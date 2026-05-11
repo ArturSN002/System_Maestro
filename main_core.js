@@ -61,6 +61,15 @@ async function bootSystem() {
       const elSetor = document.getElementById('ui-nome-setor');
       if (elSetor) elSetor.innerText = res.ui.NOME_SISTEMA;
 
+      // Captura e renderiza o emblema dinâmico (Fallback para LOGO_LIGHT se necessário)
+      const urlEmblema = (res.pwa && res.pwa.EMBLEMA_PWA) || (res.ui && res.ui.LOGO_LIGHT);
+      if (urlEmblema) {
+        document.querySelectorAll('.app-emblem, #splash-logo').forEach(img => {
+          img.src = urlEmblema;
+          img.classList.remove('hidden');
+        });
+      }
+
       const elEnd = document.getElementById('ui-endereco');
       if (elEnd && res.contato.ENDERECO) { elEnd.innerText = res.contato.ENDERECO; elEnd.classList.remove('hidden'); }
 
@@ -790,6 +799,9 @@ async function lidarComMudancaVisibilidade() {
       showToast("Erro ao apagar notificações", "error");
     }
   }
+
+  window.abrirInbox = abrirInboxIndexedDB;
+  window.limparInbox = limparInboxIndexedDB;
 
   window.addEventListener('load', () => {
     window.abrirInbox = abrirInboxIndexedDB;

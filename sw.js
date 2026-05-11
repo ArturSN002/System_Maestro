@@ -32,9 +32,9 @@ try {
   console.log("Firebase SW já inicializado ou erro na configuração.");
 }
 
-// CACHES DA VERSÃO 12.8
-const CACHE_NAME = 'maestro-cache-v12.8';
-const DYNAMIC_CACHE = 'maestro-dynamic-v12.8';
+// CACHES DA VERSÃO 12.11
+const CACHE_NAME = 'maestro-cache-v12.11';
+const DYNAMIC_CACHE = 'maestro-dynamic-v12.11';
 
 const ASSETS_TO_CACHE = [
   './',
@@ -145,25 +145,23 @@ try {
 
       // Guardar na IndexedDB (Caixa de Entrada / Inbox 7 dias)
       const salvarNotificacao = () => {
-         const dbReq = indexedDB.open('MaestroDB', 1);
+         const dbReq = indexedDB.open('MaestroOfflineDB', 1);
          dbReq.onupgradeneeded = (e) => {
              const db = e.target.result;
-             if (!db.objectStoreNames.contains('notificacoes')) {
-                 const store = db.createObjectStore('notificacoes', { keyPath: 'id', autoIncrement: true });
-                 store.createIndex('timestamp', 'timestamp', { unique: false });
+             if (!db.objectStoreNames.contains('notifications')) {
+                 db.createObjectStore('notifications', { keyPath: 'timestamp' });
              }
          };
          dbReq.onsuccess = (e) => {
              const db = e.target.result;
-             if (!db.objectStoreNames.contains('notificacoes')) return;
-             const tx = db.transaction('notificacoes', 'readwrite');
-             const store = tx.objectStore('notificacoes');
+             if (!db.objectStoreNames.contains('notifications')) return;
+             const tx = db.transaction('notifications', 'readwrite');
+             const store = tx.objectStore('notifications');
              
              // Limpeza (> 7 dias)
              const limite = Date.now() - 604800000;
-             const index = store.index('timestamp');
              const range = IDBKeyRange.upperBound(limite);
-             index.openCursor(range).onsuccess = (ec) => {
+             store.openCursor(range).onsuccess = (ec) => {
                  const cursor = ec.target.result;
                  if (cursor) {
                      store.delete(cursor.primaryKey);
@@ -184,8 +182,6 @@ try {
       };
       
       try { salvarNotificacao(); } catch(err) { console.error("Erro ao guardar Inbox", err); }
-
-      self.registration.showNotification(notificationTitle, notificationOptions);
     });
   }
 } catch (error) {
