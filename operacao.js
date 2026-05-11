@@ -479,6 +479,8 @@ async function dispararPushSegmentado() {
     const inst = document.getElementById('filtro-inst-push').value;
     const titulo = document.getElementById('aviso-titulo-direto').value.trim();
     const mensagem = document.getElementById('aviso-msg-direto').value.trim();
+    const nomeOp = localStorage.getItem("MAESTRO_OPERADOR_NOME") || "Secretaria";
+    const nivelOp = localStorage.getItem("MAESTRO_OPERADOR_NIVEL") || "Operador";
     const btn = document.getElementById('btn-disparar-direto');
 
     if (!titulo || !mensagem) {
@@ -495,7 +497,9 @@ async function dispararPushSegmentado() {
             mensagem: mensagem,
             rota: rota,
             turno: turno,
-            instituicao: inst
+            instituicao: inst,
+            operadorNome: nomeOp,
+            operadorCargo: nivelOp
         });
 
         if (res.sucesso) {

@@ -62,9 +62,12 @@ async function bootSystem() {
       if (elSetor) elSetor.innerText = res.ui.NOME_SISTEMA;
 
       // Captura e renderiza o emblema dinâmico (Fallback para LOGO_LIGHT se necessário)
-      const urlEmblema = (res.pwa && res.pwa.EMBLEMA_PWA) || (res.ui && res.ui.LOGO_LIGHT);
+      const urlEmblema = (res.pwa && res.pwa.EMBLEMA_PWA) || 
+                         (res.ui && res.ui.EMBLEMA_PWA) || 
+                         (res.config && res.config.EMBLEMA_PWA) || 
+                         (res.ui && res.ui.LOGO_LIGHT);
       if (urlEmblema) {
-        document.querySelectorAll('.app-emblem, #splash-logo').forEach(img => {
+        document.querySelectorAll('img[src*="MGA.png"], .app-emblem, #splash-logo').forEach(img => {
           img.src = urlEmblema;
           img.classList.remove('hidden');
         });
@@ -808,3 +811,47 @@ async function lidarComMudancaVisibilidade() {
     window.limparInbox = limparInboxIndexedDB;
   });
 })();
+
+window.hardResetPWA = async function() {
+  const confirmacao = window.confirm("Atenção: Isto irá apagar a sua carteira salva, histórico offline e forçar a atualização do sistema. Precisará de internet para entrar novamente.\n\nDeseja continuar?");
+  
+  if (!confirmacao) return;
+
+  showToast("A limpar sistema...", "loading");
+
+  try {
+    // 1. Limpar Storage
+    localStorage.clear();
+    sessionStorage.clear();
+
+    // 2. Destruir Service Workers
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      for (let reg of regs) {
+        await reg.unregister();
+      }
+    }
+
+    // 3. Limpar Cache API (Ficheiros Estáticos)
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(key => caches.delete(key)));
+    }
+
+    // 4. Destruir IndexedDB (Notificações Offline)
+    if (window.indexedDB) {
+      indexedDB.deleteDatabase('MaestroOfflineDB');
+    }
+
+    // 5. Hard Reload
+    showToast("Sistema limpo. A reiniciar...", "success");
+    setTimeout(() => {
+      window.location.href = window.location.pathname; // Reload limpo na raiz
+    }, 1500);
+
+  } catch (err) {
+    console.error("Erro ao limpar PWA:", err);
+    alert("Falha parcial ao limpar os dados. Por favor, reinicie o navegador.");
+    window.location.reload(true);
+  }
+};
