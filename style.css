@@ -229,10 +229,16 @@ body.dark-theme .icon-btn:hover {
 }
 
 .app-emblem {
-  width: 92px !important;
-  height: 92px !important;
+  width: 92px;
+  height: 92px;
   object-fit: contain;
   image-rendering: -webkit-optimize-contrast;
+}
+
+.app-header .app-emblem,
+.app-header .header-left .app-emblem {
+  width: auto !important;
+  height: 40px !important;
 }
 
 .brand-title {
