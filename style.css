@@ -228,6 +228,13 @@ body.dark-theme .icon-btn:hover {
   display: block;
 }
 
+.app-emblem {
+  width: 92px !important;
+  height: 92px !important;
+  object-fit: contain;
+  image-rendering: -webkit-optimize-contrast;
+}
+
 .brand-title {
   color: var(--primary);
   font-size: 20px;
