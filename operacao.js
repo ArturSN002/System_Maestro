@@ -431,6 +431,8 @@ async function dispararAvisoPublico() {
     const validadeAviso = validadeInformada || validadePadrao.toISOString().slice(0, 10);
     const campoEnviarPush = document.getElementById('aviso-enviar-push');
     const enviarPush = campoEnviarPush ? campoEnviarPush.checked : true;
+    const nomeOp = localStorage.getItem("MAESTRO_OPERADOR_NOME") || "Secretaria";
+    const nivelOp = localStorage.getItem("MAESTRO_OPERADOR_NIVEL") || "Operador";
     const btn = document.getElementById('btn-publicar-aviso');
 
     if (!titulo || !mensagem) {
@@ -449,7 +451,9 @@ async function dispararAvisoPublico() {
             validade: validadeAviso,
             validadeAviso: validadeAviso,
             ASSUNTO_VALIDADE: validadeAviso,
-            enviarPush: enviarPush
+            enviarPush: enviarPush,
+            operadorNome: nomeOp,
+            operadorCargo: nivelOp
         });
 
         if (res.sucesso) {
