@@ -656,3 +656,143 @@ async function lidarComMudancaVisibilidade() {
     }
   }
 }
+
+// ========================================================================
+// CAIXA DE NOTIFICAÇÕES PUSH (IndexedDB / Service Worker)
+// ========================================================================
+(() => {
+  const INBOX_DB_NAME = 'MaestroOfflineDB';
+  const INBOX_STORE_NAME = 'notifications';
+
+  function abrirBancoInbox() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(INBOX_DB_NAME, 1);
+
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains(INBOX_STORE_NAME)) {
+          db.createObjectStore(INBOX_STORE_NAME, { keyPath: 'timestamp' });
+        }
+      };
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+      request.onblocked = () => reject(new Error("Banco de notificações bloqueado por outra aba."));
+    });
+  }
+
+  function executarRequestInbox(request) {
+    return new Promise((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  function obterContainersInbox() {
+    const containers = new Set();
+    const listaPrincipal = document.getElementById('inbox-list');
+    if (listaPrincipal) containers.add(listaPrincipal);
+    document.querySelectorAll('.inbox-container').forEach(container => containers.add(container));
+    return Array.from(containers);
+  }
+
+  function escaparHTML(valor) {
+    return String(valor || "").replace(/[&<>"']/g, caractere => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    })[caractere]);
+  }
+
+  function formatarDataNotificacao(timestamp) {
+    const data = new Date(timestamp);
+    if (isNaN(data.getTime())) return "";
+
+    const diaMes = data.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit'
+    });
+    const horaMinuto = data.toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    return `${diaMes} às ${horaMinuto}`;
+  }
+
+  async function abrirInboxIndexedDB() {
+    const containers = obterContainersInbox();
+    if (containers.length === 0) return;
+
+    containers.forEach(container => {
+      container.innerHTML = '<div class="loader" style="margin: 0 auto;"></div>';
+    });
+
+    try {
+      const db = await abrirBancoInbox();
+      const transaction = db.transaction(INBOX_STORE_NAME, 'readonly');
+      const store = transaction.objectStore(INBOX_STORE_NAME);
+      const notificacoes = await executarRequestInbox(store.getAll());
+
+      notificacoes.sort((a, b) => Number(b.timestamp || 0) - Number(a.timestamp || 0));
+
+      if (notificacoes.length === 0) {
+        containers.forEach(container => {
+          container.innerHTML = '<div style="text-align: center; padding: 30px; background: #fff; border: 1px dashed #ccc; border-radius: 8px;"><p style="font-size: 12px; color: #666;">Nenhuma notificação recente.</p></div>';
+        });
+        db.close();
+        return;
+      }
+
+      const html = notificacoes.map(item => {
+        const titulo = escaparHTML(item.title || "Notificação");
+        const corpo = escaparHTML(item.body || "");
+        const dataFormatada = formatarDataNotificacao(item.timestamp);
+
+        return `
+          <div class="form-card" style="padding: 15px; margin-bottom: 10px; border-left: 4px solid var(--primary); text-align: left;">
+            <div style="display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: 6px;">
+              <strong style="font-size: 13px; color: var(--primary);">${titulo}</strong>
+              <span style="font-size: 10px; color: var(--text-sub); white-space: nowrap;">${dataFormatada}</span>
+            </div>
+            <p style="font-size: 12px; margin: 0; color: #333; line-height: 1.4;">${corpo}</p>
+          </div>`;
+      }).join('');
+
+      containers.forEach(container => {
+        container.innerHTML = html;
+      });
+
+      document.querySelectorAll('.badge-notificacao').forEach(badge => badge.style.display = 'none');
+      db.close();
+    } catch (erro) {
+      console.error("Erro ao carregar notificações locais:", erro);
+      containers.forEach(container => {
+        container.innerHTML = '<div class="error-box">Erro ao carregar notificações locais.</div>';
+      });
+    }
+  }
+
+  async function limparInboxIndexedDB() {
+    try {
+      const db = await abrirBancoInbox();
+      const transaction = db.transaction(INBOX_STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(INBOX_STORE_NAME);
+      await executarRequestInbox(store.clear());
+      db.close();
+
+      await abrirInboxIndexedDB();
+      showToast("Notificações apagadas", "success");
+    } catch (erro) {
+      console.error("Erro ao apagar notificações locais:", erro);
+      showToast("Erro ao apagar notificações", "error");
+    }
+  }
+
+  window.addEventListener('load', () => {
+    window.abrirInbox = abrirInboxIndexedDB;
+    window.limparInbox = limparInboxIndexedDB;
+  });
+})();
