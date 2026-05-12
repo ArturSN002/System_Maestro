@@ -22,9 +22,9 @@
     <div class="form-header">
       <span style="font-size: 36px; display: block; margin-bottom: 5px;">📧</span>
       <h2>Recuperação de Senha</h2>
-      <p>Insira o seu e-mail para receber o PIN de recuperação</p>
+      <p>Informe o e-mail cadastrado para receber o PIN de recuperação</p>
     </div>
-    <input type="email" id="recuperar-email" class="input-field" placeholder="O seu E-mail Operacional">
+    <input type="email" id="recuperar-email" class="input-field" placeholder="Seu e-mail cadastrado" autocomplete="email">
     <button class="btn-solid accent-bg" id="btn-solicitar-recuperacao" onclick="solicitarRecuperacaoSenha()">ENVIAR CÓDIGO PIN</button>
     <button class="btn-text text-light" onclick="switchView('view-login-fiscal')">Voltar ao Login</button>
   </div>
@@ -38,9 +38,15 @@
       <p>Insira o PIN recebido no e-mail e a sua nova senha</p>
     </div>
     <form onsubmit="event.preventDefault(); confirmarRedefinicaoSenha();">
-    <input type="text" id="redefinir-pin" class="input-field uppercase text-center" placeholder="PIN de 6 dígitos" maxlength="6">
-    <input type="password" id="redefinir-nova-senha" class="input-field" placeholder="Nova Senha (Mínimo 6 caracteres)" autocomplete="new-password">
-    <input type="password" id="redefinir-confirmar-senha" class="input-field" placeholder="Confirmar Nova Senha" autocomplete="new-password">
+    <input type="text" id="redefinir-pin" class="input-field uppercase text-center" placeholder="PIN de 6 dígitos" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code">
+    <div style="position: relative;">
+      <input type="password" id="redefinir-nova-senha" class="input-field" placeholder="Nova senha" autocomplete="new-password">
+      <button type="button" aria-label="Mostrar ou ocultar nova senha" onclick="const campo=document.getElementById('redefinir-nova-senha'); campo.type=campo.type==='password'?'text':'password'; this.textContent='👁';" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); border:0; background:transparent; color:var(--primary); font-size:16px; cursor:pointer;">👁</button>
+    </div>
+    <div style="position: relative;">
+      <input type="password" id="redefinir-confirmar-senha" class="input-field" placeholder="Confirmar nova senha" autocomplete="new-password">
+      <button type="button" aria-label="Mostrar ou ocultar confirmação de senha" onclick="const campo=document.getElementById('redefinir-confirmar-senha'); campo.type=campo.type==='password'?'text':'password'; this.textContent='👁';" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); border:0; background:transparent; color:var(--primary); font-size:16px; cursor:pointer;">👁</button>
+    </div>
     <button type="submit" class="btn-solid accent-bg" id="btn-confirmar-redefinicao">REDEFINIR SENHA</button>
     </form>
     <button class="btn-text text-light" onclick="switchView('view-login-fiscal')">Cancelar</button>

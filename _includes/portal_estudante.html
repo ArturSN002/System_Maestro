@@ -387,15 +387,46 @@
             <p>Insira as credenciais da sua carteira</p>
           </div>
           <form onsubmit="event.preventDefault(); loginCarteira();">
-          <label class="input-label">ID DA CARTEIRA</label>
-          <input type="text" id="login-id" class="input-field uppercase" placeholder="Ex: 2026CM..." autocomplete="username">
-          <label class="input-label">PIN</label>
-          <input type="password" id="login-senha" class="input-field" placeholder="Últimos 4 dígitos do CPF" maxlength="4" autocomplete="current-password">
+          <label class="input-label">E-mail, CPF ou Matrícula</label>
+          <input type="text" id="login-id" class="input-field" placeholder="Digite seu e-mail, CPF ou matrícula" autocomplete="username">
+          <label class="input-label">Senha</label>
+          <input type="password" id="login-senha" class="input-field" placeholder="Senha ou 4 últimos dígitos do CPF" autocomplete="current-password">
           <button type="submit" class="btn-solid" id="btn-login">ENTRAR NO COFRE</button>
           </form>
           <button class="btn-text" onclick="switchView('view-aluno-menu')">Cancelar</button>
         </div>
         <div id="res-login" class="error-box hidden"></div>
+      </section>
+
+      <section id="view-nova-senha" class="view-section" style="display: none;">
+        <div class="form-card">
+          <div class="form-header">
+            <span style="font-size: 36px; display: block; margin-bottom: 5px;">🔐</span>
+            <h2>Definir Senha de Acesso</h2>
+            <p>Crie uma senha forte para proteger a sua carteira digital</p>
+          </div>
+          <form onsubmit="event.preventDefault(); salvarNovaSenhaPrimeiroAcesso();">
+            <label class="input-label">Nova senha</label>
+            <div style="position: relative;">
+              <input type="password" id="nova-senha" class="input-field" placeholder="Digite a nova senha" autocomplete="new-password" oninput="if (typeof validarRegrasSenha === 'function') validarRegrasSenha(this.value);">
+              <button type="button" aria-label="Mostrar ou ocultar nova senha" onclick="const campo=document.getElementById('nova-senha'); campo.type=campo.type==='password'?'text':'password'; this.textContent='👁';" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); border:0; background:transparent; color:var(--primary); font-size:16px; cursor:pointer;">👁</button>
+            </div>
+            <label class="input-label">Confirmar nova senha</label>
+            <div style="position: relative;">
+              <input type="password" id="confirmar-nova-senha" class="input-field" placeholder="Repita a nova senha" autocomplete="new-password">
+              <button type="button" aria-label="Mostrar ou ocultar confirmação de senha" onclick="const campo=document.getElementById('confirmar-nova-senha'); campo.type=campo.type==='password'?'text':'password'; this.textContent='👁';" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); border:0; background:transparent; color:var(--primary); font-size:16px; cursor:pointer;">👁</button>
+            </div>
+            <ul id="senha-regras" style="list-style: none; padding: 0; font-size: 11px; color: var(--text-sub);">
+              <li id="regra-tam">❌ Mínimo de 8 caracteres</li>
+              <li id="regra-mai">❌ Pelo menos uma letra maiúscula</li>
+              <li id="regra-min">❌ Pelo menos uma letra minúscula</li>
+              <li id="regra-num">❌ Pelo menos um número</li>
+              <li id="regra-esp">❌ Pelo menos um caractere especial</li>
+            </ul>
+            <button type="submit" class="btn-solid" id="btn-salvar-nova-senha">Salvar e Entrar</button>
+          </form>
+          <button class="btn-text" onclick="switchView('view-login')">Voltar ao Login</button>
+        </div>
       </section>
 
       <section id="view-wallet" class="view-section">

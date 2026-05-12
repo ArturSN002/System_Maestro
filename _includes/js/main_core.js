@@ -395,6 +395,11 @@ window.onload = function () {
   const idParam = urlParams.get('id');
   const authParam = urlParams.get('auth');
   const validarParam = urlParams.get('validar');
+  const resetInterceptado = interceptarMagicLinkRecuperacao(urlParams);
+
+  if (resetInterceptado) {
+    return;
+  }
 
   if (validarParam) {
     setTimeout(() => {
@@ -945,3 +950,37 @@ window.hardResetPWA = async function() {
     window.location.reload(true);
   }
 };
+
+function interceptarMagicLinkRecuperacao(urlParams) {
+  if (!urlParams || !urlParams.has('reset')) return false;
+
+  const pin = String(urlParams.get('reset') || "").trim();
+  const email = String(urlParams.get('email') || "").trim();
+
+  if (pin) {
+    sessionStorage.setItem("MAESTRO_IAM_TEMP_PIN", pin);
+  }
+
+  if (email) {
+    localStorage.setItem("MAESTRO_RESET_EMAIL", email);
+  }
+
+  setTimeout(() => {
+    const inputPin = document.getElementById('redefinir-pin');
+    const inputEmail = document.getElementById('recuperar-email');
+
+    if (inputPin && pin) inputPin.value = pin;
+    if (inputEmail && email) inputEmail.value = email;
+
+    switchView('view-redefinir-senha');
+    showToast("PIN de recuperação carregado. Informe sua nova senha.", "info");
+  }, 700);
+
+  const urlLimpa = new URL(window.location.href);
+  urlLimpa.searchParams.delete('reset');
+  urlLimpa.searchParams.delete('email');
+  history.replaceState({}, document.title, urlLimpa.pathname + urlLimpa.search + urlLimpa.hash);
+
+  console.log("Magic link de recuperação interceptado com sucesso.");
+  return true;
+}

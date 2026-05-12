@@ -6,6 +6,23 @@ let arrayAlunosAuditoria = [];
 let paginaAtualAuditoria = 1;     // NOVO: Guarda a página atual
 const ITENS_POR_PAGINA = 10;      // NOVO: Exibe 10 alunos por bloco
 
+window.forcarResetSenhaEstudante = async function(cpf) {
+    const alerta = window.confirm("⚠️ ATENÇÃO OPERADOR:\n\nIsto apagará a senha atual do estudante. A conta voltará ao estado de 'Primeiro Acesso' e a senha provisória será os 4 últimos dígitos do CPF.\n\nDeseja continuar?");
+    if (!alerta) return;
+
+    showToast("A resetar credenciais...", "loading");
+    try {
+        const res = await apiCall("resetarSenhaEstudanteAdmin", { cpf: cpf });
+        if (res.sucesso) {
+            showToast(res.mensagem, "success");
+        } else {
+            showToast(res.erro || "Falha ao resetar acesso.", "error");
+        }
+    } catch (e) {
+        showToast("Erro de comunicação com o servidor.", "error");
+    }
+};
+
 function formatarNomeProprio(nome) {
     if (!nome) return "Estudante";
     const preposicoes = ["da", "de", "do", "das", "dos", "e"];
