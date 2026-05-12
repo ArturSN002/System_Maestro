@@ -431,7 +431,7 @@ async function dispararAvisoPublico() {
     const validadeAviso = validadeInformada || validadePadrao.toISOString().slice(0, 10);
     const campoEnviarPush = document.getElementById('aviso-enviar-push');
     const enviarPush = campoEnviarPush ? campoEnviarPush.checked : true;
-    const nomeOp = localStorage.getItem("MAESTRO_OPERADOR_NOME") || "Secretaria";
+    const nomeOp = localStorage.getItem("MAESTRO_OPERADOR_NOME") || localStorage.getItem("MAESTRO_OP_NOME") || "Secretaria";
     const nivelOp = localStorage.getItem("MAESTRO_OPERADOR_NIVEL") || "Operador";
     const btn = document.getElementById('btn-publicar-aviso');
 
@@ -479,7 +479,7 @@ async function dispararPushSegmentado() {
     const inst = document.getElementById('filtro-inst-push').value;
     const titulo = document.getElementById('aviso-titulo-direto').value.trim();
     const mensagem = document.getElementById('aviso-msg-direto').value.trim();
-    const nomeOp = localStorage.getItem("MAESTRO_OPERADOR_NOME") || "Secretaria";
+    const nomeOp = localStorage.getItem("MAESTRO_OPERADOR_NOME") || localStorage.getItem("MAESTRO_OP_NOME") || "Secretaria";
     const nivelOp = localStorage.getItem("MAESTRO_OPERADOR_NIVEL") || "Operador";
     const btn = document.getElementById('btn-disparar-direto');
 
@@ -626,6 +626,9 @@ async function votarNoMural(idMensagem, tipoVoto) {
 // ========================================================================
 
 function abrirInbox() {
+    if (typeof window.abrirInboxIndexedDB === 'function') {
+        return window.abrirInboxIndexedDB();
+    }
     renderizarNotificacoes();
 }
 
@@ -678,7 +681,10 @@ function renderizarNotificacoes() {
             });
 
             // Remove o red dot após abrir a inbox
-            document.querySelectorAll('.badge-notificacao').forEach(badge => badge.style.display = 'none');
+            document.querySelectorAll('.badge-notificacao').forEach(badge => {
+                badge.textContent = '';
+                badge.style.display = 'none';
+            });
         };
     };
     dbRequest.onerror = () => {
@@ -689,6 +695,9 @@ function renderizarNotificacoes() {
 }
 
 function limparInbox() {
+    if (typeof window.limparInboxIndexedDB === 'function') {
+        return window.limparInboxIndexedDB();
+    }
     const dbRequest = indexedDB.open('MaestroDB', 1);
     dbRequest.onsuccess = (e) => {
         const db = e.target.result;
@@ -697,6 +706,10 @@ function limparInbox() {
             const store = transaction.objectStore('notificacoes');
             store.clear();
             renderizarNotificacoes();
+            document.querySelectorAll('.badge-notificacao').forEach(badge => {
+                badge.textContent = '';
+                badge.style.display = 'none';
+            });
             showToast("Caixa de entrada limpa com sucesso.", "success");
         }
     };
@@ -705,6 +718,11 @@ function limparInbox() {
 // Verifica periodicamente se há notificações para acender a badge
 setInterval(() => {
     try {
+        if (typeof window.atualizarContadorNotificacoes === 'function') {
+            window.atualizarContadorNotificacoes();
+            return;
+        }
+
         const dbReq = indexedDB.open('MaestroDB', 1);
         dbReq.onsuccess = (e) => {
             const db = e.target.result;
@@ -717,7 +735,10 @@ setInterval(() => {
 
                     // Mostra a badge se houver itens e a inbox não estiver aberta (em nenhum dos modos)
                     if (countReq.result > 0 && !viewAdminAtiva && !sidebarRightAtiva) {
-                        document.querySelectorAll('.badge-notificacao').forEach(badge => badge.style.display = 'block');
+                        document.querySelectorAll('.badge-notificacao').forEach(badge => {
+                            badge.textContent = countReq.result > 99 ? '99+' : String(countReq.result);
+                            badge.style.display = 'inline-flex';
+                        });
                     }
                 }
             }

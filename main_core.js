@@ -96,6 +96,7 @@ async function bootSystem() {
   restaurarSessaoEstudante();
 
   ocultarSplashScreen();
+  if (typeof window.atualizarContadorNotificacoes === 'function') window.atualizarContadorNotificacoes();
 }
 
 function ocultarSplashScreen() {
@@ -734,6 +735,36 @@ async function lidarComMudancaVisibilidade() {
     return `${diaMes} às ${horaMinuto}`;
   }
 
+  async function atualizarContadorNotificacoes() {
+    try {
+      if (!('indexedDB' in window)) return;
+
+      const db = await abrirBancoInbox();
+      const transaction = db.transaction(INBOX_STORE_NAME, 'readonly');
+      const store = transaction.objectStore(INBOX_STORE_NAME);
+      const notificacoes = await executarRequestInbox(store.getAll());
+      const totalNaoLidas = notificacoes.filter(item => item.status === 'unread').length;
+
+      document.querySelectorAll('.badge-notificacao').forEach(badge => {
+        if (totalNaoLidas > 0) {
+          badge.textContent = totalNaoLidas > 99 ? '99+' : String(totalNaoLidas);
+          badge.style.display = 'inline-flex';
+          badge.setAttribute('aria-label', `${totalNaoLidas} notificações não lidas`);
+          badge.title = `${totalNaoLidas} notificações não lidas`;
+        } else {
+          badge.textContent = '';
+          badge.style.display = 'none';
+          badge.removeAttribute('aria-label');
+          badge.removeAttribute('title');
+        }
+      });
+
+      db.close();
+    } catch (erro) {
+      console.error("Erro ao atualizar contador de notificações:", erro);
+    }
+  }
+
   async function abrirInboxIndexedDB() {
     const containers = obterContainersInbox();
     if (containers.length === 0) return;
@@ -755,6 +786,7 @@ async function lidarComMudancaVisibilidade() {
           container.innerHTML = '<div style="text-align: center; padding: 30px; background: #fff; border: 1px dashed #ccc; border-radius: 8px;"><p style="font-size: 12px; color: #666;">Nenhuma notificação recente.</p></div>';
         });
         db.close();
+        await atualizarContadorNotificacoes();
         return;
       }
 
@@ -762,14 +794,23 @@ async function lidarComMudancaVisibilidade() {
         const titulo = escaparHTML(item.title || "Notificação");
         const corpo = escaparHTML(item.body || "");
         const dataFormatada = formatarDataNotificacao(item.timestamp);
+        const naoLida = item.status === 'unread';
+        const timestampSeguro = escaparHTML(item.timestamp);
+        const corBorda = naoLida ? '#2563eb' : 'var(--primary)';
+        const marcadorNaoLida = naoLida ? '<span style="width: 8px; height: 8px; background: #2563eb; border-radius: 50%; flex: 0 0 auto; margin-top: 4px;" title="Não lida"></span>' : '';
+        const botaoMarcarLida = naoLida ? `<button type="button" class="btn-text" data-marcar-lida="${timestampSeguro}" style="margin-top: 8px; padding: 0; font-size: 10px; font-weight: 700; color: #2563eb;">Marcar como lida</button>` : '';
 
         return `
-          <div class="form-card" style="padding: 15px; margin-bottom: 10px; border-left: 4px solid var(--primary); text-align: left;">
+          <div class="form-card" style="padding: 15px; margin-bottom: 10px; border-left: 4px solid ${corBorda}; text-align: left;">
             <div style="display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: 6px;">
-              <strong style="font-size: 13px; color: var(--primary);">${titulo}</strong>
+              <div style="display: flex; align-items: flex-start; gap: 8px;">
+                ${marcadorNaoLida}
+                <strong style="font-size: 13px; color: var(--primary);">${titulo}</strong>
+              </div>
               <span style="font-size: 10px; color: var(--text-sub); white-space: nowrap;">${dataFormatada}</span>
             </div>
             <p style="font-size: 12px; margin: 0; color: #333; line-height: 1.4;">${corpo}</p>
+            ${botaoMarcarLida}
           </div>`;
       }).join('');
 
@@ -777,13 +818,48 @@ async function lidarComMudancaVisibilidade() {
         container.innerHTML = html;
       });
 
-      document.querySelectorAll('.badge-notificacao').forEach(badge => badge.style.display = 'none');
+      document.querySelectorAll('[data-marcar-lida]').forEach(botao => {
+        botao.addEventListener('click', () => marcarNotificacaoComoLida(botao.dataset.marcarLida));
+      });
+
+      await atualizarContadorNotificacoes();
       db.close();
     } catch (erro) {
       console.error("Erro ao carregar notificações locais:", erro);
       containers.forEach(container => {
         container.innerHTML = '<div class="error-box">Erro ao carregar notificações locais.</div>';
       });
+    }
+  }
+
+  async function marcarNotificacaoComoLida(timestamp) {
+    try {
+      const chaveNumerica = Number(timestamp);
+      const chave = Number.isNaN(chaveNumerica) ? timestamp : chaveNumerica;
+      const db = await abrirBancoInbox();
+      const transaction = db.transaction(INBOX_STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(INBOX_STORE_NAME);
+      let notificacao = await executarRequestInbox(store.get(chave));
+
+      if (!notificacao && chave !== String(timestamp)) {
+        notificacao = await executarRequestInbox(store.get(String(timestamp)));
+      }
+
+      if (!notificacao) {
+        db.close();
+        showToast("Notificação não encontrada.", "error");
+        return;
+      }
+
+      notificacao.status = 'read';
+      await executarRequestInbox(store.put(notificacao));
+      db.close();
+
+      await abrirInboxIndexedDB();
+      await atualizarContadorNotificacoes();
+    } catch (erro) {
+      console.error("Erro ao marcar notificação como lida:", erro);
+      showToast("Erro ao atualizar notificação.", "error");
     }
   }
 
@@ -796,6 +872,7 @@ async function lidarComMudancaVisibilidade() {
       db.close();
 
       await abrirInboxIndexedDB();
+      await atualizarContadorNotificacoes();
       showToast("Notificações apagadas", "success");
     } catch (erro) {
       console.error("Erro ao apagar notificações locais:", erro);
@@ -805,10 +882,23 @@ async function lidarComMudancaVisibilidade() {
 
   window.abrirInbox = abrirInboxIndexedDB;
   window.limparInbox = limparInboxIndexedDB;
+  window.abrirInboxIndexedDB = abrirInboxIndexedDB;
+  window.limparInboxIndexedDB = limparInboxIndexedDB;
+  window.atualizarContadorNotificacoes = atualizarContadorNotificacoes;
+  window.marcarNotificacaoComoLida = marcarNotificacaoComoLida;
 
   window.addEventListener('load', () => {
     window.abrirInbox = abrirInboxIndexedDB;
     window.limparInbox = limparInboxIndexedDB;
+    window.abrirInboxIndexedDB = abrirInboxIndexedDB;
+    window.limparInboxIndexedDB = limparInboxIndexedDB;
+    window.atualizarContadorNotificacoes = atualizarContadorNotificacoes;
+    window.marcarNotificacaoComoLida = marcarNotificacaoComoLida;
+    atualizarContadorNotificacoes();
+  });
+
+  window.addEventListener('focus', () => {
+    atualizarContadorNotificacoes();
   });
 })();
 

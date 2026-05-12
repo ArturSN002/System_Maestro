@@ -150,7 +150,7 @@ async function fazerLoginOperador() {
       }
 
       localStorage.setItem("MAESTRO_TOKEN", tokenValido);
-      localStorage.setItem("MAESTRO_OP_NOME", res.nome || "Operador");
+      localStorage.setItem("MAESTRO_OPERADOR_NOME", res.nome || "Operador");
       localStorage.setItem("MAESTRO_OPERADOR_NIVEL", String(res.nivel || "OPERADOR").toUpperCase());
       localStorage.setItem("MAESTRO_OPERADOR_EMAIL", email);
 
@@ -204,7 +204,7 @@ function configurarInterfacePorNivel(nivel) {
 function verificarSessaoAtiva() {
   const token = localStorage.getItem("MAESTRO_TOKEN");
   const nivel = localStorage.getItem("MAESTRO_OPERADOR_NIVEL");
-  const nome = localStorage.getItem("MAESTRO_OP_NOME");
+  const nome = localStorage.getItem("MAESTRO_OPERADOR_NOME");
 
   if (token && nivel && token !== "undefined" && token !== "null") {
     const elNome = document.getElementById('nome-operador-logado');
@@ -217,7 +217,7 @@ function verificarSessaoAtiva() {
 
 function encerrarSessaoOperador() {
   localStorage.removeItem("MAESTRO_TOKEN");
-  localStorage.removeItem("MAESTRO_OP_NOME");
+  localStorage.removeItem("MAESTRO_OPERADOR_NOME");
   localStorage.removeItem("MAESTRO_OPERADOR_NIVEL");
   localStorage.removeItem("MAESTRO_OPERADOR_EMAIL");
 
