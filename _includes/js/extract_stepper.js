@@ -1,7 +1,7 @@
 
 const dir = 'c:\\Users\\asn03\\Downloads\\Maestro V9.2.7\\GitHub Pages';
-const estudantePath = path.join(dir, 'estudante.js');
-const inscricaoPath = path.join(dir, 'inscricao.js');
+const estudantePath = dir + '/' + 'estudante.js';
+const inscricaoPath = dir + '/' + 'inscricao.js';
 
 const allLines = fs.readFileSync(estudantePath, 'utf8').split(/\r?\n/);
 
