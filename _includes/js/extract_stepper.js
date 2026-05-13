@@ -1,5 +1,3 @@
-const fs = require('fs');
-const path = require('path');
 
 const dir = 'c:\\Users\\asn03\\Downloads\\Maestro V9.2.7\\GitHub Pages';
 const estudantePath = path.join(dir, 'estudante.js');
