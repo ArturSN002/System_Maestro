@@ -548,6 +548,10 @@ function getRadioValue(name) {
     return checked ? checked.value : '';
 }
 
+function getRadioSimNao(name) {
+    return getRadioValue(name) === 'Sim' ? 'Sim' : 'Não';
+}
+
 function getCheckboxValues(name) {
     return Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(el => el.value);
 }
@@ -588,6 +592,10 @@ function prepararEnvioNativo() {
         return;
     }
 
+    const estagio = getRadioSimNao('insc-estagio');
+    const menorIdade = getRadioSimNao('insc-menor');
+    const acompanhado = getRadioSimNao('insc-criancas');
+
     const payloadNativo = {
         // Step 1
         cpf: cpf,
@@ -609,13 +617,15 @@ function prepararEnvioNativo() {
         // Step 3
         transporte23h: getRadioValue('insc-23h'),
         bairro23h: document.getElementById('insc-bairro-23h').value,
-        transporteEstagio: getRadioValue('insc-estagio'),
+        estagio: estagio,
+        transporteEstagio: estagio,
         paradaEstagio: document.getElementById('insc-parada-estagio').value.trim(),
         turnoEstagio: document.getElementById('insc-turno-estagio').value,
         possuiDeficiencia: getRadioValue('insc-pcd'),
         cidDeficiencia: document.getElementById('insc-cid').value.trim(),
-        acompanhadoCriancas: getRadioValue('insc-criancas'),
-        menorIdade: getRadioValue('insc-menor'),
+        acompanhado: acompanhado,
+        acompanhadoCriancas: acompanhado,
+        menorIdade: menorIdade,
 
         // Step 4
         arquivos: inscricaoArquivos,
