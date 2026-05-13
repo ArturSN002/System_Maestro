@@ -5,7 +5,7 @@
     // =======================================================================
 
     // 1. Core & Variáveis Globais
-    {% include js / js_global.js %}
+{% include js / js_global.js %}
 {% include js / main_core.js %}
 {% include js / api_auth.js %}
 
