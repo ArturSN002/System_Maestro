@@ -34,11 +34,15 @@ function formatarNomeProprio(nome) {
 }
 
 function abrirMesaAuditoria() {
+    if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
+
     switchView('view-auditoria');
     carregarFilaAuditoria();
 }
 
 async function carregarFilaAuditoria(ehPesquisa = false) {
+    if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
+
     const container = document.getElementById('auditoria-fila-container');
     const inputPesquisa = document.getElementById('auditoria-pesquisa').value.trim();
     const termo = ehPesquisa ? inputPesquisa : "";
@@ -276,6 +280,8 @@ document.addEventListener('keydown', (e) => {
 // ========================================================================
 
 async function abrirPainelModerador() {
+    if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
+
     switchView('view-moderador');
     const loader = document.getElementById('loader-sincronizacao-motores');
 
@@ -414,6 +420,8 @@ function alternarTipoAviso(tipo) {
 }
 
 async function carregarFiltrosParaPush() {
+    if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
+
     const selectRota = document.getElementById('filtro-rota-push');
     const selectTurno = document.getElementById('filtro-turno-push');
     const selectInst = document.getElementById('filtro-inst-push');
@@ -439,6 +447,8 @@ async function carregarFiltrosParaPush() {
 }
 
 async function dispararAvisoPublico() {
+    if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
+
     const tipo = document.getElementById('aviso-tipo-mural').value;
     const titulo = document.getElementById('aviso-titulo-mural').value.trim();
     const mensagem = document.getElementById('aviso-msg-mural').value.trim();
@@ -491,6 +501,8 @@ async function dispararAvisoPublico() {
 }
 
 async function dispararPushSegmentado() {
+    if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
+
     const rota = document.getElementById('filtro-rota-push').value;
     const turno = document.getElementById('filtro-turno-push').value;
     const inst = document.getElementById('filtro-inst-push').value;
@@ -924,6 +936,8 @@ function obterTurnosAtuais() {
 }
 
 async function popularSelectFrotaMotorista() {
+    if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
+
     const select = document.getElementById("select-frota-motorista");
     if (!select) return;
 

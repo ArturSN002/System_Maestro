@@ -19,6 +19,8 @@ function mudarAbaDashboard(aba) {
 const CACHE_STATS_KEY = "MAESTRO_DASH_STATS";
 
 async function carregarDashboard() {
+    if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
+
     const cachedStatsRaw = localStorage.getItem(CACHE_STATS_KEY);
 
     if (cachedStatsRaw) {

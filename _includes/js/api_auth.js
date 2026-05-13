@@ -123,6 +123,20 @@ async function apiCall(action, payload = {}) {
   }
 }
 
+function temSessaoOperadorAtiva() {
+  const tokenOperador = localStorage.getItem("MAESTRO_TOKEN");
+  const nivelOperador = localStorage.getItem("MAESTRO_OPERADOR_NIVEL");
+
+  return !!(
+    tokenOperador &&
+    nivelOperador &&
+    tokenOperador !== "undefined" &&
+    tokenOperador !== "null" &&
+    nivelOperador !== "undefined" &&
+    nivelOperador !== "null"
+  );
+}
+
 // ========================================================================
 // 1. AUTENTICAÇÃO DE OPERADORES (FISCAL / MOTORISTA / ADMIN)
 // ========================================================================
@@ -448,6 +462,8 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function configurarInterfacePorNivel(nivel) {
+  if (!temSessaoOperadorAtiva()) return;
+
   const mCampo = document.getElementById('menu-grupo-campo');
   const mSecretaria = document.getElementById('menu-grupo-secretaria');
   const mModerador = document.getElementById('menu-grupo-moderador');

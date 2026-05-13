@@ -97,12 +97,16 @@ function fecharModoFiscalizacao() {
 }
 
 function abrirModoFiscalizacaoGlobal() {
+    if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
+
     // Leva qualquer operador para a tela isolada da câmara
     switchView('view-fiscal');
     iniciarScanner();
 }
 
 async function validarFiscal() {
+    if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
+
     const idCarteira = document.getElementById('id-fiscal').value.trim().toUpperCase();
     if (!idCarteira) return;
 

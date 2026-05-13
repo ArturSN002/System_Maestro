@@ -6,6 +6,8 @@
 // NOVO: Funções de Encerramento Manual de Rota (V9.2.2)
 // ------------------------------------------------------------------------
 function abrirModalEncerrarRota() {
+    if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
+
     document.getElementById('modal-encerrar-rota').classList.remove('hidden');
     document.getElementById('input-encerrar-onibus').value = '';
 }
@@ -18,6 +20,8 @@ function fecharModalEncerrarRota() {
 }
 
 async function dispararEncerramentoRota() {
+    if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
+
     const idBus = document.getElementById('input-encerrar-onibus').value.trim().toUpperCase();
     const btn = document.getElementById('btn-enviar-encerramento');
 
@@ -51,6 +55,8 @@ async function dispararEncerramentoRota() {
 // MOTOR DE CRISES E AVISOS PUSH - PARTE SOS
 // ------------------------------------------------------------------------
 function abrirModalSOS() {
+    if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
+
     document.getElementById('modal-sos-fiscal').classList.remove('hidden');
     document.getElementById('sos-id-onibus').value = '';
     document.getElementById('sos-motivo').value = '';
@@ -64,6 +70,8 @@ function fecharModalSOS() {
 }
 
 function confirmarEmergenciaGPS() {
+    if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
+
     const idBus = document.getElementById('sos-id-onibus').value.trim().toUpperCase();
     const motivo = document.getElementById('sos-motivo').value;
     const btn = document.getElementById('btn-enviar-sos');
@@ -94,6 +102,8 @@ function confirmarEmergenciaGPS() {
 }
 
 async function enviarAlarmeCriseAPI(idBus, motivo, coords) {
+    if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
+
     const btn = document.getElementById('btn-enviar-sos');
 
     try {

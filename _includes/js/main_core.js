@@ -150,6 +150,16 @@ function instalarPWA() {
 function switchView(viewId) {
   closeAllSidebars();
 
+  const viewsOperador = [
+    'view-admin-hub', 'view-dashboard', 'view-auditoria', 'view-moderador',
+    'view-fiscal', 'view-notificacoes', 'view-painel-motorista'
+  ];
+
+  if (viewsOperador.indexOf(viewId) !== -1 && typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) {
+    sessionStorage.setItem('MAESTRO_LAST_VIEW', 'view-hub');
+    viewId = 'view-hub';
+  }
+
   let target = document.getElementById(viewId);
   if (!target) {
     console.warn(`View não encontrada: ${viewId}. Redirecionando para 'view-gateway'.`);
@@ -580,6 +590,8 @@ let wakeLockMotorista = null;
 let ultimaTransmissaoMestre = 0;
 
 async function btnIniciarRotaMotorista(idOnibus) {
+  if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
+
   const emailMotorista = localStorage.getItem("MAESTRO_OPERADOR_EMAIL") || "motorista@desconhecido.com";
 
   const res = await apiCall("iniciarRotaMotorista", {
@@ -596,6 +608,8 @@ async function btnIniciarRotaMotorista(idOnibus) {
 }
 
 async function btnFinalizarRotaMotorista(idOnibus) {
+  if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
+
   const res = await apiCall("encerrarRotaManual", {
     idOnibus: idOnibus
   });

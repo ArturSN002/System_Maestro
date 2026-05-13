@@ -631,8 +631,9 @@ function prepararEnvioNativo() {
             if (res.sucesso) {
                 showToast(res.msg || "Inscrição recebida com sucesso!", "success");
                 triggerVibration([50, 30, 50]);
-                // Reset do formulário e volta ao menu
+                // Reset do formulário e volta ao menu do estudante sem recarregar o app
                 setTimeout(() => {
+                    sessionStorage.setItem('MAESTRO_LAST_VIEW', 'view-aluno-menu');
                     switchView('view-aluno-menu');
                     _resetarFormularioInscricao();
                 }, 2000);
