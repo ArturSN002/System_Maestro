@@ -47,6 +47,13 @@
       <input type="password" id="redefinir-confirmar-senha" class="input-field" placeholder="Confirmar nova senha" autocomplete="new-password">
       <button type="button" aria-label="Mostrar ou ocultar confirmação de senha" onclick="const campo=document.getElementById('redefinir-confirmar-senha'); campo.type=campo.type==='password'?'text':'password'; this.textContent='👁';" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); border:0; background:transparent; color:var(--primary); font-size:16px; cursor:pointer;">👁</button>
     </div>
+    <ul id="senha-regras-recuperacao" style="list-style: none; padding: 0; font-size: 11px; color: var(--text-sub); margin-bottom: 15px;">
+      <li id="regra-tam">❌ Mínimo de 8 caracteres</li>
+      <li id="regra-mai">❌ Pelo menos uma letra maiúscula</li>
+      <li id="regra-min">❌ Pelo menos uma letra minúscula</li>
+      <li id="regra-num">❌ Pelo menos um número</li>
+      <li id="regra-esp">❌ Pelo menos um caractere especial</li>
+    </ul>
     <button type="submit" class="btn-solid accent-bg" id="btn-confirmar-redefinicao">REDEFINIR SENHA</button>
     </form>
     <button class="btn-text text-light" onclick="switchView('view-login-fiscal')">Cancelar</button>

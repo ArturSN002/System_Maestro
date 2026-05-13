@@ -259,11 +259,15 @@ function validarRegrasSenha(valor) {
 }
 
 function atualizarItemRegraSenhaIAM(id, valido, texto) {
-  const item = document.getElementById(id);
-  if (!item) return;
+  const itens = document.querySelectorAll('[id="' + id + '"]');
+  if (!itens || itens.length === 0) return;
 
-  item.textContent = (valido ? "✅ " : "❌ ") + texto;
-  item.style.color = valido ? "var(--success)" : "var(--danger)";
+  itens.forEach(item => {
+    if (item) {
+      item.textContent = (valido ? "✅ " : "❌ ") + texto;
+      item.style.color = valido ? "var(--success)" : "var(--danger)";
+    }
+  });
 }
 
 function prepararPrimeiroAcessoIAM(login, senhaTemporaria, res, origem) {
