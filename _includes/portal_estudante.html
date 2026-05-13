@@ -432,6 +432,16 @@
       <section id="view-wallet" class="view-section">
         <div id="wallet-container"></div>
         <div id="wallet-actions" class="hidden" style="margin-top: 15px;"></div>
+        <div id="wallet-privacy-card" class="form-card" style="margin-top: 15px; padding: 15px; border-left: 4px solid var(--primary);">
+          <div class="form-header" style="margin-bottom: 12px; text-align: left;">
+            <h2 style="font-size: 15px; margin-bottom: 3px;">Privacidade e Meus Dados</h2>
+            <p style="font-size: 11px; line-height: 1.4;">Acesse seus dados pessoais ou solicite a anonimização da sua conta.</p>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <button class="btn-solid" type="button" style="margin: 0; background: var(--primary);" onclick="downloadDadosPessoais()">📥 Baixar Meus Dados (JSON)</button>
+            <button class="btn-solid" type="button" style="margin: 0; background: var(--danger);" onclick="confirmarExclusaoConta()">⚠️ Solicitar Exclusão de Conta</button>
+          </div>
+        </div>
 
         <div id="view-mobilidade" style="margin-top: 25px; display: none;">
            <div class="form-card" style="padding: 15px; border: 2px solid var(--primary);">

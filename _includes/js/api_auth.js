@@ -576,3 +576,119 @@ async function confirmarRedefinicaoSenha() {
     btn.disabled = false;
   }
 }
+
+// ========================================================================
+// 3. PRIVACIDADE DO ESTUDANTE (LGPD)
+// ========================================================================
+
+function obterCpfPrivacidadeEstudante() {
+  const cacheBruto = localStorage.getItem("MAESTRO_WALLET_CACHE") || localStorage.getItem("MAESTRO_OFFLINE_WALLET") || "{}";
+
+  try {
+    const dados = JSON.parse(cacheBruto);
+    return String(dados.cpf || dados.cpfAluno || "").replace(/\D/g, "");
+  } catch (erro) {
+    console.warn("Não foi possível ler o CPF da carteira local:", erro);
+    return "";
+  }
+}
+
+async function downloadDadosPessoais() {
+  const cpf = obterCpfPrivacidadeEstudante();
+
+  if (!cpf || cpf.length !== 11) {
+    showToast("CPF não encontrado na sessão. Entre novamente no Cofre Digital.", "error");
+    return;
+  }
+
+  showToast("Preparando seus dados pessoais...", "info");
+
+  try {
+    const res = await apiCall("exportarDadosEstudante", { cpf: cpf });
+
+    if (!res || !res.sucesso) {
+      showToast((res && res.erro) || "Não foi possível exportar seus dados.", "error");
+      return;
+    }
+
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(res.dados));
+    const link = document.createElement("a");
+    const dataArquivo = new Date().toISOString().slice(0, 10);
+
+    link.setAttribute("href", dataStr);
+    link.setAttribute("download", `dados_pessoais_maestro_${cpf}_${dataArquivo}.json`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showToast("Arquivo JSON gerado com sucesso.", "success");
+  } catch (erro) {
+    console.error("Erro ao baixar dados pessoais:", erro);
+    showToast("Falha de conexão ao exportar seus dados.", "error");
+  }
+}
+
+async function confirmarExclusaoConta() {
+  const cpf = obterCpfPrivacidadeEstudante();
+
+  if (!cpf || cpf.length !== 11) {
+    showToast("CPF não encontrado na sessão. Entre novamente no Cofre Digital.", "error");
+    return;
+  }
+
+  const primeiraConfirmacao = window.confirm(
+    "A anonimização da conta é irreversível. Seus dados pessoais, documentos e acesso ao Cofre Digital serão removidos do cadastro, mantendo apenas dados estatísticos como rota, turno, instituição e data de inscrição.\n\nDeseja continuar?"
+  );
+
+  if (!primeiraConfirmacao) return;
+
+  const segundaConfirmacao = window.confirm(
+    "Confirma definitivamente a solicitação de exclusão de conta? Esta ação não poderá ser desfeita."
+  );
+
+  if (!segundaConfirmacao) return;
+
+  showToast("Enviando solicitação de anonimização...", "warning");
+
+  try {
+    const res = await apiCall("solicitarAnonimizacaoEstudante", { cpf: cpf });
+
+    if (!res || !res.sucesso) {
+      showToast((res && res.erro) || "Não foi possível anonimizar sua conta.", "error");
+      return;
+    }
+
+    limparCarteiraLocalAposAnonimizacao();
+    showToast(res.mensagem || "Conta anonimizada com sucesso.", "success");
+
+    setTimeout(() => {
+      switchView("view-aluno-menu");
+    }, 1200);
+  } catch (erro) {
+    console.error("Erro ao solicitar anonimização:", erro);
+    showToast("Falha de conexão ao solicitar a exclusão da conta.", "error");
+  }
+}
+
+function limparCarteiraLocalAposAnonimizacao() {
+  localStorage.removeItem("MAESTRO_EST_TOKEN");
+  localStorage.removeItem("MAESTRO_WALLET_CACHE");
+  localStorage.removeItem("MAESTRO_OFFLINE_WALLET");
+  localStorage.removeItem("MAESTRO_WALLET_CREDS");
+  localStorage.removeItem("MAESTRO_FCM_TOKEN");
+  localStorage.removeItem("MAESTRO_FCM_TOKEN_TEMP");
+  localStorage.removeItem("FCM_SYNCED_ID");
+
+  if (typeof currentWalletId !== "undefined") currentWalletId = "";
+  if (typeof currentWalletSenha !== "undefined") currentWalletSenha = "";
+  if (typeof currentStudentName !== "undefined") currentStudentName = "";
+
+  const walletContainer = document.getElementById("wallet-container");
+  if (walletContainer) walletContainer.innerHTML = "";
+
+  const walletActions = document.getElementById("wallet-actions");
+  if (walletActions) walletActions.classList.add("hidden");
+
+  const painelMobilidade = document.getElementById("view-mobilidade");
+  if (painelMobilidade) painelMobilidade.style.display = "none";
+}
