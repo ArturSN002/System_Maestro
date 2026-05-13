@@ -464,13 +464,11 @@ function capturarFoto3x4() {
     const video = document.getElementById('camera-video');
     const canvas = document.getElementById('camera-canvas');
     const preview = document.getElementById('camera-preview');
-    const viewfinder = document.getElementById('camera-viewfinder');
-    const btnCapturar = document.getElementById('btn-capturar-foto');
     const btnRefazer = document.getElementById('btn-refazer-foto');
 
-    if (!video || !canvas || !preview) return;
+    if (!video || !canvas || !preview || !cameraStream) return;
 
-    // Set canvas dimensions to 3x4 aspect ratio
+    // Captura imediata dos pixels no formato 3x4 antes de qualquer processamento pesado.
     const largura = 300;
     const altura = 400;
     canvas.width = largura;
@@ -478,11 +476,11 @@ function capturarFoto3x4() {
 
     const ctx = canvas.getContext('2d');
 
-    // Mirror horizontally (front camera is mirrored in CSS)
+    // Espelha horizontalmente, pois a câmera frontal já é espelhada no CSS.
     ctx.translate(largura, 0);
     ctx.scale(-1, 1);
 
-    // Calculate crop from video center
+    // Calcula o recorte central do vídeo.
     const vw = video.videoWidth;
     const vh = video.videoHeight;
     const aspectTarget = largura / altura;
@@ -503,28 +501,44 @@ function capturarFoto3x4() {
 
     ctx.drawImage(video, sx, sy, sw, sh, 0, 0, largura, altura);
 
+    // Prioridade máxima: desliga o hardware imediatamente após a captura do frame.
+    finalizarInscricaoLimparHardware();
+
     inscricaoFotoBase64 = canvas.toDataURL('image/jpeg', 0.8);
 
     preview.src = inscricaoFotoBase64;
     preview.classList.remove('hidden');
     if (btnRefazer) btnRefazer.classList.remove('hidden');
 
-    // Stop camera to save battery
-    pararCameraInscricao();
-    if (viewfinder) viewfinder.classList.add('hidden');
-    if (btnCapturar) btnCapturar.classList.add('hidden');
-
     showToast("Foto capturada com sucesso!", "success");
     triggerVibration(50);
 }
 
-function pararCameraInscricao() {
+function finalizarInscricaoLimparHardware() {
     if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream.getTracks().forEach(track => {
+            try {
+                track.stop();
+            } catch (err) {
+                console.warn("[Inscrição] Falha ao encerrar faixa da câmera:", err);
+            }
+        });
         cameraStream = null;
+        console.log("[Inscrição] Câmera fechada por segurança.");
     }
+
     const video = document.getElementById('camera-video');
     if (video) video.srcObject = null;
+
+    const viewfinder = document.getElementById('camera-viewfinder');
+    if (viewfinder) viewfinder.classList.add('hidden');
+
+    const btnCapturar = document.getElementById('btn-capturar-foto');
+    if (btnCapturar) btnCapturar.classList.add('hidden');
+}
+
+function pararCameraInscricao() {
+    finalizarInscricaoLimparHardware();
 }
 
 // ----- Form Payload Assembly -----
@@ -616,12 +630,12 @@ function prepararEnvioNativo() {
     console.log(payloadNativo);
     console.log("===============================================");
 
-    // Visual feedback
+    // Feedback visual.
     btn.innerHTML = "📤 A ENVIAR... ⏳";
     btn.disabled = true;
 
-    // Forcibly turn off hardware immediately
-    pararCameraInscricao();
+    // Desliga o hardware imediatamente antes do envio final.
+    finalizarInscricaoLimparHardware();
     if (typeof pararTransmissaoGpsE_Radar === 'function') { 
         pararTransmissaoGpsE_Radar(true); 
     }
@@ -629,6 +643,7 @@ function prepararEnvioNativo() {
     apiCall("submeterInscricaoNativa", payloadNativo)
         .then(res => {
             if (res.sucesso) {
+                finalizarInscricaoLimparHardware();
                 showToast(res.msg || "Inscrição recebida com sucesso!", "success");
                 triggerVibration([50, 30, 50]);
                 // Reset do formulário e volta ao menu do estudante sem recarregar o app
@@ -683,8 +698,8 @@ function _resetarFormularioInscricao() {
         if (el) { el.innerText = 'Nenhum arquivo selecionado'; el.style.color = 'var(--text-sub)'; }
     });
 
-    // Reset camera
-    pararCameraInscricao();
+    // Reset da câmera sem deixar hardware ativo fora da tela de inscrição.
+    finalizarInscricaoLimparHardware();
     const preview = document.getElementById('camera-preview');
     if (preview) preview.classList.add('hidden');
     const btnRefazer = document.getElementById('btn-refazer-foto');
@@ -692,7 +707,13 @@ function _resetarFormularioInscricao() {
     const viewfinder = document.getElementById('camera-viewfinder');
     if (viewfinder) viewfinder.classList.add('hidden');
 
-   // Reset hybrid photo toggle com base na política de privacidade
+    const viewInscricao = document.getElementById('view-inscricao');
+    const inscricaoVisivel = viewInscricao && (
+        viewInscricao.classList.contains('active-view') ||
+        viewInscricao.style.display === 'block'
+    );
+
+    // Redefine o modo de foto com base na política de privacidade.
     if (localStorage.getItem('MAESTRO_PREF_CAMERA') === 'false') {
         toggleModoFoto('upload');
         const btnCamera = document.getElementById('btn-modo-camera');
@@ -700,14 +721,25 @@ function _resetarFormularioInscricao() {
     } else {
         const btnCamera = document.getElementById('btn-modo-camera');
         if (btnCamera) btnCamera.classList.remove('hidden');
-        toggleModoFoto('camera');
+        if (inscricaoVisivel) {
+            toggleModoFoto('camera');
+        } else {
+            const areaCamera = document.getElementById('camera-3x4-area');
+            const areaUpload = document.getElementById('upload-3x4-area');
+            const btnUpload = document.getElementById('btn-modo-upload');
+
+            if (areaCamera) areaCamera.classList.remove('hidden');
+            if (areaUpload) areaUpload.classList.add('hidden');
+            if (btnCamera) { btnCamera.classList.add('btn-modo-ativo'); btnCamera.classList.remove('btn-modo-inativo'); }
+            if (btnUpload) { btnUpload.classList.add('btn-modo-inativo'); btnUpload.classList.remove('btn-modo-ativo'); }
+        }
     }
 
-    // Reset state
+    // Redefine o estado interno.
     inscricaoArquivos = {};
     inscricaoFotoBase64 = null;
 
-    // Reset stepper to step 1
+    // Redefine o stepper para a etapa 1.
     document.querySelectorAll('.step-container').forEach(sc => sc.classList.remove('step-visible'));
     const step1 = document.getElementById('step-1');
     if (step1) step1.classList.add('step-visible');

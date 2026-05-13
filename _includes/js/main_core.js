@@ -148,6 +148,11 @@ function instalarPWA() {
 // ... (Código do Bootstrap e PWA mantido) ...
 
 function switchView(viewId) {
+  // Salvaguarda de hardware: qualquer troca de tela encerra a câmera da inscrição.
+  if (typeof finalizarInscricaoLimparHardware === 'function') {
+    finalizarInscricaoLimparHardware();
+  }
+
   closeAllSidebars();
 
   const viewsOperador = [
