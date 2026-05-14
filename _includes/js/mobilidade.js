@@ -56,6 +56,8 @@ async function verificarJanelasEmbarque() {
         if (painelMob) painelMob.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
         const res = await apiCall("getViagensDisponiveisPortal", { idEstudante: currentWalletId });
+        console.warn("🔍 [DEBUG PWA] Raw response from getViagensDisponiveisPortal:");
+        console.dir(res);
 
         if (!res.sucesso) {
             if (containerLista) containerLista.innerHTML = `<p style="font-size: 11px; color: var(--danger);">Erro: ${res.erro}</p>`;
