@@ -483,7 +483,15 @@ async function inicializarMapaMobilidade(dadosViagem) {
             if (response.ok) {
                 const geojsonData = await response.json();
                 const routeLayer = L.geoJSON(geojsonData, {
-                    style: { color: '#0A3D6B', weight: 4 }
+                    style: { color: '#0A3D6B', weight: 4 },
+                    filter: function(feature) {
+                        // Prevent Leaflet crash if export tool generated a null geometry
+                        if (!feature.geometry || !feature.geometry.coordinates) {
+                            console.warn("🛡️ [PWA] Invalid GeoJSON feature ignored:", feature);
+                            return false; // Skip this feature
+                        }
+                        return true; // Keep valid features
+                    }
                 }).addTo(mapInstance);
                 
                 // Adjust map bounds to the route
