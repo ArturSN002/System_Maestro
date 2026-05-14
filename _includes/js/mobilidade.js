@@ -7,6 +7,14 @@ let idIntervaloGPS = null;
 let idIntervaloRadar = null;
 let wakeLockAtivo = null;
 
+let busMarker = null;
+const busIcon = L.divIcon({
+    className: 'custom-bus-marker',
+    html: '<div style="background-color: var(--accent); width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 8px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; font-size: 12px;">🚌</div>',
+    iconSize: [30, 30],
+    iconAnchor: [15, 15]
+});
+
 function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
     const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -62,6 +70,11 @@ async function verificarJanelasEmbarque() {
         }
 
         if (!res.viagens || res.viagens.length === 0) {
+            if (busMarker && typeof mapInstance !== 'undefined' && mapInstance) {
+                mapInstance.removeLayer(busMarker);
+            }
+            busMarker = null;
+
             let msgEmpty = "Nenhum embarque previsto para agora.";
             if (res.statusOperacao === "FORA_DE_HORARIO") {
                 msgEmpty = "<b>Fora do Horário de Embarque.</b><br>Os autocarros só aparecem aqui minutos antes da hora de partida da sua rota.";
@@ -92,6 +105,10 @@ async function verificarJanelasEmbarque() {
         });
 
         if (containerLista) containerLista.innerHTML = html;
+
+        if (res.viagens.length > 0) {
+            inicializarMapaMobilidade(res.viagens[0]);
+        }
 
     } catch (e) {
         if (containerLista) containerLista.innerHTML = `<p style="font-size: 11px; color: var(--danger);">Não foi possível atualizar a logística.</p>`;
@@ -173,6 +190,10 @@ async function atualizarRadarDinamico() {
 
     try {
         const res = await apiCall("statusRadarOnibus", { idOnibus: onibusSelecionadoGPS, idEstudante: currentWalletId });
+
+        if (res.coordenadas) {
+            atualizarPosicaoOnibusMapa(res.coordenadas.lat, res.coordenadas.lng);
+        }
 
         // --- Injetar CSS de animação ---
         if (!document.getElementById('radar-pulse-css')) {
@@ -423,4 +444,85 @@ function pararTransmissaoGpsE_Radar(matarRadarTambem = true) {
     if (idIntervaloGPS) { clearInterval(idIntervaloGPS); idIntervaloGPS = null; }
     if (matarRadarTambem && idIntervaloRadar) { clearInterval(idIntervaloRadar); idIntervaloRadar = null; }
     if (wakeLockAtivo) { wakeLockAtivo.release().then(() => wakeLockAtivo = null); }
+}
+
+let mapInstance = null;
+
+async function inicializarMapaMobilidade(dadosViagem) {
+    const container = document.getElementById('mapa-paradas-container');
+    if (!container) return;
+
+    container.style.display = 'block';
+
+    if (mapInstance !== null) {
+        mapInstance.off();
+        mapInstance.remove();
+        mapInstance = null;
+    }
+
+    // Default coordinate for Ceará-Mirim or use the first stop's coordinates
+    let centerLat = -5.6322;
+    let centerLng = -35.4267;
+    
+    if (dadosViagem.paradas && dadosViagem.paradas.length > 0) {
+        centerLat = dadosViagem.paradas[0].LATITUDE;
+        centerLng = dadosViagem.paradas[0].LONGITUDE;
+    }
+
+    mapInstance = L.map('mapa-paradas-container').setView([centerLat, centerLng], 14);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(mapInstance);
+
+    if (dadosViagem.geojson_url) {
+        try {
+            const response = await fetch(dadosViagem.geojson_url);
+            if (response.ok) {
+                const geojsonData = await response.json();
+                const routeLayer = L.geoJSON(geojsonData, {
+                    style: { color: '#0A3D6B', weight: 4 }
+                }).addTo(mapInstance);
+                
+                // Adjust map bounds to the route
+                mapInstance.fitBounds(routeLayer.getBounds());
+            }
+        } catch (error) {
+            console.error("Erro ao carregar GeoJSON da rota:", error);
+        }
+    }
+
+    if (dadosViagem.paradas && dadosViagem.paradas.length > 0) {
+        dadosViagem.paradas.forEach(parada => {
+            if (parada.TIPO_PARADA === "Principal") {
+                L.marker([parada.LATITUDE, parada.LONGITUDE])
+                    .addTo(mapInstance)
+                    .bindPopup(`<b>${parada.NOME_PARADA}</b><br>Parada Principal`);
+            } else {
+                L.circleMarker([parada.LATITUDE, parada.LONGITUDE], {
+                    radius: 5,
+                    color: '#ff7800',
+                    weight: 1,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                })
+                .addTo(mapInstance)
+                .bindPopup(`<b>${parada.NOME_PARADA}</b><br>Parada Secundária`);
+            }
+        });
+    }
+}
+
+function atualizarPosicaoOnibusMapa(lat, lng) {
+    if (typeof mapInstance === 'undefined' || !mapInstance) return;
+
+    if (busMarker === null) {
+        busMarker = L.marker([lat, lng], {icon: busIcon}).addTo(mapInstance);
+    } else {
+        if (busMarker.slideTo) {
+            busMarker.slideTo([lat, lng], { duration: 2500, keepAtCenter: false });
+        } else {
+            busMarker.setLatLng([lat, lng]);
+        }
+    }
 }
