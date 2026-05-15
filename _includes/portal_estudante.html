@@ -443,18 +443,21 @@
           </div>
         </div>
 
-        <div id="view-mobilidade" style="margin-top: 25px; display: none;">
-           <div class="form-card" style="padding: 15px; border: 2px solid var(--primary);">
-              <div class="form-header" style="margin-bottom: 15px;">
-                 <h2 style="font-size: 14px; margin-bottom: 2px;">🚌 PRÓXIMAS VIAGENS</h2>
-                 <p style="font-size: 10px;">Janela de Embarque em Tempo Real</p>
-              </div>
-              <div id="mapa-paradas-container" style="height: 400px; width: 100%; border-radius: 8px; z-index: 1; display: none; margin-bottom: 15px; border: 2px solid var(--border);"></div>
-              <div id="lista-viagens-container" style="text-align: center;">
-                 <div class="loader" style="margin: 0 auto 10px auto; width: 25px; height: 25px; border-width: 3px;"></div>
-                 <p style="font-size: 11px; color: var(--text-sub);">A procurar autocarros na sua rota...</p>
-              </div>
-              <div id="painel-viagem-ativa" class="hidden text-center"></div>
-           </div>
+        <div id="view-mobilidade" style="display: none; height: 100dvh; position: relative; margin-top: 15px; border-radius: 8px; overflow: hidden; border: 2px solid var(--border);">
+            <div id="radar-status-bar" style="position: absolute; top: 10px; left: 10px; right: 10px; z-index: 1000; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); background: #e5e7eb; color: #374151;">
+                <span id="radar-status-text">A carregar radar...</span>
+            </div>
+
+            <div id="mapa-paradas-container" style="height: 100%; width: 100%; z-index: 1; display: none;"></div>
+            
+            <button onclick="centralizarMapaEmMim()" style="position: absolute; bottom: 20px; right: 20px; z-index: 1000; width: 50px; height: 50px; border-radius: 50%; background: white; border: none; box-shadow: 0 2px 10px rgba(0,0,0,0.3); font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer;">🎯</button>
+
+            <div id="lista-viagens-overlay" style="position: absolute; bottom: 80px; left: 10px; right: 10px; z-index: 1000;">
+                <div id="lista-viagens-container" style="text-align: center;">
+                    <div class="loader" style="margin: 0 auto 10px auto; width: 25px; height: 25px; border-width: 3px;"></div>
+                    <p style="font-size: 11px; color: var(--text-sub);">A procurar autocarros na sua rota...</p>
+                </div>
+                <div id="painel-viagem-ativa" class="hidden text-center"></div>
+            </div>
         </div>
       </section>
