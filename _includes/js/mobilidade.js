@@ -507,17 +507,17 @@ async function inicializarMapaMobilidade(dadosViagem) {
 
     if (statusBar && statusText) {
         if (estado === "AGUARDANDO") {
-            statusBar.style.background = "#e5e7eb";
-            statusBar.style.color = "#374151";
-            statusText.textContent = "Fase de Planeamento";
+            statusBar.style.background = "#6B7280";
+            statusBar.style.color = "white";
+            statusText.textContent = "🕒 Fase de Planeamento";
         } else if (estado === "PREPARANDO") {
-            statusBar.style.background = "#fef08a";
-            statusBar.style.color = "#854d0e";
-            statusText.textContent = "Autocarros em Preparação";
+            statusBar.style.background = "#F59E0B";
+            statusBar.style.color = "white";
+            statusText.textContent = "⚙️ Autocarros em Preparação";
         } else if (estado === "EM_OPERACAO") {
-            statusBar.style.background = "#bbf7d0";
-            statusBar.style.color = "#166534";
-            statusText.textContent = "Operação em Tempo Real";
+            statusBar.style.background = "#10B981";
+            statusBar.style.color = "white";
+            statusText.textContent = "🚌 Operação em Tempo Real";
         } else {
             statusBar.style.background = "#fca5a5";
             statusBar.style.color = "#991b1b";
@@ -556,10 +556,10 @@ async function inicializarMapaMobilidade(dadosViagem) {
 
     if (dadosViagem.paradas && dadosViagem.paradas.length > 0) {
         dadosViagem.paradas.forEach(parada => {
-            let popupContent = `<b>${parada.NOME_PARADA}</b>`;
-            if (estado === "PREPARANDO") {
-                popupContent += `<br>Autocarro: ${dadosViagem.placa || 'A designar'}<br><span style="font-size: 11px; color: #854d0e;">Partida em breve</span>`;
-            } else if (estado === "EM_OPERACAO") {
+            const tipoStr = String(parada.TIPO_PARADA || "Secundaria").toUpperCase().trim();
+            let popupContent = `<b>${parada.NOME_PARADA}</b><br><span style="font-size:10px; color:gray;">${tipoStr}</span>`;
+            
+            if (estado === "EM_OPERACAO") {
                 const maxCapacidade = 50; // Approximated default if unknown
                 const lotacaoReal = (maxCapacidade - dadosViagem.vagasRestantes) > 0 ? (maxCapacidade - dadosViagem.vagasRestantes) : 0;
                 const ocupacaoPct = Math.min(100, Math.round((lotacaoReal / maxCapacidade) * 100));
@@ -574,9 +574,9 @@ async function inicializarMapaMobilidade(dadosViagem) {
                             <div style="width: ${ocupacaoPct}%; background: ${corLota}; height: 100%; border-radius: 4px; transition: width 0.3s ease;"></div>
                         </div>
                     </div>`;
+            } else {
+                popupContent += `<br><br><span style="color:#F59E0B; font-weight:bold; font-size:11px;">Embarque ainda fechado.</span>`;
             }
-
-            const tipoStr = String(parada.TIPO_PARADA || "Secundaria").toUpperCase().trim();
 
             if (tipoStr === "PRINCIPAL") {
                 L.marker([parada.LATITUDE, parada.LONGITUDE])
@@ -598,9 +598,16 @@ async function inicializarMapaMobilidade(dadosViagem) {
         });
     }
 
-    if (estado === "EM_OPERACAO" && !busMarker && centerLat && centerLng) {
+    if (estado === "EM_OPERACAO") {
         // Create a visual indicator that bus is operating even if GPS hasn't caught up
-        atualizarPosicaoOnibusMapa(centerLat, centerLng);
+        if (!busMarker && centerLat && centerLng) {
+            atualizarPosicaoOnibusMapa(centerLat, centerLng);
+        }
+    } else {
+        if (busMarker && mapInstance) {
+            mapInstance.removeLayer(busMarker);
+            busMarker = null;
+        }
     }
 }
 
