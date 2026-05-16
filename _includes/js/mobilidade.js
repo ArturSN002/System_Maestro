@@ -34,6 +34,38 @@ function calcularETA(distanciaKm) {
     return `~ ${tempoMinutos} min`;
 }
 
+function abrirRadarMasterView() {
+    switchView('view-radar');
+    document.getElementById('radar-lista-container').classList.remove('hidden');
+    document.getElementById('radar-mapa-container').classList.add('hidden');
+    verificarJanelasEmbarque();
+}
+
+function abrirMapaDaViagem(idViagem) {
+    if (!window.lastViagens) return;
+    const tripData = window.lastViagens.find(v => v.id === idViagem);
+    if (!tripData) return;
+
+    // Transition UI
+    document.getElementById('radar-lista-container').classList.add('hidden');
+    document.getElementById('radar-mapa-container').classList.remove('hidden');
+    
+    // Initialize map
+    inicializarMapaMobilidade(tripData);
+}
+
+function fecharMapaVoltarLista() {
+    document.getElementById('radar-mapa-container').classList.add('hidden');
+    document.getElementById('radar-lista-container').classList.remove('hidden');
+    
+    // Destroy map instance to save mobile memory
+    if (mapInstance !== null) {
+        mapInstance.off();
+        mapInstance.remove();
+        mapInstance = null;
+    }
+}
+
 async function verificarJanelasEmbarque() {
     if (typeof currentWalletId === 'undefined' || !currentWalletId) {
         showToast("Sessão inválida para aceder às viagens.", "error");
@@ -41,7 +73,7 @@ async function verificarJanelasEmbarque() {
     }
 
     const painelMob = document.getElementById('view-mobilidade');
-    const containerLista = document.getElementById('lista-viagens-container');
+    const containerLista = document.getElementById('lista-viagens-alvo');
     const painelSucesso = document.getElementById('painel-viagem-ativa');
 
     if (painelMob) painelMob.style.display = 'block';
@@ -110,23 +142,20 @@ async function verificarJanelasEmbarque() {
             const borderHighlight = index === 0 ? "border: 2px solid var(--primary);" : "border: 1px solid var(--border); opacity: 0.8;";
 
             html += `
-           <div style="background: var(--secondary); padding: 12px; border-radius: 8px; margin-bottom: 10px; text-align: left; ${borderHighlight}">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                 <strong style="font-size: 13px;">🚌 ${v.rota}</strong>
-                 <span style="font-size: 11px; background: #e0e7ff; padding: 2px 6px; border-radius: 4px; color: #3730a3;">${v.horario}</span>
-              </div>
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                 <span style="font-size: 11px;">${statusVagas}</span>
-                 ${checkinArea}
-              </div>
-           </div>`;
+<div style="background: var(--secondary); padding: 12px; border-radius: 8px; margin-bottom: 10px; text-align: left; ${borderHighlight}">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+     <strong style="font-size: 13px;">🚌 ${v.rota}</strong>
+     <span style="font-size: 11px; background: #e0e7ff; padding: 2px 6px; border-radius: 4px; color: #3730a3;">${v.horario}</span>
+  </div>
+  <div style="font-size: 11px; margin-bottom: 10px;">${statusVagas}</div>
+  <div style="display: flex; justify-content: space-between; gap: 8px;">
+     <button class="btn-solid" onclick="abrirMapaDaViagem('${v.id}')" style="background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; flex: 1;">VER MAPA 🗺️</button>
+     ${checkinArea.replace('style="', 'style="flex: 1; ')}
+  </div>
+</div>`;
         });
 
         if (containerLista) containerLista.innerHTML = html;
-
-        if (res.viagens.length > 0) {
-            inicializarMapaMobilidade(res.viagens[0]);
-        }
 
     } catch (e) {
         if (containerLista) containerLista.innerHTML = `<p style="font-size: 11px; color: var(--danger);">Não foi possível atualizar a logística.</p>`;
@@ -184,7 +213,8 @@ async function confirmarEmbarque(idOnibus) {
         if (res.sucesso) {
             showToast("Lugar Confirmado!", "success");
             onibusSelecionadoGPS = idOnibus;
-            document.getElementById('lista-viagens-container').classList.add('hidden');
+            document.getElementById('radar-lista-container').classList.add('hidden');
+            document.getElementById('radar-mapa-container').classList.remove('hidden');
             abrirPainelViagem();
         } else {
             showToast(res.erro || "Lotação atingida no momento do clique.", "error");
@@ -593,9 +623,13 @@ async function inicializarMapaMobilidade(dadosViagem) {
             } else {
                 const secondaryIcon = L.divIcon({
                     className: 'custom-sec-marker',
-                    html: '<div style="background-color: #fef08a; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #ea580c; box-shadow: 0 0 4px rgba(0,0,0,0.3);"></div>',
-                    iconSize: [18, 18],
-                    iconAnchor: [9, 9]
+                    html: `<svg viewBox="0 0 24 24" width="20" height="20" fill="#fef08a" stroke="#ea580c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.4));">
+                             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                             <circle cx="12" cy="10" r="3" fill="#ea580c"></circle>
+                           </svg>`,
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 20],
+                    popupAnchor: [0, -18]
                 });
 
                 L.marker([parada.LATITUDE, parada.LONGITUDE], { icon: secondaryIcon })
