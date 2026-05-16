@@ -83,6 +83,29 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = event.request.url;
 
+  // 1. ESTRATÉGIA DE CACHE PARA MAPAS (Leaflet/OSM)
+  if (url.includes('tile.openstreetmap.org')) {
+      event.respondWith(
+          caches.match(event.request).then(function(cachedResponse) {
+              // Se o mapa já está no cache, devolve instantaneamente (Offline)
+              if (cachedResponse) {
+                  return cachedResponse;
+              }
+              // Se não está, vai à internet, devolve ao mapa e guarda uma cópia no cache
+              return fetch(event.request).then(function(networkResponse) {
+                  return caches.open('maestro-map-tiles-v1').then(function(cache) {
+                      cache.put(event.request, networkResponse.clone());
+                      return networkResponse;
+                  });
+              }).catch(function() {
+                  // Ignora falhas se estiver totalmente offline na primeira tentativa
+                  console.warn('[SW] Falha ao carregar tile do mapa (Offline).');
+              });
+          })
+      );
+      return; // Impede que o resto da lógica do SW processe este pedido
+  }
+
   if (url.includes('script.google.com') || url.includes('firestore') || (url.includes('googleapis') && !url.includes('fcm'))) {
     return;
   }
