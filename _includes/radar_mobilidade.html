@@ -1,14 +1,18 @@
 <section id="view-radar" class="view-section" style="display: none; padding: 0; height: 100dvh; background: var(--secondary); overflow: hidden;">
     
-    <div id="radar-lista-container" style="padding: 15px; height: 100%; overflow-y: auto;">
+    <div id="radar-lista-container">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2 style="margin: 0; font-size: 20px; color: var(--primary);">Autocarros em Operação</h2>
-            <button class="btn-text" onclick="switchView('view-wallet')" style="margin: 0; font-size: 13px;">⬅ Voltar à Carteira</button>
         </div>
         <p style="font-size: 11px; color: var(--text-sub); margin-bottom: 10px;">Acompanhe os veículos e rotas em tempo real.</p>
         <div id="lista-viagens-cards">
             <div class="loader" style="margin: 0 auto 10px auto; width: 25px; height: 25px; border-width: 3px;"></div>
             <p style="text-align: center; font-size: 11px; color: var(--text-sub);">A procurar viagens disponíveis...</p>
+        </div>
+        <div id="radar-voltar-footer">
+            <button class="btn-voltar-red" onclick="switchView('view-wallet')">
+                <span>⬅</span> Voltar à Carteira Digital
+            </button>
         </div>
     </div>
 

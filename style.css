@@ -11,6 +11,7 @@
   --border: #E5E7EB;
   --bg-dark: #121212;
   --card-dark: #1E1E1E;
+  --cor-voltar-alerta: #e74c3c;
 }
 
 body {
@@ -1694,4 +1695,48 @@ body.dark-theme .sidebar-drawer {
 .splash-overlay[id^="modal-"] > div {
   position: relative;
   z-index: auto;
+}
+
+/* NEW RADAR COMPONENT STYLES */
+#radar-lista-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 15px;
+    box-sizing: border-box;
+}
+
+#lista-viagens-cards {
+    flex-grow: 1;
+    overflow-y: auto;
+    margin-bottom: 15px;
+}
+
+#radar-voltar-footer {
+    flex-shrink: 0;
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+}
+
+.btn-voltar-red {
+    width: 100%;
+    color: var(--cor-voltar-alerta);
+    background: transparent;
+    border: 1px solid var(--cor-voltar-alerta);
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.2s ease;
+}
+
+.btn-voltar-red:active {
+    background: rgba(231, 76, 60, 0.1);
 }
