@@ -1,29 +1,31 @@
       <section id="view-aluno-menu" class="view-section">
         <div class="welcome-text">Área do Estudante</div>
 
-        <button class="menu-card outline-card" style="border-color: var(--success); background: rgba(16,185,129,0.04);" onclick="abrirNovaInscricao()">
-          <span class="icon">📝</span>
-          <div class="info">
-            <strong style="color: var(--success);">Nova Inscrição</strong>
-            <span>Solicite o seu passe de transporte</span>
-          </div>
-        </button>
+        <div class="grid-desktop">
+          <button class="menu-card outline-card" style="border-color: var(--success); background: rgba(16,185,129,0.04);" onclick="abrirNovaInscricao()">
+            <span class="icon">📝</span>
+            <div class="info">
+              <strong style="color: var(--success);">Nova Inscrição</strong>
+              <span>Solicite o seu passe de transporte</span>
+            </div>
+          </button>
 
-        <button class="menu-card outline-card" onclick="switchView('view-consult')">
-          <span class="icon">🔍</span>
-          <div class="info">
-            <strong>Acompanhar Inscrição</strong>
-            <span>Verifique o status usando o seu CPF</span>
-          </div>
-        </button>
+          <button class="menu-card outline-card" onclick="switchView('view-consult')">
+            <span class="icon">🔍</span>
+            <div class="info">
+              <strong>Acompanhar Inscrição</strong>
+              <span>Verifique o status usando o seu CPF</span>
+            </div>
+          </button>
 
-        <button class="menu-card primary-card" onclick="switchView('view-login')">
-          <span class="icon">🪪</span>
-          <div class="info">
-            <strong>Abrir Carteira Digital</strong>
-            <span>Acessar (Requer ID)</span>
-          </div>
-        </button>
+          <button class="menu-card primary-card" onclick="switchView('view-login')">
+            <span class="icon">🪪</span>
+            <div class="info">
+              <strong>Abrir Carteira Digital</strong>
+              <span>Acessar (Requer ID)</span>
+            </div>
+          </button>
+        </div>
 
         <button class="btn-text" onclick="switchView('view-hub')">⬅ Voltar ao Início</button>
       </section>

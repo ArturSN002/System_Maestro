@@ -396,12 +396,17 @@ async function sairCarteira(expiracaoSilenciosa = false) {
     if (clockInterval) clearInterval(clockInterval);
     if (timeoutSessaoEstudanteID) clearInterval(timeoutSessaoEstudanteID);
 
+    // --- Full map/GPS cleanup (layout-agnostic) ---
     if (typeof pararTransmissaoGpsE_Radar === 'function') {
         pararTransmissaoGpsE_Radar();
     }
-    if (typeof fecharMapaVoltarLista === 'function') {
-        fecharMapaVoltarLista();
+    // Directly destroy map instance to guarantee no leaks on desktop or mobile
+    if (typeof mapInstance !== 'undefined' && mapInstance !== null) {
+        try { mapInstance.off(); mapInstance.remove(); } catch (e) { }
+        mapInstance = null;
     }
+    if (typeof busMarker !== 'undefined') busMarker = null;
+    if (typeof onibusSelecionadoGPS !== 'undefined') onibusSelecionadoGPS = null;
 
     document.getElementById('wallet-container').innerHTML = '';
     const actions = document.getElementById('wallet-actions');

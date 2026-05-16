@@ -2,6 +2,10 @@
 // 8.1. MOTOR DE MOBILIDADE: RADAR E ETA 
 // ========================================================================
 
+// --- Central Layout Detector ---
+// Uses matchMedia for reliable CSS-synced breakpoint detection.
+const isDesktop = () => window.matchMedia('(min-width: 768px)').matches;
+
 let onibusSelecionadoGPS = null;
 let idIntervaloGPS = null;
 let idIntervaloRadar = null;
@@ -14,6 +18,10 @@ const busIcon = L.divIcon({
     iconSize: [30, 30],
     iconAnchor: [15, 15]
 });
+
+// Default city coordinates (Ceará-Mirim)
+const CIDADE_DEFAULT_LAT = -5.6322;
+const CIDADE_DEFAULT_LNG = -35.4267;
 
 function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
     const R = 6371;
@@ -36,9 +44,60 @@ function calcularETA(distanciaKm) {
 
 function abrirRadarMasterView() {
     switchView('view-radar');
+
     if (typeof carregarViagensDisponiveisEstudante === 'function') {
         carregarViagensDisponiveisEstudante();
     }
+
+    // Desktop: proactively initialize the map canvas with general city view
+    // so the right pane is never blank while the trip list loads.
+    if (isDesktop()) {
+        const mapaContainer = document.getElementById('radar-mapa-container');
+        if (mapaContainer) {
+            mapaContainer.classList.remove('hidden');
+            void mapaContainer.offsetHeight; // Synchronous reflow trigger
+
+            requestAnimationFrame(() => {
+                _inicializarMapaDesktopStandby();
+            });
+        }
+    }
+}
+
+/**
+ * Initializes a lightweight standby map for desktop split-view.
+ * Shows general city area until a specific trip is selected.
+ */
+function _inicializarMapaDesktopStandby() {
+    const container = document.getElementById('mapa-paradas-container');
+    if (!container) return;
+    container.style.display = 'block';
+
+    // If a map already exists, just recalculate size
+    if (mapInstance !== null) {
+        mapInstance.invalidateSize();
+        return;
+    }
+
+    mapInstance = L.map('mapa-paradas-container', { zoomControl: false })
+        .setView([CIDADE_DEFAULT_LAT, CIDADE_DEFAULT_LNG], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(mapInstance);
+
+    // Status bar: standby
+    const statusBar = document.getElementById('radar-status-bar');
+    const statusText = document.getElementById('radar-status-text');
+    if (statusBar && statusText) {
+        statusBar.style.background = '#6B7280';
+        statusBar.style.color = 'white';
+        statusText.textContent = '🗺️ Selecione uma viagem na lista';
+    }
+
+    setTimeout(() => {
+        if (mapInstance) mapInstance.invalidateSize();
+    }, 200);
 }
 
 function abrirMapaDaViagem(idViagem) {
@@ -46,34 +105,60 @@ function abrirMapaDaViagem(idViagem) {
     const tripData = window.lastViagens.find(v => v.id === idViagem);
     if (!tripData) return;
 
-    // Transition UI
-    document.getElementById('radar-lista-container').classList.add('hidden');
-    const mapaContainer = document.getElementById('radar-mapa-container');
-    mapaContainer.classList.remove('hidden');
-    
-    void mapaContainer.offsetHeight;
-    
-    requestAnimationFrame(() => {
-        // Initialize map
-        inicializarMapaMobilidade(tripData);
+    const desktopActive = isDesktop();
 
-        // FIX: Force Leaflet to recalculate size after the container becomes visible
-        setTimeout(() => {
-            if (mapInstance) mapInstance.invalidateSize();
-        }, 150);
-    });
+    if (desktopActive) {
+        // Desktop: map canvas is already visible via CSS split-view.
+        // Just load the route data into the existing map instance.
+        requestAnimationFrame(() => {
+            inicializarMapaMobilidade(tripData);
+            setTimeout(() => {
+                if (mapInstance) mapInstance.invalidateSize();
+            }, 150);
+        });
+    } else {
+        // Mobile: standard Master-Detail toggle
+        document.getElementById('radar-lista-container').classList.add('hidden');
+        const mapaContainer = document.getElementById('radar-mapa-container');
+        mapaContainer.classList.remove('hidden');
+
+        void mapaContainer.offsetHeight;
+
+        requestAnimationFrame(() => {
+            inicializarMapaMobilidade(tripData);
+            setTimeout(() => {
+                if (mapInstance) mapInstance.invalidateSize();
+            }, 150);
+        });
+    }
 }
 
 function fecharMapaVoltarLista() {
-    document.getElementById('radar-mapa-container').classList.add('hidden');
-    document.getElementById('radar-lista-container').classList.remove('hidden');
-    
-    // Destroy map instance to save mobile memory
-    if (mapInstance !== null) {
-        mapInstance.off();
-        mapInstance.remove();
-        mapInstance = null;
-        busMarker = null;
+    const desktopActive = isDesktop();
+
+    if (desktopActive) {
+        // Desktop: don't toggle views — clear active route markers
+        // and reset to general standby map view.
+        if (mapInstance !== null) {
+            mapInstance.off();
+            mapInstance.remove();
+            mapInstance = null;
+            busMarker = null;
+        }
+        // Re-initialize the standby map so the pane isn't blank
+        _inicializarMapaDesktopStandby();
+    } else {
+        // Mobile: toggle visibility back to list
+        document.getElementById('radar-mapa-container').classList.add('hidden');
+        document.getElementById('radar-lista-container').classList.remove('hidden');
+
+        // Destroy map instance to save mobile memory
+        if (mapInstance !== null) {
+            mapInstance.off();
+            mapInstance.remove();
+            mapInstance = null;
+            busMarker = null;
+        }
     }
 }
 
@@ -144,10 +229,10 @@ async function carregarViagensDisponiveisEstudante() {
                 const btnDisable = v.vagasRestantes <= 0 ? "disabled" : "";
                 const btnBg = v.vagasRestantes <= 0 ? "#ccc" : "var(--primary)";
                 statusVagas = labelLota;
-                checkinArea = `<button ${btnDisable} onclick="confirmarEmbarque('${v.id}')" style="background: ${btnBg}; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer;">FAZER CHECK-IN</button>`;
+                checkinArea = `<button class="hide-on-desktop" ${btnDisable} onclick="confirmarEmbarque('${v.id}')" style="background: ${btnBg}; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer;">FAZER CHECK-IN</button>`;
             } else {
                 statusVagas = `<span style="color:#6B7280; font-weight:bold;">Embarque fechado (Capacidade: ${v.vagasRestantes})</span>`;
-                checkinArea = `<button disabled style="background: #e5e7eb; color: #9ca3af; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: not-allowed;">AGUARDE...</button>`;
+                checkinArea = `<button class="hide-on-desktop" disabled style="background: #e5e7eb; color: #9ca3af; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: not-allowed;">AGUARDE...</button>`;
             }
 
             const borderHighlight = index === 0 ? "border: 2px solid var(--primary);" : "border: 1px solid var(--border); opacity: 0.8;";
@@ -224,7 +309,13 @@ async function confirmarEmbarque(idOnibus) {
         if (res.sucesso) {
             showToast("Lugar Confirmado!", "success");
             onibusSelecionadoGPS = idOnibus;
-            document.getElementById('radar-lista-container').classList.add('hidden');
+
+            const desktopActive = isDesktop();
+
+            // On mobile, hide the list; on desktop, keep both visible
+            if (!desktopActive) {
+                document.getElementById('radar-lista-container').classList.add('hidden');
+            }
             const mapaContainer = document.getElementById('radar-mapa-container');
             mapaContainer.classList.remove('hidden');
             
@@ -233,7 +324,7 @@ async function confirmarEmbarque(idOnibus) {
             void mapaContainer.offsetHeight;
 
             requestAnimationFrame(() => {
-                // NEW: Initialize the map for the confirmed trip
+                // Initialize the map for the confirmed trip
                 if (window.lastViagens) {
                     const tripData = window.lastViagens.find(v => v.id === idOnibus);
                     if (tripData) {
@@ -241,7 +332,7 @@ async function confirmarEmbarque(idOnibus) {
                     }
                 }
 
-                // FIX: Force Leaflet to recalculate size
+                // Force Leaflet to recalculate size
                 setTimeout(() => {
                     if (mapInstance) mapInstance.invalidateSize();
                 }, 150);
@@ -441,6 +532,12 @@ function _renderizarETAFallbackSemGPS(slot, coordenadasBus) {
 }
 
 async function solicitarSerGuia() {
+    // GUARD: Desktop PCs should not attempt GPS guide broadcasting
+    if (typeof isDesktop === 'function' && isDesktop()) {
+        showToast('Funcionalidade de guia GPS disponível apenas em dispositivos móveis.', 'info');
+        return;
+    }
+
     // BLOQUEIO DE PRIVACIDADE: Aborta se o aluno desligou o GPS
     if (localStorage.getItem('MAESTRO_PREF_GPS') === 'false') return;
 
@@ -465,6 +562,14 @@ async function solicitarSerGuia() {
 async function iniciarTransmissaoGpsComoGuia() {
     if (!navigator.geolocation) {
         abdicarSerGuia();
+        return;
+    }
+
+    // GUARD: On desktop with operator/admin profiles, bypass continuous
+    // GPS telemetry to avoid console errors on hardware without GPS chips.
+    if (isDesktop() && typeof currentPerfilOperador !== 'undefined' && currentPerfilOperador) {
+        console.info('[Maestro] Desktop operator detected — GPS guide transmission bypassed.');
+        showToast('GPS guia não disponível em modo desktop.', 'info');
         return;
     }
 
@@ -734,3 +839,13 @@ function centralizarMapaEmMim() {
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
 }
+
+// ========================================================================
+// GLOBAL: Resize listener for Leaflet tile integrity on desktop
+// Prevents tile tearing when the browser window is maximized/restored.
+// ========================================================================
+window.addEventListener('resize', () => {
+    if (typeof mapInstance !== 'undefined' && mapInstance !== null) {
+        mapInstance.invalidateSize();
+    }
+});
