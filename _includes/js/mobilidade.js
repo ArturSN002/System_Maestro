@@ -36,9 +36,9 @@ function calcularETA(distanciaKm) {
 
 function abrirRadarMasterView() {
     switchView('view-radar');
-    document.getElementById('radar-lista-container').classList.remove('hidden');
-    document.getElementById('radar-mapa-container').classList.add('hidden');
-    carregarViagensDisponiveisEstudante();
+    if (typeof carregarViagensDisponiveisEstudante === 'function') {
+        carregarViagensDisponiveisEstudante();
+    }
 }
 
 function abrirMapaDaViagem(idViagem) {

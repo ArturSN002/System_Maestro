@@ -399,6 +399,9 @@ async function sairCarteira(expiracaoSilenciosa = false) {
     if (typeof pararTransmissaoGpsE_Radar === 'function') {
         pararTransmissaoGpsE_Radar();
     }
+    if (typeof fecharMapaVoltarLista === 'function') {
+        fecharMapaVoltarLista();
+    }
 
     document.getElementById('wallet-container').innerHTML = '';
     const actions = document.getElementById('wallet-actions');
