@@ -576,17 +576,21 @@ async function inicializarMapaMobilidade(dadosViagem) {
                     </div>`;
             }
 
-            if (parada.TIPO_PARADA === "Principal") {
+            const tipoStr = String(parada.TIPO_PARADA || "Secundaria").toUpperCase().trim();
+
+            if (tipoStr === "PRINCIPAL") {
                 L.marker([parada.LATITUDE, parada.LONGITUDE])
                     .addTo(mapInstance)
                     .bindPopup(popupContent);
             } else {
+                // Melhor contraste para paradas secundárias
                 L.circleMarker([parada.LATITUDE, parada.LONGITUDE], {
-                    radius: 5,
-                    color: '#ff7800',
-                    weight: 1,
+                    radius: 6,
+                    color: '#ea580c', // Laranja escuro para borda
+                    weight: 2,
                     opacity: 1,
-                    fillOpacity: 0.8
+                    fillColor: '#fef08a', // Amarelo claro
+                    fillOpacity: 1
                 })
                 .addTo(mapInstance)
                 .bindPopup(popupContent);
