@@ -14,7 +14,7 @@
             <p style="font-size: 10px; color: var(--text-sub); margin: 0;">O seu histórico de mensagens dos últimos 7 dias guardado localmente (Offline).</p>
          </div>
          
-         <div class="inbox-container">
+         <div class="inbox-container grid-desktop">
             <div class="text-center" style="padding: 30px;"><div class="loader" style="margin: 0 auto;"></div></div>
          </div>
          
@@ -35,7 +35,7 @@
             <p style="font-size: 10px; color: var(--text-sub); margin: 0;">A mostrar os casos mais antigos na fila (FIFO). Use a pesquisa para encontrar um aluno específico.</p>
          </div>
          
-         <div id="auditoria-fila-container">
+         <div id="auditoria-fila-container" class="grid-desktop">
             <div class="text-center" style="padding: 30px;"><div class="loader" style="margin: 0 auto;"></div></div>
          </div>
          
@@ -165,7 +165,7 @@
             <button class="dash-tab" id="tab-inclusao" onclick="mudarAbaDashboard('inclusao')">Inclusão</button>
           </div>
 
-          <div id="dash-area-logistica">
+          <div id="dash-area-logistica" class="grid-desktop">
             <div class="dash-box"><h3>Instituições Top 5</h3><div class="chart-wrapper"><canvas id="chart-instituicoes"></canvas></div></div>
             <div class="dash-box"><h3>Dias de Utilização</h3><div class="chart-wrapper"><canvas id="chart-dias"></canvas></div></div>
             <div class="dash-box"><h3>Turnos</h3><div class="chart-wrapper"><canvas id="chart-turnos"></canvas></div></div>
@@ -211,12 +211,12 @@
              </div>
           </div>
 
-          <div id="dash-area-noturno" class="hidden">
+          <div id="dash-area-noturno" class="hidden grid-desktop">
             <div class="dash-box"><h3>Adesão Rota da Madrugada</h3><div class="chart-wrapper"><canvas id="chart-adesao-23h"></canvas></div></div>
             <div class="dash-box"><h3>Bairros de Desembarque</h3><div class="chart-wrapper" style="height: 300px;"><canvas id="chart-bairros-23h"></canvas></div></div>
           </div>
 
-          <div id="dash-area-inclusao" class="hidden">
+          <div id="dash-area-inclusao" class="hidden grid-desktop">
             <div class="dash-box"><h3>Estagiários</h3><div class="chart-wrapper"><canvas id="chart-estagio"></canvas></div></div>
             <div class="dash-box"><h3>Acessibilidade (PCD)</h3><div class="chart-wrapper"><canvas id="chart-pcd"></canvas></div></div>
             <div class="dash-box"><h3>Menores de Idade</h3><div class="chart-wrapper"><canvas id="chart-menor"></canvas></div></div>

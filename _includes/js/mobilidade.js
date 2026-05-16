@@ -229,10 +229,10 @@ async function carregarViagensDisponiveisEstudante() {
                 const btnDisable = v.vagasRestantes <= 0 ? "disabled" : "";
                 const btnBg = v.vagasRestantes <= 0 ? "#ccc" : "var(--primary)";
                 statusVagas = labelLota;
-                checkinArea = `<button class="hide-on-desktop" ${btnDisable} onclick="confirmarEmbarque('${v.id}')" style="background: ${btnBg}; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer;">FAZER CHECK-IN</button>`;
+                checkinArea = `<button class="hide-on-desktop" ${btnDisable} onclick="confirmarEmbarque('${v.id}')" style="flex: 1; background: ${btnBg}; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer;">FAZER CHECK-IN</button>`;
             } else {
                 statusVagas = `<span style="color:#6B7280; font-weight:bold;">Embarque fechado (Capacidade: ${v.vagasRestantes})</span>`;
-                checkinArea = `<button class="hide-on-desktop" disabled style="background: #e5e7eb; color: #9ca3af; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: not-allowed;">AGUARDE...</button>`;
+                checkinArea = `<button class="hide-on-desktop" disabled style="flex: 1; background: #e5e7eb; color: #9ca3af; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: not-allowed;">AGUARDE...</button>`;
             }
 
             const borderHighlight = index === 0 ? "border: 2px solid var(--primary);" : "border: 1px solid var(--border); opacity: 0.8;";
@@ -246,7 +246,7 @@ async function carregarViagensDisponiveisEstudante() {
   <div style="font-size: 11px; margin-bottom: 10px;">${statusVagas}</div>
   <div style="display: flex; justify-content: space-between; gap: 8px;">
      <button class="btn-solid" onclick="abrirMapaDaViagem('${v.id}')" style="background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; flex: 1;">VER MAPA 🗺️</button>
-     ${checkinArea.replace('style="', 'style="flex: 1; ')}
+     ${checkinArea}
   </div>
 </div>`;
         });

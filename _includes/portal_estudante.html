@@ -65,31 +65,46 @@
           <div class="step-container" id="step-2">
             <div class="step-section-title">Dados Acadêmicos</div>
 
-            <label class="input-label">NOME COMPLETO</label>
-            <input type="text" id="insc-nome" class="input-field" placeholder="Nome conforme documento">
-
-            <label class="input-label">E-MAIL DE CONTATO *</label>
-            <input type="email" id="insc-email" class="input-field" placeholder="seu@email.com">
-            
-            <label class="input-label">WHATSAPP / TELEFONE *</label>
-            <input type="tel" id="insc-contato" class="input-field" placeholder="(00) 00000-0000">
-            
-            <label class="input-label">RG (IDENTIDADE) (Opcional)</label>
-            <input type="text" id="insc-rg" class="input-field" placeholder="Apenas números">
-
-            <label class="input-label">INSTITUIÇÃO DE ENSINO</label>
-            <select id="insc-instituicao" class="input-field" onchange="toggleCondField('cond-outra-inst', this.value === 'Outra (Não listada)')">
-              <option value="" disabled selected>Selecione...</option>
-              <!-- Populado dinamicamente via getListsInscricao() -->
-              <option value="Outra (Não listada)">Outra (Não listada)</option>
-            </select>
-            <div class="cond-field" id="cond-outra-inst">
-              <label class="input-label">NOME DA INSTITUIÇÃO</label>
-              <input type="text" id="insc-instituicao-outra" class="input-field" placeholder="Informe o nome completo da instituição">
+            <div class="grid-desktop">
+              <div>
+                <label class="input-label">NOME COMPLETO</label>
+                <input type="text" id="insc-nome" class="input-field" placeholder="Nome conforme documento">
+              </div>
+              <div>
+                <label class="input-label">E-MAIL DE CONTATO *</label>
+                <input type="email" id="insc-email" class="input-field" placeholder="seu@email.com">
+              </div>
             </div>
 
-            <label class="input-label">MATRÍCULA</label>
-            <input type="text" id="insc-matricula" class="input-field" placeholder="Número de matrícula">
+            <div class="grid-desktop">
+              <div>
+                <label class="input-label">WHATSAPP / TELEFONE *</label>
+                <input type="tel" id="insc-contato" class="input-field" placeholder="(00) 00000-0000">
+              </div>
+              <div>
+                <label class="input-label">RG (IDENTIDADE) (Opcional)</label>
+                <input type="text" id="insc-rg" class="input-field" placeholder="Apenas números">
+              </div>
+            </div>
+
+            <div class="grid-desktop">
+              <div>
+                <label class="input-label">INSTITUIÇÃO DE ENSINO</label>
+                <select id="insc-instituicao" class="input-field" onchange="toggleCondField('cond-outra-inst', this.value === 'Outra (Não listada)')">
+                  <option value="" disabled selected>Selecione...</option>
+                  <!-- Populado dinamicamente via getListsInscricao() -->
+                  <option value="Outra (Não listada)">Outra (Não listada)</option>
+                </select>
+                <div class="cond-field" id="cond-outra-inst">
+                  <label class="input-label">NOME DA INSTITUIÇÃO</label>
+                  <input type="text" id="insc-instituicao-outra" class="input-field" placeholder="Informe o nome completo da instituição">
+                </div>
+              </div>
+              <div>
+                <label class="input-label">MATRÍCULA</label>
+                <input type="text" id="insc-matricula" class="input-field" placeholder="Número de matrícula">
+              </div>
+            </div>
 
             <label class="input-label">ROTA DE TRANSPORTE</label>
             <select id="insc-rota" class="input-field">
@@ -116,10 +131,16 @@
             </div>
 
             <div class="step-section-title">Período Letivo</div>
-            <label class="input-label">INÍCIO DO SEMESTRE</label>
-            <input type="date" id="insc-inicio-semestre" class="input-field">
-            <label class="input-label">FIM DO SEMESTRE</label>
-            <input type="date" id="insc-fim-semestre" class="input-field">
+            <div class="grid-desktop">
+              <div>
+                <label class="input-label">INÍCIO DO SEMESTRE</label>
+                <input type="date" id="insc-inicio-semestre" class="input-field">
+              </div>
+              <div>
+                <label class="input-label">FIM DO SEMESTRE</label>
+                <input type="date" id="insc-fim-semestre" class="input-field">
+              </div>
+            </div>
 
             <div class="stepper-nav">
               <button class="btn-solid btn-back" onclick="stepperPrev(2, 1)">⬅ VOLTAR</button>
@@ -288,16 +309,14 @@
             <h2>Situação Cadastral</h2>
             <p>Acompanhe a emissão da sua identidade</p>
           </div>
-          <input type="text" id="id-estudante" class="input-field" placeholder="Digite apenas os números do CPF">
-          
-          <div style="text-align: left; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px; border-radius: 6px; margin-bottom: 15px;">
-             <label style="display:flex; align-items:flex-start; gap:8px; font-size:11px; color:#166534; cursor:pointer;">
-                <input type="checkbox" id="chk-notificacoes-cpf" style="margin-top: 2px;">
-                <span><strong>Avisem-me por aqui!</strong> Desejo receber atualizações e alertas sobre o meu processo diretamente neste telemóvel.</span>
-             </label>
+          <div class="grid-desktop">
+            <div>
+              <input type="text" id="id-estudante" class="input-field" placeholder="Digite apenas os números do CPF">
+            </div>
+            <div>
+              <button class="btn-solid" id="btn-estudante" onclick="consultarEstudante()" style="width: 100%;">CONSULTAR STATUS</button>
+            </div>
           </div>
-
-          <button class="btn-solid" id="btn-estudante" onclick="consultarEstudante()">CONSULTAR STATUS</button>
           <button class="btn-text" onclick="switchView('view-aluno-menu')">Cancelar</button>
         </div>
         <div id="res-estudante" class="result-container hidden"></div>
@@ -432,22 +451,23 @@
       </section>
 
       <section id="view-wallet" class="view-section">
-        <div id="wallet-container"></div>
-        <div id="wallet-actions" class="hidden" style="margin-top: 15px;">
-          <button class="btn-solid" onclick="abrirRadarMasterView()" style="background: var(--primary); margin-top: 10px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
-            <span>🗺️</span> ABRIR RADAR DE VIAGENS
-          </button>
-        </div>
-        <div id="wallet-privacy-card" class="form-card" style="margin-top: 15px; padding: 15px; border-left: 4px solid var(--primary);">
-          <div class="form-header" style="margin-bottom: 12px; text-align: left;">
-            <h2 style="font-size: 15px; margin-bottom: 3px;">Privacidade e Meus Dados</h2>
-            <p style="font-size: 11px; line-height: 1.4;">Acesse seus dados pessoais ou solicite a anonimização da sua conta.</p>
+        <div style="max-width: 480px; margin: 0 auto; width: 100%;">
+          <div id="wallet-container"></div>
+          <div id="wallet-actions" class="hidden" style="margin-top: 15px;">
+            <button class="btn-solid" onclick="abrirRadarMasterView()" style="background: var(--primary); margin-top: 10px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+              <span>🗺️</span> ABRIR RADAR DE VIAGENS
+            </button>
           </div>
-          <div style="display: flex; flex-direction: column; gap: 8px;">
-            <button class="btn-solid" type="button" style="margin: 0; background: var(--primary);" onclick="downloadDadosPessoais()">📥 Baixar Meus Dados (JSON)</button>
-            <button class="btn-solid" type="button" style="margin: 0; background: var(--danger);" onclick="confirmarExclusaoConta()">⚠️ Solicitar Exclusão de Conta</button>
+          <div id="wallet-privacy-card" class="form-card" style="margin-top: 15px;">
+            <div class="form-header" style="text-align: left;">
+              <h2 style="font-size: 15px; margin-bottom: 3px;">Privacidade e Meus Dados</h2>
+              <p style="font-size: 11px; line-height: 1.4;">Acesse seus dados pessoais ou solicite a anonimização da sua conta.</p>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <button class="btn-solid" type="button" style="margin: 0; background: var(--primary);" onclick="downloadDadosPessoais()">📥 Baixar Meus Dados (JSON)</button>
+              <button class="btn-solid" type="button" style="margin: 0; background: var(--danger);" onclick="confirmarExclusaoConta()">⚠️ Solicitar Exclusão de Conta</button>
+            </div>
           </div>
         </div>
-
       </section>
 

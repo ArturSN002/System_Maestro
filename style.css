@@ -1865,6 +1865,12 @@ body.dark-theme .sidebar-drawer {
   background: rgba(231, 76, 60, 0.1);
 }
 
+/* Mobile-first: .hide-on-desktop elements are always visible by default.
+   The @media (min-width: 768px) block below overrides this on desktop. */
+.hide-on-desktop {
+  display: inline-flex !important;
+}
+
 /* ========================================== */
 /* V13.0: NATIVE DESKTOP RESPONSIVE GRID      */
 /* Foundation for Phase 2 desktop layouts      */
