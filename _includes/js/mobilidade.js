@@ -48,15 +48,20 @@ function abrirMapaDaViagem(idViagem) {
 
     // Transition UI
     document.getElementById('radar-lista-container').classList.add('hidden');
-    document.getElementById('radar-mapa-container').classList.remove('hidden');
+    const mapaContainer = document.getElementById('radar-mapa-container');
+    mapaContainer.classList.remove('hidden');
     
-    // Initialize map
-    inicializarMapaMobilidade(tripData);
+    void mapaContainer.offsetHeight;
+    
+    requestAnimationFrame(() => {
+        // Initialize map
+        inicializarMapaMobilidade(tripData);
 
-    // FIX: Force Leaflet to recalculate size after the container becomes visible
-    setTimeout(() => {
-        if (mapInstance) mapInstance.invalidateSize();
-    }, 300);
+        // FIX: Force Leaflet to recalculate size after the container becomes visible
+        setTimeout(() => {
+            if (mapInstance) mapInstance.invalidateSize();
+        }, 150);
+    });
 }
 
 function fecharMapaVoltarLista() {
@@ -68,6 +73,7 @@ function fecharMapaVoltarLista() {
         mapInstance.off();
         mapInstance.remove();
         mapInstance = null;
+        busMarker = null;
     }
 }
 
@@ -219,22 +225,27 @@ async function confirmarEmbarque(idOnibus) {
             showToast("Lugar Confirmado!", "success");
             onibusSelecionadoGPS = idOnibus;
             document.getElementById('radar-lista-container').classList.add('hidden');
-            document.getElementById('radar-mapa-container').classList.remove('hidden');
+            const mapaContainer = document.getElementById('radar-mapa-container');
+            mapaContainer.classList.remove('hidden');
             
-            // NEW: Initialize the map for the confirmed trip
-            if (window.lastViagens) {
-                const tripData = window.lastViagens.find(v => v.id === idOnibus);
-                if (tripData) {
-                    inicializarMapaMobilidade(tripData);
-                }
-            }
-
             abrirPainelViagem();
 
-            // FIX: Force Leaflet to recalculate size
-            setTimeout(() => {
-                if (mapInstance) mapInstance.invalidateSize();
-            }, 300);
+            void mapaContainer.offsetHeight;
+
+            requestAnimationFrame(() => {
+                // NEW: Initialize the map for the confirmed trip
+                if (window.lastViagens) {
+                    const tripData = window.lastViagens.find(v => v.id === idOnibus);
+                    if (tripData) {
+                        inicializarMapaMobilidade(tripData);
+                    }
+                }
+
+                // FIX: Force Leaflet to recalculate size
+                setTimeout(() => {
+                    if (mapInstance) mapInstance.invalidateSize();
+                }, 150);
+            });
         } else {
             showToast(res.erro || "Lotação atingida no momento do clique.", "error");
             verificarJanelasEmbarque();
