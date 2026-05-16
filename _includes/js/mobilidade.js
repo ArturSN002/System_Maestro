@@ -88,10 +88,10 @@ async function verificarJanelasEmbarque() {
         }
 
         let html = `<p style="font-size: 11px; color: var(--text-sub); margin-bottom: 10px;">Selecione o seu autocarro para garantir lugar:</p>`;
-        
+
         // Armazenar na window para acesso no check-in
         window.lastViagens = res.viagens;
-        
+
         res.viagens.forEach(v => {
             const labelLota = v.vagasRestantes > 0 ? `<span style="color:var(--success); font-weight:bold;">${v.vagasRestantes} vagas</span>` : `<span style="color:var(--danger); font-weight:bold;">LOTADO</span>`;
             const btnDisable = v.vagasRestantes <= 0 ? "disabled" : "";
@@ -140,7 +140,7 @@ async function confirmarEmbarque(idOnibus) {
 
         const lat = posicao.coords.latitude;
         const lng = posicao.coords.longitude;
-        
+
         // Geofencing 150m check if state is EM_OPERACAO
         if (window.lastViagens) {
             const tripData = window.lastViagens.find(v => v.id === idOnibus);
@@ -383,12 +383,12 @@ async function solicitarSerGuia() {
     try {
         const res = await apiCall("solicitarCargoGuia", { idOnibus: onibusSelecionadoGPS, idEstudante: currentWalletId });
         if (res.sucesso) {
-            iniciarTransmissaoGpsComoGuia(); 
+            iniciarTransmissaoGpsComoGuia();
         } else {
             showToast(res.erro, "warning");
-            atualizarRadarDinamico(); 
+            atualizarRadarDinamico();
         }
-    } catch(e) {
+    } catch (e) {
         showToast("Erro ao contactar o servidor.", "error");
         atualizarRadarDinamico();
     }
@@ -488,7 +488,7 @@ async function inicializarMapaMobilidade(dadosViagem) {
     // Default coordinate for Ceará-Mirim or use the first stop's coordinates
     let centerLat = -5.6322;
     let centerLng = -35.4267;
-    
+
     if (dadosViagem.paradas && dadosViagem.paradas.length > 0) {
         centerLat = dadosViagem.paradas[0].LATITUDE;
         centerLng = dadosViagem.paradas[0].LONGITUDE;
@@ -507,17 +507,17 @@ async function inicializarMapaMobilidade(dadosViagem) {
 
     if (statusBar && statusText) {
         if (estado === "AGUARDANDO") {
-            statusBar.style.background = "#6B7280";
-            statusBar.style.color = "white";
-            statusText.textContent = "🕒 Fase de Planeamento";
+            statusBar.style.background = "#e5e7eb";
+            statusBar.style.color = "#374151";
+            statusText.textContent = "Fase de Planeamento";
         } else if (estado === "PREPARANDO") {
-            statusBar.style.background = "#F59E0B";
-            statusBar.style.color = "white";
-            statusText.textContent = "⚙️ Autocarros em Preparação";
+            statusBar.style.background = "#fef08a";
+            statusBar.style.color = "#854d0e";
+            statusText.textContent = "Autocarros em Preparação";
         } else if (estado === "EM_OPERACAO") {
-            statusBar.style.background = "#10B981";
-            statusBar.style.color = "white";
-            statusText.textContent = "🚌 Operação em Tempo Real";
+            statusBar.style.background = "#bbf7d0";
+            statusBar.style.color = "#166534";
+            statusText.textContent = "Operação em Tempo Real";
         } else {
             statusBar.style.background = "#fca5a5";
             statusBar.style.color = "#991b1b";
@@ -532,7 +532,7 @@ async function inicializarMapaMobilidade(dadosViagem) {
                 const geojsonData = await response.json();
                 const routeLayer = L.geoJSON(geojsonData, {
                     style: { color: '#0A3D6B', weight: 4 },
-                    filter: function(feature) {
+                    filter: function (feature) {
                         // Prevent Leaflet crash if export tool generated a null geometry
                         if (!feature.geometry || !feature.geometry.coordinates) {
                             console.warn("🛡️ [PWA] Invalid GeoJSON feature ignored:", feature);
@@ -545,7 +545,7 @@ async function inicializarMapaMobilidade(dadosViagem) {
                         return true; // Keep valid features
                     }
                 }).addTo(mapInstance);
-                
+
                 // Adjust map bounds to the route
                 mapInstance.fitBounds(routeLayer.getBounds());
             }
@@ -556,15 +556,15 @@ async function inicializarMapaMobilidade(dadosViagem) {
 
     if (dadosViagem.paradas && dadosViagem.paradas.length > 0) {
         dadosViagem.paradas.forEach(parada => {
-            const tipoStr = String(parada.TIPO_PARADA || "Secundaria").toUpperCase().trim();
-            let popupContent = `<b>${parada.NOME_PARADA}</b><br><span style="font-size:10px; color:gray;">${tipoStr}</span>`;
-            
-            if (estado === "EM_OPERACAO") {
+            let popupContent = `<b>${parada.NOME_PARADA}</b>`;
+            if (estado === "PREPARANDO") {
+                popupContent += `<br>Autocarro: ${dadosViagem.placa || 'A designar'}<br><span style="font-size: 11px; color: #854d0e;">Partida em breve</span>`;
+            } else if (estado === "EM_OPERACAO") {
                 const maxCapacidade = 50; // Approximated default if unknown
                 const lotacaoReal = (maxCapacidade - dadosViagem.vagasRestantes) > 0 ? (maxCapacidade - dadosViagem.vagasRestantes) : 0;
                 const ocupacaoPct = Math.min(100, Math.round((lotacaoReal / maxCapacidade) * 100));
                 const corLota = ocupacaoPct > 90 ? 'red' : (ocupacaoPct > 50 ? 'orange' : 'green');
-                
+
                 popupContent += `
                     <br>Autocarro: ${dadosViagem.placa || ''}
                     <br><span style="font-size: 11px;">ETA: (Calculando ao vivo)</span>
@@ -574,9 +574,9 @@ async function inicializarMapaMobilidade(dadosViagem) {
                             <div style="width: ${ocupacaoPct}%; background: ${corLota}; height: 100%; border-radius: 4px; transition: width 0.3s ease;"></div>
                         </div>
                     </div>`;
-            } else {
-                popupContent += `<br><br><span style="color:#F59E0B; font-weight:bold; font-size:11px;">Embarque ainda fechado.</span>`;
             }
+
+            const tipoStr = String(parada.TIPO_PARADA || "Secundaria").toUpperCase().trim();
 
             if (tipoStr === "PRINCIPAL") {
                 L.marker([parada.LATITUDE, parada.LONGITUDE])
@@ -592,22 +592,15 @@ async function inicializarMapaMobilidade(dadosViagem) {
                     fillColor: '#fef08a', // Amarelo claro
                     fillOpacity: 1
                 })
-                .addTo(mapInstance)
-                .bindPopup(popupContent);
+                    .addTo(mapInstance)
+                    .bindPopup(popupContent);
             }
         });
     }
 
-    if (estado === "EM_OPERACAO") {
+    if (estado === "EM_OPERACAO" && !busMarker && centerLat && centerLng) {
         // Create a visual indicator that bus is operating even if GPS hasn't caught up
-        if (!busMarker && centerLat && centerLng) {
-            atualizarPosicaoOnibusMapa(centerLat, centerLng);
-        }
-    } else {
-        if (busMarker && mapInstance) {
-            mapInstance.removeLayer(busMarker);
-            busMarker = null;
-        }
+        atualizarPosicaoOnibusMapa(centerLat, centerLng);
     }
 }
 
@@ -615,7 +608,7 @@ function atualizarPosicaoOnibusMapa(lat, lng) {
     if (typeof mapInstance === 'undefined' || !mapInstance) return;
 
     if (busMarker === null) {
-        busMarker = L.marker([lat, lng], {icon: busIcon}).addTo(mapInstance);
+        busMarker = L.marker([lat, lng], { icon: busIcon }).addTo(mapInstance);
     } else {
         if (busMarker.slideTo) {
             busMarker.slideTo([lat, lng], { duration: 2500, keepAtCenter: false });
@@ -632,17 +625,17 @@ function centralizarMapaEmMim() {
         showToast("O seu dispositivo não suporta geolocalização.", "error");
         return;
     }
-    
+
     showToast("A obter a sua localização...", "loading");
-    
+
     navigator.geolocation.getCurrentPosition(
-        function(pos) {
+        function (pos) {
             const lat = pos.coords.latitude;
             const lng = pos.coords.longitude;
-            
+
             if (mapInstance) {
                 mapInstance.setView([lat, lng], 16);
-                
+
                 if (userLocationMarker === null) {
                     const userIcon = L.divIcon({
                         className: 'user-location-marker',
@@ -650,14 +643,14 @@ function centralizarMapaEmMim() {
                         iconSize: [22, 22],
                         iconAnchor: [11, 11]
                     });
-                    userLocationMarker = L.marker([lat, lng], {icon: userIcon, zIndexOffset: 1000}).addTo(mapInstance);
+                    userLocationMarker = L.marker([lat, lng], { icon: userIcon, zIndexOffset: 1000 }).addTo(mapInstance);
                 } else {
                     userLocationMarker.setLatLng([lat, lng]);
                 }
             }
             showToast("Localização atualizada.", "success");
         },
-        function(err) {
+        function (err) {
             showToast("Não foi possível obter a sua localização.", "error");
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
