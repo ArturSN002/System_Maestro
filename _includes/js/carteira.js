@@ -215,7 +215,7 @@ function renderizarCarteira(dados) {
     if (actions) {
         actions.innerHTML = `
         <div style="display:flex; gap:10px; margin-bottom: 15px;">
-           <button class="btn-solid" style="flex:1; margin:0; background: var(--primary);" onclick="verificarJanelasEmbarque()">🚐 Abrir Radar de Viagens</button>
+           <button class="btn-solid" style="flex:1; margin:0; background: var(--primary);" onclick="abrirRadarMasterView()">🚐 Abrir Radar de Viagens</button>
            <button class="btn-solid dark-bg" style="flex:1; margin:0;" onclick="abrirMuralDaSemana()">🗣️ Sugestões / Fórum</button>
         </div>
         <div style="text-align:center;">
