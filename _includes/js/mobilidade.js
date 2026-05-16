@@ -38,7 +38,7 @@ function abrirRadarMasterView() {
     switchView('view-radar');
     document.getElementById('radar-lista-container').classList.remove('hidden');
     document.getElementById('radar-mapa-container').classList.add('hidden');
-    verificarJanelasEmbarque();
+    carregarViagensDisponiveisEstudante();
 }
 
 function abrirMapaDaViagem(idViagem) {
@@ -77,14 +77,14 @@ function fecharMapaVoltarLista() {
     }
 }
 
-async function verificarJanelasEmbarque() {
+async function carregarViagensDisponiveisEstudante() {
     if (typeof currentWalletId === 'undefined' || !currentWalletId) {
         showToast("Sessão inválida para aceder às viagens.", "error");
         return;
     }
 
     const painelMob = document.getElementById('view-mobilidade');
-    const containerLista = document.getElementById('lista-viagens-alvo');
+    const containerLista = document.getElementById('lista-viagens-cards');
     const painelSucesso = document.getElementById('painel-viagem-ativa');
 
     if (painelMob) painelMob.style.display = 'block';
@@ -248,7 +248,7 @@ async function confirmarEmbarque(idOnibus) {
             });
         } else {
             showToast(res.erro || "Lotação atingida no momento do clique.", "error");
-            verificarJanelasEmbarque();
+            carregarViagensDisponiveisEstudante();
         }
     } catch (e) {
         if (e instanceof GeolocationPositionError || (e && e.code)) {
