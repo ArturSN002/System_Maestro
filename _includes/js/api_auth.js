@@ -13,7 +13,7 @@ const IAM_STATE = {
 };
 
 const CLIENT_DIRECTORY = {
-  "Ceará-Mirim": "https://script.google.com/macros/s/AKfycbxHJXa9kXhleLiUHTWmaW9Ge6L_IPt7xlKwgKVl3GpUL6-lwBc0Uxw89quDnpqPS-Xa-Q/exec",
+  "Ceará-Mirim": "https://script.google.com/macros/s/AKfycbyotJkUxeS7PVgB7msoraQ0CAy_x_Nq3UZZheSQctdTxbpgGeVRBMd25nX7BfzHGvfi9w/exec",
 };
 
 async function checkClientGateway() {
