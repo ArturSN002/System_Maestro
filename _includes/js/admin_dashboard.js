@@ -132,56 +132,43 @@ function renderizarDashboardUI(stats) {
     try {
         const baseColor = '#3B82F6';
 
-        // 4. Verificações Condicionais e Renderização (Substitui desenharGraficos)
-        if (graficos.status) {
-            const st = graficos.status;
-            renderChart('chart-status', 'doughnut',
-                ["Ativos", "Pendentes", "Retidos (Humana)", "Cancelados/Suspensos"],
-                [st["Ativos"] || 0, st["Pendentes"] || 0, st["Retidos (Humana)"] || 0, st["Cancelados/Suspensos"] || 0],
-                ['#10B981', '#FBBF24', '#F97316', '#EF4444'],
-                { plugins: { legend: { display: true, position: 'right', labels: { color: '#ddd', boxWidth: 12 } } } }
-            );
-        }
+        // 4. Verificações Condicionais e Renderização Segura (Blindado contra Undefined/Null e Array Conversions)
+        const st = graficos.status || {};
+        renderChart('chart-status', 'doughnut',
+            ["Ativos", "Pendentes", "Retidos (Humana)", "Cancelados/Suspensos"],
+            [st["Ativos"] || 0, st["Pendentes"] || 0, st["Retidos (Humana)"] || 0, st["Cancelados/Suspensos"] || 0],
+            ['#10B981', '#FBBF24', '#F97316', '#EF4444'],
+            { plugins: { legend: { display: true, position: 'right', labels: { color: '#ddd', boxWidth: 12 } } } }
+        );
 
-        if (graficos.instituicoes) {
-            const inst = extrairEOrdenar(graficos.instituicoes);
-            renderChart('chart-instituicoes', 'bar', inst.labels, inst.data, baseColor, { indexAxis: 'y' });
-        }
+        const safeRenderBar = (key, canvasId, color, options = {}) => {
+            const extraido = extrairEOrdenar(graficos[key]);
+            if (extraido.labels.length > 0) renderChart(canvasId, 'bar', extraido.labels, extraido.data, color, options);
+        };
 
-        if (graficos.dias) {
-            const dias = extrairEOrdenar(graficos.dias);
-            renderChart('chart-dias', 'bar', dias.labels, dias.data, baseColor, { indexAxis: 'y' });
-        }
-
-        if (graficos.rotas) {
-            const rotas = extrairEOrdenar(graficos.rotas);
-            renderChart('chart-rotas', 'bar', rotas.labels, rotas.data, baseColor, { indexAxis: 'y' });
-        }
-
-        if (graficos.turnos) {
-            const turnos = extrairEOrdenar(graficos.turnos);
-            renderChart('chart-turnos', 'bar', turnos.labels, turnos.data, baseColor);
-        }
+        safeRenderBar('instituicoes', 'chart-instituicoes', baseColor, { indexAxis: 'y' });
+        safeRenderBar('dias', 'chart-dias', baseColor, { indexAxis: 'y' });
+        safeRenderBar('rotas', 'chart-rotas', baseColor, { indexAxis: 'y' });
+        safeRenderBar('turnos', 'chart-turnos', baseColor);
 
         if (graficos.noturno) {
-            if (graficos.noturno.adesao) {
-                const adesao = extrairEOrdenar(graficos.noturno.adesao);
-                renderChart('chart-adesao-23h', 'doughnut', adesao.labels, adesao.data, ['#FBBF24', '#333333'], { plugins: { legend: { display: true, position: 'bottom', labels: { color: '#ddd', boxWidth: 12 } } } });
-            }
-            if (graficos.noturno.bairros) {
-                const bairros = extrairEOrdenar(graficos.noturno.bairros);
-                renderChart('chart-bairros-23h', 'bar', bairros.labels, bairros.data, '#F97316', { indexAxis: 'y' });
-            }
+            const adesao = extrairEOrdenar(graficos.noturno.adesao);
+            if (adesao.labels.length > 0) renderChart('chart-adesao-23h', 'doughnut', adesao.labels, adesao.data, ['#FBBF24', '#333333'], { plugins: { legend: { display: true, position: 'bottom', labels: { color: '#ddd', boxWidth: 12 } } } });
+            
+            const bairros = extrairEOrdenar(graficos.noturno.bairros);
+            if (bairros.labels.length > 0) renderChart('chart-bairros-23h', 'bar', bairros.labels, bairros.data, '#F97316', { indexAxis: 'y' });
         }
 
-        if (graficos.inclusao) {
-            const renderInclusao = (canvas, objData) => renderChart(canvas, 'bar', ['Sim', 'Não'], [objData['Sim'] || 0, objData['Não'] || 0], ['#10B981', '#333']);
+        const inclusao = graficos.inclusao || {};
+        const renderInclusao = (canvas, objData) => {
+            const dataSafe = objData || {};
+            renderChart(canvas, 'bar', ['Sim', 'Não'], [dataSafe['Sim'] || 0, dataSafe['Não'] || 0], ['#10B981', '#333']);
+        };
 
-            if (graficos.inclusao.pcd) renderInclusao('chart-pcd', graficos.inclusao.pcd);
-            if (graficos.inclusao.menor) renderInclusao('chart-menor', graficos.inclusao.menor);
-            if (graficos.inclusao.acompanhado) renderInclusao('chart-acompanhado', graficos.inclusao.acompanhado);
-            if (graficos.inclusao.estagio) renderInclusao('chart-estagio', graficos.inclusao.estagio);
-        }
+        renderInclusao('chart-pcd', inclusao.pcd);
+        renderInclusao('chart-menor', inclusao.menor);
+        renderInclusao('chart-acompanhado', inclusao.acompanhado);
+        renderInclusao('chart-estagio', inclusao.estagio);
 
     } catch (erro) {
         console.error("[Dashboard] Ocorreu um erro ao renderizar os gráficos:", erro);
@@ -309,6 +296,11 @@ function renderChart(canvasId, type, labels, data, colors, options = {}) {
 }
 
 function extrairEOrdenar(obj) {
+    // Retorno seguro caso o objeto seja indefinido, nulo ou tenha sido convertido em array vazio (comportamento do GAS em Dictionaries vazios)
+    if (!obj || typeof obj !== 'object' || (Array.isArray(obj) && obj.length === 0)) {
+        return { labels: [], data: [] };
+    }
+    
     const arr = Object.keys(obj).map(key => ({ label: key, value: obj[key] }));
     arr.sort((a, b) => b.value - a.value);
     return { labels: arr.map(item => item.label), data: arr.map(item => item.value) };
