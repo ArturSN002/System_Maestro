@@ -157,7 +157,7 @@ async function fazerLoginOperador() {
   resBox.classList.add('hidden');
 
   try {
-    const res = await apiCall("autenticarUsuario", { login: email, email, senha });
+    const res = await apiCall("autenticarUsuario", { identificador: email, email, senha });
 
     if (res.status === "PRIMEIRO_ACESSO") {
       prepararPrimeiroAcessoIAM(email, senha, res, "OPERADOR");
@@ -324,7 +324,7 @@ async function loginCarteiraIAM() {
   resBox.classList.add('hidden');
 
   try {
-    const res = await apiCall("autenticarUsuario", { login, senha });
+    const res = await apiCall("autenticarUsuario", { identificador: login, senha });
 
     if (res.status === "PRIMEIRO_ACESSO") {
       prepararPrimeiroAcessoIAM(login, senha, res, "ESTUDANTE");
@@ -428,7 +428,7 @@ async function salvarNovaSenhaPrimeiroAcesso() {
     showToast("Senha definida com sucesso. Entrando...", "success");
 
     if (origem === "OPERADOR") {
-      const auth = await apiCall("autenticarUsuario", { login, senha: novaSenha });
+      const auth = await apiCall("autenticarUsuario", { identificador: login, senha: novaSenha });
       if (auth.sucesso) {
         localStorage.setItem("MAESTRO_TOKEN", auth.token);
         localStorage.setItem("MAESTRO_OPERADOR_NOME", auth.nome || "Operador");
@@ -441,7 +441,7 @@ async function salvarNovaSenhaPrimeiroAcesso() {
       return;
     }
 
-    const auth = await apiCall("autenticarUsuario", { login, senha: novaSenha });
+    const auth = await apiCall("autenticarUsuario", { identificador: login, senha: novaSenha });
     if (auth.sucesso) {
       finalizarLoginEstudanteIAM(login, novaSenha, auth);
     } else {

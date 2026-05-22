@@ -1956,3 +1956,8 @@ body.dark-theme .sidebar-drawer {
     border-right: 1px solid var(--border);
   }
 }
+
+/* Fix for Document Viewer Stacking Context */
+#modal-doc-viewer {
+  z-index: 1000000 !important;
+}

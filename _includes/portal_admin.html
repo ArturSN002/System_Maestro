@@ -28,9 +28,26 @@
                <button onclick="carregarFilaAuditoria()" style="background: none; border: none; font-size: 20px; cursor: pointer;">🔄</button>
             </div>
             
-            <div style="display: flex; gap: 8px; margin-bottom: 15px;">
-               <input type="text" id="auditoria-pesquisa" class="input-field" style="margin:0; padding: 10px; font-size: 13px;" placeholder="Pesquisar por Nome, CPF ou E-mail...">
-               <button class="btn-solid" style="margin:0; width: auto; padding: 10px 15px;" onclick="carregarFilaAuditoria(true)">🔍</button>
+            <div style="display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap;">
+               <input type="text" id="auditoria-pesquisa" class="input-field" style="margin:0; padding: 10px; font-size: 13px; flex: 1; min-width: 200px;" placeholder="Pesquisar por Nome, CPF ou E-mail..." onkeyup="aplicarFiltrosAuditoria()">
+               <select id="auditoria-status" class="input-field" style="margin:0; padding: 10px; font-size: 13px; width: auto;" onchange="aplicarFiltrosAuditoria()">
+                  <option value="">Status (Todos)</option>
+                  <option value="ATIVO">Ativos</option>
+                  <option value="PENDENTE">Pendentes</option>
+                  <option value="ANALISE_HUMANA">Retidos</option>
+               </select>
+               <select id="auditoria-instituicao" class="input-field" style="margin:0; padding: 10px; font-size: 13px; width: auto;" onchange="aplicarFiltrosAuditoria()">
+                  <option value="">Instituição (Todas)</option>
+                  <option value="UFRN">UFRN</option>
+                  <option value="IFRN">IFRN</option>
+                  <option value="UERN">UERN</option>
+               </select>
+               <select id="auditoria-turno" class="input-field" style="margin:0; padding: 10px; font-size: 13px; width: auto;" onchange="aplicarFiltrosAuditoria()">
+                  <option value="">Turno (Todos)</option>
+                  <option value="MATUTINO">Matutino</option>
+                  <option value="VESPERTINO">Vespertino</option>
+                  <option value="NOTURNO">Noturno</option>
+               </select>
             </div>
             <p style="font-size: 10px; color: var(--text-sub); margin: 0;">A mostrar os casos mais antigos na fila (FIFO). Use a pesquisa para encontrar um aluno específico.</p>
          </div>

@@ -3,6 +3,7 @@
 // ========================================================================
 
 let arrayAlunosAuditoria = [];
+let arrayAlunosAuditoriaFiltrado = [];
 let paginaAtualAuditoria = 1;     // NOVO: Guarda a página atual
 const ITENS_POR_PAGINA = 10;      // NOVO: Exibe 10 alunos por bloco
 
@@ -44,8 +45,6 @@ async function carregarFilaAuditoria(ehPesquisa = false) {
     if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
 
     const container = document.getElementById('auditoria-fila-container');
-    const inputPesquisa = document.getElementById('auditoria-pesquisa').value.trim();
-    const termo = ehPesquisa ? inputPesquisa : "";
 
     // Sempre que carregar a lista ou pesquisar, volta à página 1
     paginaAtualAuditoria = 1;
@@ -53,10 +52,10 @@ async function carregarFilaAuditoria(ehPesquisa = false) {
     container.innerHTML = '<div class="text-center" style="padding: 30px;"><div class="loader" style="margin: 0 auto;"></div><p style="font-size: 11px; margin-top: 10px;">A puxar a fila de trabalho...</p></div>';
 
     try {
-        const res = await apiCall("getListaAuditoria", { pesquisa: termo });
+        const res = await apiCall("getListaAuditoria", { pesquisa: "" });
         if (res.sucesso) {
             arrayAlunosAuditoria = res.lista;
-            renderizarListaAuditoria();
+            aplicarFiltrosAuditoria();
         } else {
             container.innerHTML = `<div class="error-box">Erro: ${res.erro}</div>`;
         }
@@ -65,19 +64,43 @@ async function carregarFilaAuditoria(ehPesquisa = false) {
     }
 }
 
+function aplicarFiltrosAuditoria() {
+    const termo = document.getElementById('auditoria-pesquisa')?.value.trim().toLowerCase() || "";
+    const status = document.getElementById('auditoria-status')?.value || "";
+    const instituicao = document.getElementById('auditoria-instituicao')?.value || "";
+    const turno = document.getElementById('auditoria-turno')?.value || "";
+
+    arrayAlunosAuditoriaFiltrado = arrayAlunosAuditoria.filter(aluno => {
+        let matchPesquisa = true;
+        if (termo) {
+            matchPesquisa = (aluno.nome && aluno.nome.toLowerCase().includes(termo)) ||
+                            (aluno.cpf && aluno.cpf.toLowerCase().includes(termo)) ||
+                            (aluno.email && aluno.email.toLowerCase().includes(termo));
+        }
+        let matchStatus = status ? (aluno.statusAtividade === status || aluno.statusAuditoria === status) : true;
+        let matchInst = instituicao ? (aluno.instituicao === instituicao) : true;
+        let matchTurno = turno ? (aluno.turno === turno) : true;
+
+        return matchPesquisa && matchStatus && matchInst && matchTurno;
+    });
+
+    paginaAtualAuditoria = 1;
+    renderizarListaAuditoria();
+}
+
 function renderizarListaAuditoria() {
     const container = document.getElementById('auditoria-fila-container');
 
-    if (!arrayAlunosAuditoria || arrayAlunosAuditoria.length === 0) {
-        container.innerHTML = `<div style="text-align: center; padding: 30px; background: #fff; border: 1px dashed #ccc; border-radius: 8px;"><h3 style="color: var(--success); margin:0;">🎉 Fila Vazia!</h3><p style="font-size: 12px; color: #666;">Todos os pedidos foram atendidos.</p></div>`;
+    if (!arrayAlunosAuditoriaFiltrado || arrayAlunosAuditoriaFiltrado.length === 0) {
+        container.innerHTML = `<div style="text-align: center; padding: 30px; background: #fff; border: 1px dashed #ccc; border-radius: 8px;"><h3 style="color: var(--success); margin:0;">🎉 Fila Vazia!</h3><p style="font-size: 12px; color: #666;">Todos os pedidos foram atendidos ou não há resultados.</p></div>`;
         return;
     }
 
     // Matemática da Paginação
-    const totalPaginas = Math.ceil(arrayAlunosAuditoria.length / ITENS_POR_PAGINA);
+    const totalPaginas = Math.ceil(arrayAlunosAuditoriaFiltrado.length / ITENS_POR_PAGINA);
     const inicio = (paginaAtualAuditoria - 1) * ITENS_POR_PAGINA;
     const fim = inicio + ITENS_POR_PAGINA;
-    const itensPagina = arrayAlunosAuditoria.slice(inicio, fim);
+    const itensPagina = arrayAlunosAuditoriaFiltrado.slice(inicio, fim);
 
     let html = '';
     itensPagina.forEach(aluno => {
@@ -100,7 +123,7 @@ function renderizarListaAuditoria() {
                 <span class="auditoria-data">Submetido: ${strData}</span>
                 <span class="auditoria-badge" style="color: ${corBadge}; background: ${bgBadge}; margin-left: 0; display: inline-block; margin-top: 4px;">${aluno.statusAuditoria}</span>
             </div>
-            <button class="btn-solid" style="width: auto; margin: 0; padding: 8px 12px; font-size: 11px;" onclick="abrirModalRaioX(${aluno.linhaBase})">Detalhar 🔍</button>
+            <button class="btn-solid" style="width: auto; margin: 0; padding: 8px 12px; font-size: 11px;" onclick="abrirModalRaioX('${aluno.cpf}')">Detalhar 🔍</button>
         </div>`;
     });
 
@@ -128,8 +151,8 @@ function mudarPaginaAuditoria(direcao) {
     document.getElementById('view-auditoria').scrollIntoView({ behavior: 'smooth' });
 }
 
-function abrirModalRaioX(linhaBase) {
-    const aluno = arrayAlunosAuditoria.find(a => a.linhaBase === linhaBase);
+function abrirModalRaioX(cpf) {
+    const aluno = arrayAlunosAuditoria.find(a => a.cpf === cpf);
     if (!aluno) return;
 
     const nomeTratado = formatarNomeProprio(aluno.nome);
@@ -142,8 +165,8 @@ function abrirModalRaioX(linhaBase) {
     document.getElementById('rx-status-badge').innerText = aluno.statusAtividade;
 
     document.getElementById('rx-novo-status').value = aluno.statusAtividade;
-    document.getElementById('rx-notas').value = aluno.observacoes;
-    document.getElementById('rx-linha-base').value = linhaBase;
+    document.getElementById('rx-notas').value = aluno.observacoes || "";
+    document.getElementById('rx-linha-base').value = cpf;
 
     let anexoHtml = '';
     const docsMapa = {
@@ -155,7 +178,7 @@ function abrirModalRaioX(linhaBase) {
     };
 
     for (const [chave, rotulo] of Object.entries(docsMapa)) {
-        anexoHtml += `<button class="btn-chip-anexo" onclick="abrirDocumentoSeguro(${linhaBase}, '${chave}')">${rotulo}</button>`;
+        anexoHtml += `<button class="btn-chip-anexo" onclick="abrirDocumentoSeguro('${cpf}', '${chave}')">${rotulo}</button>`;
     }
 
     document.getElementById('rx-documentos-grid').innerHTML = anexoHtml;
@@ -167,7 +190,7 @@ function fecharModalRaioX() {
     document.getElementById('modal-raio-x-aluno').classList.add('hidden');
 }
 
-async function abrirDocumentoSeguro(linhaBase, tipoDoc) {
+async function abrirDocumentoSeguro(cpf, tipoDoc) {
     const docViewer = document.getElementById('modal-doc-viewer');
     const contentBox = document.getElementById('doc-viewer-content');
 
@@ -176,7 +199,7 @@ async function abrirDocumentoSeguro(linhaBase, tipoDoc) {
     docViewer.classList.remove('hidden');
 
     try {
-        const res = await apiCall("verFicheiroBase64", { linhaEstudante: linhaBase, tipoDocumento: tipoDoc });
+        const res = await apiCall("verFicheiroBase64", { cpf: cpf, tipoDocumento: tipoDoc });
 
         if (res.sucesso && res.base64) {
             document.getElementById('doc-viewer-title').innerText = tipoDoc;
@@ -203,22 +226,22 @@ function fecharModalDocViewer() {
 }
 
 async function gravarDecisaoAuditoria() {
-    const linhaBase = document.getElementById('rx-linha-base').value;
+    const cpf = document.getElementById('rx-linha-base').value;
     const novoStatus = document.getElementById('rx-novo-status').value;
     const notas = document.getElementById('rx-notas').value;
 
     showToast("A gravar e a notificar o estudante...", "loading");
 
     try {
-        const res = await apiCall("atualizarStatusAluno", { linhaEstudante: parseInt(linhaBase), novoStatus: novoStatus, notasOperador: notas });
+        const res = await apiCall("atualizarStatusAluno", { cpf: cpf, novoStatus: novoStatus, notasOperador: notas });
         if (res.sucesso) {
             showToast("Alteração guardada com sucesso!", "success");
             fecharModalRaioX();
-            const alunoIndex = arrayAlunosAuditoria.findIndex(a => a.linhaBase === parseInt(linhaBase));
+            const alunoIndex = arrayAlunosAuditoria.findIndex(a => a.cpf === cpf);
             if (alunoIndex !== -1) {
                 arrayAlunosAuditoria[alunoIndex].statusAtividade = novoStatus;
                 if (novoStatus === "ATIVO") arrayAlunosAuditoria[alunoIndex].statusAuditoria = "OK";
-                renderizarListaAuditoria();
+                aplicarFiltrosAuditoria();
             }
         } else {
             showToast(res.erro || "Falha ao gravar.", "error");
@@ -235,13 +258,13 @@ async function acionarIAParaEmail() {
         return;
     }
 
-    const linhaBase = parseInt(document.getElementById('rx-linha-base').value);
+    const cpf = document.getElementById('rx-linha-base').value;
     const btnIa = document.querySelector("button[onclick='acionarIAParaEmail()']");
     btnIa.innerText = "A Redigir... ⏳";
     btnIa.disabled = true;
 
     try {
-        const res = await apiCall("enviarParecerOperador", { linhaEstudante: linhaBase, textoRevisado: notasTexto });
+        const res = await apiCall("enviarParecerOperador", { cpf: cpf, textoRevisado: notasTexto });
         if (res.sucesso) {
             showToast("E-mail disparado para o estudante!", "success");
         } else {
