@@ -1,7 +1,7 @@
 // ========================================================================
 // 11. MOTOR DO DASHBOARD ANALÍTICO E BI
 // ========================================================================
-let myCharts = {};
+window.myCharts = window.myCharts || {};
 
 function mudarAbaDashboard(aba) {
     ['logistica', 'noturno', 'inclusao', 'analise'].forEach(t => {
@@ -91,26 +91,29 @@ async function carregarDashboard() {
 /**
  * Renderiza a interface do Dashboard processando os dados e inicializando os gráficos de forma segura.
  * 
- * @param {Object} stats Objeto consolidado vindo de getDashboardStats()
+ * @param {Object} payload Objeto consolidado vindo de getDashboardStats()
  */
-function renderizarDashboardUI(stats) {
+function renderizarDashboardUI(payload) {
     // 1. Guard Clause: Aborta a renderização caso os dados não estejam disponíveis
-    if (!stats || !stats.graficos) {
+    const estatisticas = payload?.estatisticas || payload;
+    if (!estatisticas || !estatisticas.graficos) {
         showToast("Dados do Dashboard indisponíveis.", "error");
         return;
     }
 
-    const graficos = stats.graficos;
+    const graficos = estatisticas.graficos;
+    const kpis = estatisticas.kpis || {};
+    const consumo = estatisticas.consumo || {};
 
     // Atualização dos KPIs superiores
-    document.getElementById('kpi-ativos').innerText = stats.kpis.ativos || 0;
-    document.getElementById('kpi-pendentes').innerText = stats.kpis.pendentes || 0;
-    document.getElementById('kpi-retidos').innerText = stats.kpis.retidos || 0;
-    document.getElementById('kpi-suspensos').innerText = stats.kpis.suspensos || 0;
+    if (document.getElementById('kpi-ativos')) document.getElementById('kpi-ativos').innerText = kpis.ativos || 0;
+    if (document.getElementById('kpi-pendentes')) document.getElementById('kpi-pendentes').innerText = kpis.pendentes || 0;
+    if (document.getElementById('kpi-retidos')) document.getElementById('kpi-retidos').innerText = kpis.retidos || 0;
+    if (document.getElementById('kpi-suspensos')) document.getElementById('kpi-suspensos').innerText = kpis.suspensos || 0;
 
     // Atualização da barra de Uso de IA
-    const ocrUsado = stats.consumo?.ocr?.usado || 0;
-    const ocrLimite = stats.consumo?.ocr?.limite || 100;
+    const ocrUsado = consumo?.ocr?.usado || 0;
+    const ocrLimite = consumo?.ocr?.limite || 100;
     const pctIA = Math.round((ocrUsado / ocrLimite) * 100);
 
     const barraIA = document.getElementById('bar-ia-usage');
@@ -121,12 +124,13 @@ function renderizarDashboardUI(stats) {
     }
 
     // 2. Prevenção de Memory Leaks: Destrói qualquer gráfico existente
-    if (typeof myCharts !== 'undefined') {
-        Object.values(myCharts).forEach(chart => {
-            if (chart) chart.destroy();
-        });
-        myCharts = {};
+    if (typeof window.myCharts === 'undefined') {
+        window.myCharts = {};
     }
+    Object.values(window.myCharts).forEach(chart => {
+        if (chart && typeof chart.destroy === 'function') chart.destroy();
+    });
+    window.myCharts = {};
 
     // 3. Renderização Segura: Tenta renderizar gráficos evitando travamento total em caso de corrupção
     try {
@@ -284,15 +288,20 @@ function renderizarDashboardBI() {
 function renderChart(canvasId, type, labels, data, colors, options = {}) {
     const ctx = document.getElementById(canvasId);
     if (!ctx) return;
-    if (myCharts[canvasId]) {
-        myCharts[canvasId].destroy();
+    
+    if (typeof window.myCharts === 'undefined') {
+        window.myCharts = {};
+    }
+    
+    if (window.myCharts[canvasId]) {
+        window.myCharts[canvasId].destroy();
     }
 
     Chart.defaults.color = '#aaaaaa';
     Chart.defaults.borderColor = '#333333';
 
     const defaultOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } };
-    myCharts[canvasId] = new Chart(ctx, { type: type, data: { labels: labels, datasets: [{ data: data, backgroundColor: colors, borderRadius: (type === 'bar' ? 4 : 0), borderWidth: 0 }] }, options: Object.assign(defaultOptions, options) });
+    window.myCharts[canvasId] = new Chart(ctx, { type: type, data: { labels: labels, datasets: [{ data: data, backgroundColor: colors, borderRadius: (type === 'bar' ? 4 : 0), borderWidth: 0 }] }, options: Object.assign(defaultOptions, options) });
 }
 
 function extrairEOrdenar(obj) {

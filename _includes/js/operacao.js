@@ -66,20 +66,37 @@ async function carregarFilaAuditoria(ehPesquisa = false) {
 
 function aplicarFiltrosAuditoria() {
     const termo = document.getElementById('auditoria-pesquisa')?.value.trim().toLowerCase() || "";
-    const status = document.getElementById('auditoria-status')?.value || "";
-    const instituicao = document.getElementById('auditoria-instituicao')?.value || "";
-    const turno = document.getElementById('auditoria-turno')?.value || "";
+    const status = (document.getElementById('auditoria-status')?.value || "").toLowerCase();
+    const instituicao = (document.getElementById('auditoria-instituicao')?.value || "").toLowerCase();
+    const turno = (document.getElementById('auditoria-turno')?.value || "").toLowerCase();
 
     arrayAlunosAuditoriaFiltrado = arrayAlunosAuditoria.filter(aluno => {
         let matchPesquisa = true;
         if (termo) {
-            matchPesquisa = (aluno.nome && aluno.nome.toLowerCase().includes(termo)) ||
-                            (aluno.cpf && aluno.cpf.toLowerCase().includes(termo)) ||
-                            (aluno.email && aluno.email.toLowerCase().includes(termo));
+            const nomeStr = String(aluno.NOME_ALUNO || aluno.nome || "").toLowerCase();
+            const cpfStr = String(aluno.CPF_ALUNO || aluno.cpf || "").toLowerCase();
+            const emailStr = String(aluno.EMAIL_ALUNO || aluno.email || "").toLowerCase();
+            matchPesquisa = nomeStr.includes(termo) || cpfStr.includes(termo) || emailStr.includes(termo);
         }
-        let matchStatus = status ? (aluno.statusAtividade === status || aluno.statusAuditoria === status) : true;
-        let matchInst = instituicao ? (aluno.instituicao === instituicao) : true;
-        let matchTurno = turno ? (aluno.turno === turno) : true;
+
+        let matchStatus = true;
+        if (status) {
+            const statusVal = String(aluno.STATUS_VALIDACAO || aluno.statusAuditoria || "").toLowerCase();
+            const statusAtv = String(aluno.STATUS_ATIVIDADE || aluno.statusAtividade || "").toLowerCase();
+            matchStatus = (statusVal === status || statusAtv === status);
+        }
+
+        let matchInst = true;
+        if (instituicao) {
+            const instVal = String(aluno.INSTITUICAO_ALUNO || aluno.instituicao || "").toLowerCase();
+            matchInst = (instVal === instituicao);
+        }
+
+        let matchTurno = true;
+        if (turno) {
+            const turnoVal = String(aluno.TURNOS_ALUNO || aluno.turno || "").toLowerCase();
+            matchTurno = (turnoVal === turno);
+        }
 
         return matchPesquisa && matchStatus && matchInst && matchTurno;
     });

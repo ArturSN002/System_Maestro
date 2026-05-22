@@ -219,20 +219,53 @@ async function verificarCPFInscricao() {
         if (!resDuplicidade) throw new Error("Sem resposta do Cão de Guarda");
 
         if (resDuplicidade.duplicado) {
-            // ⛔ Cão de guarda ativado! CPF duplicado.
-            const feedbackBox = document.getElementById('cpf-feedback-box');
-            if (feedbackBox) {
-                feedbackBox.style.background = '#fef2f2';
-                feedbackBox.style.color = '#991b1b';
-                feedbackBox.innerHTML = `⚠️ ${resDuplicidade.mensagem}`;
-                feedbackBox.classList.remove('hidden');
+            if (resDuplicidade.estudante) {
+                // Preenche dados imutáveis
+                const elNome = document.getElementById('insc-nome') || document.getElementById('input-nome');
+                const elNascimento = document.getElementById('insc-nascimento') || document.getElementById('input-nascimento');
+                const elCid = document.getElementById('insc-cid') || document.getElementById('input-cid');
+                
+                if (elNome && resDuplicidade.estudante.nome) {
+                    elNome.value = resDuplicidade.estudante.nome;
+                    elNome.disabled = true;
+                    elNome.readOnly = true;
+                }
+                if (elNascimento && resDuplicidade.estudante.nascimento) {
+                    elNascimento.value = resDuplicidade.estudante.nascimento;
+                    elNascimento.disabled = true;
+                    elNascimento.readOnly = true;
+                }
+                if (elCid && resDuplicidade.estudante.cid) {
+                    elCid.value = resDuplicidade.estudante.cid;
+                    elCid.disabled = true;
+                    elCid.readOnly = true;
+                }
+                
+                showToast("Dados recuperados com sucesso!", "success");
+                triggerVibration(50);
+                setTimeout(() => { 
+                    if (typeof avancarStep === 'function') {
+                        avancarStep();
+                    } else {
+                        stepperNext(1, 2); 
+                    }
+                }, 1500);
             } else {
-                showToast(resDuplicidade.mensagem, "error");
+                // ⛔ Cão de guarda ativado! CPF duplicado legas.
+                const feedbackBox = document.getElementById('cpf-feedback-box');
+                if (feedbackBox) {
+                    feedbackBox.style.background = '#fef2f2';
+                    feedbackBox.style.color = '#991b1b';
+                    feedbackBox.innerHTML = `⚠️ ${resDuplicidade.mensagem}`;
+                    feedbackBox.classList.remove('hidden');
+                } else {
+                    showToast(resDuplicidade.mensagem, "error");
+                }
+                triggerVibration([100, 50, 100]);
             }
-            triggerVibration([100, 50, 100]);
             btn.innerText = "VERIFICAR CPF";
             btn.disabled = false;
-            return; // Bloqueia o avanço para a Etapa 2
+            return; // Bloqueia o avanço padrão e aguarda a transição de resgate
         }
 
         // ✅ Caminho livre! Prosseguir com o Histórico (Auto-fill)
