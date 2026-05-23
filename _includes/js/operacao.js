@@ -7,6 +7,24 @@ let arrayAlunosAuditoriaFiltrado = [];
 let paginaAtualAuditoria = 1;     // NOVO: Guarda a página atual
 const ITENS_POR_PAGINA = 10;      // NOVO: Exibe 10 alunos por bloco
 
+function escapeHTMLAuditoria(valor) {
+    return String(valor ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function cpfSeguroAuditoria(valor) {
+    return String(valor || "").replace(/\D/g, "");
+}
+
+function getSemestreRaioXAtual() {
+    const input = document.getElementById('rx-linha-base');
+    return input ? String(input.dataset.semestreId || "") : "";
+}
+
 window.forcarResetSenhaEstudante = async function(cpf) {
     const alerta = window.confirm("⚠️ ATENÇÃO OPERADOR:\n\nIsto apagará a senha atual do estudante. A conta voltará ao estado de 'Primeiro Acesso' e a senha provisória será os 4 últimos dígitos do CPF.\n\nDeseja continuar?");
     if (!alerta) return;
@@ -52,15 +70,16 @@ async function carregarFilaAuditoria(ehPesquisa = false) {
     container.innerHTML = '<div class="text-center" style="padding: 30px;"><div class="loader" style="margin: 0 auto;"></div><p style="font-size: 11px; margin-top: 10px;">A puxar a fila de trabalho...</p></div>';
 
     try {
-        const res = await apiCall("getListaAuditoria", { pesquisa: "" });
+        const pesquisaAtual = ehPesquisa ? (document.getElementById('auditoria-pesquisa')?.value.trim() || "") : "";
+        const res = await apiCall("getListaAuditoria", { pesquisa: pesquisaAtual, limite: 300 });
         if (res.sucesso) {
-            arrayAlunosAuditoria = res.lista;
+            arrayAlunosAuditoria = Array.isArray(res.lista) ? res.lista : [];
             aplicarFiltrosAuditoria();
         } else {
-            container.innerHTML = `<div class="error-box">Erro: ${res.erro}</div>`;
+            container.innerHTML = `<div class="error-box">Erro: ${escapeHTMLAuditoria(res.erro)}</div>`;
         }
     } catch (e) {
-        container.innerHTML = `<div class="error-box">Falha ao ligar à base de dados: ${e.message}</div>`;
+        container.innerHTML = `<div class="error-box">Falha ao ligar à base de dados: ${escapeHTMLAuditoria(e.message)}</div>`;
     }
 }
 
@@ -131,16 +150,19 @@ function renderizarListaAuditoria() {
         let strData = d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         if (isNaN(d.getTime()) || aluno.timestamp === 0) strData = "Sem data registada";
 
-        const nomeTratado = formatarNomeProprio(aluno.nome);
+        const cpfAluno = cpfSeguroAuditoria(aluno.cpf || aluno.CPF_ALUNO);
+        const nomeTratado = escapeHTMLAuditoria(formatarNomeProprio(aluno.nome || aluno.NOME_ALUNO));
+        const statusAuditoria = escapeHTMLAuditoria(aluno.statusAuditoria || aluno.STATUS_VALIDACAO || "");
+        const strDataSeguro = escapeHTMLAuditoria(strData);
 
         html += `
         <div class="auditoria-linha">
             <div class="auditoria-info">
                 <h4 class="auditoria-nome">${nomeTratado}</h4>
-                <span class="auditoria-data">Submetido: ${strData}</span>
-                <span class="auditoria-badge" style="color: ${corBadge}; background: ${bgBadge}; margin-left: 0; display: inline-block; margin-top: 4px;">${aluno.statusAuditoria}</span>
+                <span class="auditoria-data">Submetido: ${strDataSeguro}</span>
+                <span class="auditoria-badge" style="color: ${corBadge}; background: ${bgBadge}; margin-left: 0; display: inline-block; margin-top: 4px;">${statusAuditoria}</span>
             </div>
-            <button class="btn-solid" style="width: auto; margin: 0; padding: 8px 12px; font-size: 11px;" onclick="abrirModalRaioX('${aluno.cpf}')">Detalhar 🔍</button>
+            <button class="btn-solid" style="width: auto; margin: 0; padding: 8px 12px; font-size: 11px;" data-cpf="${cpfAluno}" onclick="abrirModalRaioX(this.dataset.cpf)">Detalhar 🔍</button>
         </div>`;
     });
 
@@ -169,21 +191,24 @@ function mudarPaginaAuditoria(direcao) {
 }
 
 function abrirModalRaioX(cpf) {
-    const aluno = arrayAlunosAuditoria.find(a => a.cpf === cpf);
+    const cpfLimpo = cpfSeguroAuditoria(cpf);
+    const aluno = arrayAlunosAuditoria.find(a => cpfSeguroAuditoria(a.cpf || a.CPF_ALUNO) === cpfLimpo);
     if (!aluno) return;
 
-    const nomeTratado = formatarNomeProprio(aluno.nome);
+    const nomeTratado = formatarNomeProprio(aluno.nome || aluno.NOME_ALUNO);
+    const semestreId = String(aluno.semestreId || aluno.semestreAtual || aluno.semestre || "");
 
     document.getElementById('rx-nome').innerText = nomeTratado;
-    document.getElementById('rx-cpf').innerText = aluno.cpf;
-    document.getElementById('rx-matricula').innerText = aluno.matricula;
-    document.getElementById('rx-email').innerText = aluno.email;
-    document.getElementById('rx-logistica').innerText = `${aluno.instituicao} • ${aluno.turno}`;
-    document.getElementById('rx-status-badge').innerText = aluno.statusAtividade;
+    document.getElementById('rx-cpf').innerText = cpfLimpo;
+    document.getElementById('rx-matricula').innerText = aluno.matricula || aluno.MATRICULA_ALUNO || "";
+    document.getElementById('rx-email').innerText = aluno.email || aluno.EMAIL_ALUNO || "";
+    document.getElementById('rx-logistica').innerText = `${aluno.instituicao || aluno.INSTITUICAO_ALUNO || ""} • ${aluno.turno || aluno.TURNOS_ALUNO || ""}`;
+    document.getElementById('rx-status-badge').innerText = aluno.statusAtividade || aluno.STATUS_ATIVIDADE || "";
 
-    document.getElementById('rx-novo-status').value = aluno.statusAtividade;
+    document.getElementById('rx-novo-status').value = aluno.statusAtividade || aluno.STATUS_ATIVIDADE || "";
     document.getElementById('rx-notas').value = aluno.observacoes || "";
-    document.getElementById('rx-linha-base').value = cpf;
+    document.getElementById('rx-linha-base').value = cpfLimpo;
+    document.getElementById('rx-linha-base').dataset.semestreId = semestreId;
 
     let anexoHtml = '';
     const docsMapa = {
@@ -195,7 +220,7 @@ function abrirModalRaioX(cpf) {
     };
 
     for (const [chave, rotulo] of Object.entries(docsMapa)) {
-        anexoHtml += `<button class="btn-chip-anexo" onclick="abrirDocumentoSeguro('${cpf}', '${chave}')">${rotulo}</button>`;
+        anexoHtml += `<button class="btn-chip-anexo" data-cpf="${cpfLimpo}" data-tipo="${chave}" data-semestre-id="${escapeHTMLAuditoria(semestreId)}" onclick="abrirDocumentoSeguro(this.dataset.cpf, this.dataset.tipo, this.dataset.semestreId)">${escapeHTMLAuditoria(rotulo)}</button>`;
     }
 
     document.getElementById('rx-documentos-grid').innerHTML = anexoHtml;
@@ -207,33 +232,36 @@ function fecharModalRaioX() {
     document.getElementById('modal-raio-x-aluno').classList.add('hidden');
 }
 
-async function abrirDocumentoSeguro(cpf, tipoDoc) {
+async function abrirDocumentoSeguro(cpf, tipoDoc, semestreId = "") {
     const docViewer = document.getElementById('modal-doc-viewer');
     const contentBox = document.getElementById('doc-viewer-content');
+    const cpfLimpo = cpfSeguroAuditoria(cpf);
+    const semestreAtual = semestreId || getSemestreRaioXAtual();
 
     document.getElementById('doc-viewer-title').innerText = "A descarregar: " + tipoDoc;
     contentBox.innerHTML = '<div class="loader"></div>';
     docViewer.classList.remove('hidden');
 
     try {
-        const res = await apiCall("verFicheiroBase64", { cpf: cpf, tipoDocumento: tipoDoc });
+        const res = await apiCall("verFicheiroBase64", { cpf: cpfLimpo, tipoDocumento: tipoDoc, semestreId: semestreAtual });
 
         if (res.sucesso && res.base64) {
             document.getElementById('doc-viewer-title').innerText = tipoDoc;
-            const fullBase64 = `data:${res.mimeType};base64,${res.base64}`;
+            const mimeType = /^[-\w.]+\/[-\w.+]+$/.test(String(res.mimeType || "")) ? String(res.mimeType) : "application/octet-stream";
+            const fullBase64 = `data:${mimeType};base64,${String(res.base64 || "")}`;
 
-            if (res.mimeType.includes("image")) {
+            if (mimeType.includes("image")) {
                 contentBox.innerHTML = `<img src="${fullBase64}" class="zoom-hover" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
-            } else if (res.mimeType.includes("pdf")) {
+            } else if (mimeType.includes("pdf")) {
                 contentBox.innerHTML = `<embed src="${fullBase64}" width="100%" height="100%" type="application/pdf">`;
             } else {
-                contentBox.innerHTML = `<div class="error-box">Formato não suportado: ${res.mimeType}</div>`;
+                contentBox.innerHTML = `<div class="error-box">Formato não suportado: ${escapeHTMLAuditoria(mimeType)}</div>`;
             }
         } else {
-            contentBox.innerHTML = `<div class="error-box">Erro: ${res.erro}</div>`;
+            contentBox.innerHTML = `<div class="error-box">Erro: ${escapeHTMLAuditoria(res.erro)}</div>`;
         }
     } catch (e) {
-        contentBox.innerHTML = `<div class="error-box">Falha de rede: ${e.message}</div>`;
+        contentBox.innerHTML = `<div class="error-box">Falha de rede: ${escapeHTMLAuditoria(e.message)}</div>`;
     }
 }
 
@@ -243,21 +271,28 @@ function fecharModalDocViewer() {
 }
 
 async function gravarDecisaoAuditoria() {
-    const cpf = document.getElementById('rx-linha-base').value;
+    const cpf = cpfSeguroAuditoria(document.getElementById('rx-linha-base').value);
     const novoStatus = document.getElementById('rx-novo-status').value;
     const notas = document.getElementById('rx-notas').value;
+    const semestreId = getSemestreRaioXAtual();
 
     showToast("A gravar e a notificar o estudante...", "loading");
 
     try {
-        const res = await apiCall("atualizarStatusAluno", { cpf: cpf, novoStatus: novoStatus, notasOperador: notas });
+        const res = await apiCall("atualizarStatusAluno", { cpf: cpf, novoStatus: novoStatus, motivo: notas, notasOperador: notas, semestreId: semestreId });
         if (res.sucesso) {
             showToast("Alteração guardada com sucesso!", "success");
             fecharModalRaioX();
-            const alunoIndex = arrayAlunosAuditoria.findIndex(a => a.cpf === cpf);
+            let alunoIndex = arrayAlunosAuditoria.findIndex(a => cpfSeguroAuditoria(a.cpf || a.CPF_ALUNO) === cpf && String(a.semestreId || a.semestreAtual || "") === semestreId);
+            if (alunoIndex === -1) alunoIndex = arrayAlunosAuditoria.findIndex(a => cpfSeguroAuditoria(a.cpf || a.CPF_ALUNO) === cpf);
             if (alunoIndex !== -1) {
-                arrayAlunosAuditoria[alunoIndex].statusAtividade = novoStatus;
-                if (novoStatus === "ATIVO") arrayAlunosAuditoria[alunoIndex].statusAuditoria = "OK";
+                arrayAlunosAuditoria[alunoIndex].statusAtividade = res.statusAtividade || novoStatus;
+                arrayAlunosAuditoria[alunoIndex].STATUS_ATIVIDADE = res.statusAtividade || novoStatus;
+                arrayAlunosAuditoria[alunoIndex].statusAuditoria = res.statusValidacao || arrayAlunosAuditoria[alunoIndex].statusAuditoria;
+                arrayAlunosAuditoria[alunoIndex].STATUS_VALIDACAO = res.statusValidacao || arrayAlunosAuditoria[alunoIndex].STATUS_VALIDACAO;
+                arrayAlunosAuditoria[alunoIndex].statusDocs = res.statusDocs || arrayAlunosAuditoria[alunoIndex].statusDocs;
+                arrayAlunosAuditoria[alunoIndex].STATUS_DOCS = res.statusDocs || arrayAlunosAuditoria[alunoIndex].STATUS_DOCS;
+                arrayAlunosAuditoria[alunoIndex].observacoes = res.observacoes || notas;
                 aplicarFiltrosAuditoria();
             }
         } else {
@@ -275,13 +310,16 @@ async function acionarIAParaEmail() {
         return;
     }
 
-    const cpf = document.getElementById('rx-linha-base').value;
+    const cpf = cpfSeguroAuditoria(document.getElementById('rx-linha-base').value);
+    const semestreId = getSemestreRaioXAtual();
     const btnIa = document.querySelector("button[onclick='acionarIAParaEmail()']");
-    btnIa.innerText = "A Redigir... ⏳";
-    btnIa.disabled = true;
+    if (btnIa) {
+        btnIa.innerText = "A Redigir... ⏳";
+        btnIa.disabled = true;
+    }
 
     try {
-        const res = await apiCall("enviarParecerOperador", { cpf: cpf, textoRevisado: notasTexto });
+        const res = await apiCall("enviarParecerOperador", { cpf: cpf, textoRevisado: notasTexto, semestreId: semestreId });
         if (res.sucesso) {
             showToast("E-mail disparado para o estudante!", "success");
         } else {
@@ -290,8 +328,10 @@ async function acionarIAParaEmail() {
     } catch (e) {
         showToast("Falha ao comunicar com motor de E-mails: " + e.message, "error");
     } finally {
-        btnIa.innerText = "✨ Gerar E-mail IA";
-        btnIa.disabled = false;
+        if (btnIa) {
+            btnIa.innerText = "✨ Gerar E-mail IA";
+            btnIa.disabled = false;
+        }
     }
 }
 
@@ -619,7 +659,7 @@ async function abrirMuralDaSemana() {
 
     try {
         const res = await apiCall("getMuralDaSemana");
-        if (!res.sucesso) { container.innerHTML = `${btnNovoPostHTML}<div class="error-box">${res.erro}</div>`; return; }
+        if (!res.sucesso) { container.innerHTML = `${btnNovoPostHTML}<div class="error-box">${escapeHTMLAuditoria(res.erro)}</div>`; return; }
         if (!res.mensagens || res.mensagens.length === 0) {
             container.innerHTML = `${btnNovoPostHTML}<div class="text-center" style="padding: 30px 10px; color: var(--text-sub); border: 1px dashed var(--border); border-radius: 8px;">Ainda não há contribuições nos últimos 7 dias.<br><br><b>Seja o primeiro a partilhar uma ideia!</b></div>`;
             return;
@@ -658,7 +698,7 @@ async function abrirMuralDaSemana() {
         });
         container.innerHTML = html;
     } catch (e) {
-        container.innerHTML = `<div class="error-box">Erro ao comunicar com o servidor do Mural: ${e.message}</div>`;
+        container.innerHTML = `<div class="error-box">Erro ao comunicar com o servidor do Mural: ${escapeHTMLAuditoria(e.message)}</div>`;
     }
 }
 

@@ -23,6 +23,41 @@ const busIcon = L.divIcon({
 const CIDADE_DEFAULT_LAT = -5.6322;
 const CIDADE_DEFAULT_LNG = -35.4267;
 
+function normalizarArrayMobilidade(obj) {
+    if (Array.isArray(obj)) return obj;
+    if (!obj || typeof obj !== 'object') return [];
+
+    const chaves = Object.keys(obj);
+    if (chaves.length === 0) return [];
+
+    const chavesNumericas = chaves.filter(k => /^\d+$/.test(k));
+    if (chavesNumericas.length === chaves.length) {
+        return chavesNumericas
+            .sort((a, b) => Number(a) - Number(b))
+            .map(k => obj[k])
+            .filter(Boolean);
+    }
+
+    if (Array.isArray(obj.values)) return obj.values;
+    if (Array.isArray(obj.items)) return obj.items;
+    if (Array.isArray(obj.lista)) return obj.lista;
+
+    return [];
+}
+
+function normalizarCoordenadasRadar(obj) {
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return null;
+
+    const lat = Number(obj.lat ?? obj.latitude ?? obj.LATITUDE);
+    const lng = Number(obj.lng ?? obj.longitude ?? obj.LONGITUDE);
+    const ts = Number(obj.ts ?? obj.timestamp ?? Date.now());
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
+
+    return { lat, lng, ts: Number.isFinite(ts) ? ts : Date.now() };
+}
+
 function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
     const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -104,6 +139,7 @@ function abrirMapaDaViagem(idViagem) {
     if (!window.lastViagens) return;
     const tripData = window.lastViagens.find(v => v.id === idViagem);
     if (!tripData) return;
+    tripData.paradas = normalizarArrayMobilidade(tripData.paradas);
 
     const desktopActive = isDesktop();
 
@@ -199,7 +235,9 @@ async function carregarViagensDisponiveisEstudante() {
             return;
         }
 
-        if (!res.viagens || res.viagens.length === 0) {
+        const viagens = normalizarArrayMobilidade(res.viagens);
+
+        if (viagens.length === 0) {
             if (busMarker && typeof mapInstance !== 'undefined' && mapInstance) {
                 mapInstance.removeLayer(busMarker);
             }
@@ -210,6 +248,10 @@ async function carregarViagensDisponiveisEstudante() {
                 msgEmpty = "<b>Fora do Horário de Embarque.</b><br>Os autocarros só aparecem aqui minutos antes da hora de partida da sua rota.";
             } else if (res.statusOperacao === "SEM_FROTA") {
                 msgEmpty = "Não há autocarros ativos associados à sua rota neste momento.";
+            } else if (res.statusOperacao === "ESTUDANTE_INATIVO") {
+                msgEmpty = "A sua carteira não está ativa para embarque neste semestre.";
+            } else if (res.statusOperacao === "DOCUMENTOS_PENDENTES") {
+                msgEmpty = "A sua documentação ainda não permite embarque neste semestre.";
             }
             if (containerLista) containerLista.innerHTML = `<div style="background: #fef3c7; border: 1px solid #f59e0b; padding: 15px; border-radius: 8px; color: #92400e; font-size: 12px; line-height: 1.4; text-align:left;">${msgEmpty}</div>`;
             return;
@@ -218,9 +260,9 @@ async function carregarViagensDisponiveisEstudante() {
         let html = `<p style="font-size: 11px; color: var(--text-sub); margin-bottom: 10px;">Selecione o seu autocarro para garantir lugar:</p>`;
 
         // Armazenar na window para acesso no check-in
-        window.lastViagens = res.viagens;
+        window.lastViagens = viagens;
 
-        res.viagens.forEach((v, index) => {
+        viagens.forEach((v, index) => {
             let checkinArea = "";
             let statusVagas = "";
 
@@ -281,10 +323,11 @@ async function confirmarEmbarque(idOnibus) {
         // Geofencing 150m check if state is EM_OPERACAO
         if (window.lastViagens) {
             const tripData = window.lastViagens.find(v => v.id === idOnibus);
-            if (tripData && tripData.estadoRadar === "EM_OPERACAO" && tripData.paradas) {
+            const paradas = normalizarArrayMobilidade(tripData && tripData.paradas);
+            if (tripData && tripData.estadoRadar === "EM_OPERACAO" && paradas.length > 0) {
                 let isNearStop = false;
-                for (let i = 0; i < tripData.paradas.length; i++) {
-                    const dist = calcularDistanciaHaversine(lat, lng, tripData.paradas[i].LATITUDE, tripData.paradas[i].LONGITUDE);
+                for (let i = 0; i < paradas.length; i++) {
+                    const dist = calcularDistanciaHaversine(lat, lng, paradas[i].LATITUDE, paradas[i].LONGITUDE);
                     if (dist <= 0.150) { // 150 metros = 0.150 km
                         isNearStop = true;
                         break;
@@ -378,9 +421,10 @@ async function atualizarRadarDinamico() {
 
     try {
         const res = await apiCall("statusRadarOnibus", { idOnibus: onibusSelecionadoGPS, idEstudante: currentWalletId });
+        const coordenadasRadar = normalizarCoordenadasRadar(res && res.coordenadas);
 
-        if (res.coordenadas) {
-            atualizarPosicaoOnibusMapa(res.coordenadas.lat, res.coordenadas.lng);
+        if (coordenadasRadar) {
+            atualizarPosicaoOnibusMapa(coordenadasRadar.lat, coordenadasRadar.lng);
         }
 
         // --- Injetar CSS de animação ---
@@ -404,7 +448,7 @@ async function atualizarRadarDinamico() {
             `;
         }
         // --- UI do Passageiro (com ETA Híbrido) ---
-        else if (res.guiaAtivo && res.coordenadas) {
+        else if (res.guiaAtivo && coordenadasRadar) {
             // Recruitment: Require explicit consent, auto-volunteer removed.
 
             boxRadar.innerHTML = `
@@ -421,7 +465,7 @@ async function atualizarRadarDinamico() {
             `;
 
             // Fetch posição do passageiro e chamar ETA Híbrido
-            _buscarETAHibrido(res.coordenadas);
+            _buscarETAHibrido(coordenadasRadar);
         }
         // --- Radar Inativo (sem guias) ---
         else {
@@ -448,9 +492,11 @@ async function atualizarRadarDinamico() {
 function _buscarETAHibrido(coordenadasBus) {
     const etaSlot = document.getElementById('radar-eta-slot');
     if (!etaSlot) return;
+    const coordsBus = normalizarCoordenadasRadar(coordenadasBus);
+    if (!coordsBus) return;
 
     if (!navigator.geolocation) {
-        _renderizarETAFallbackSemGPS(etaSlot, coordenadasBus);
+        _renderizarETAFallbackSemGPS(etaSlot, coordsBus);
         return;
     }
 
@@ -460,26 +506,26 @@ function _buscarETAHibrido(coordenadasBus) {
             const lngEst = posPassageiro.coords.longitude;
 
             apiCall("calcularETAHibrido", {
-                latBus: coordenadasBus.lat,
-                lngBus: coordenadasBus.lng,
+                latBus: coordsBus.lat,
+                lngBus: coordsBus.lng,
                 latEstudante: latEst,
                 lngEstudante: lngEst
             }).then(function (resEta) {
                 if (!resEta || !resEta.sucesso) {
                     // Fallback local se API falhar
-                    const distLocal = calcularDistanciaHaversine(latEst, lngEst, coordenadasBus.lat, coordenadasBus.lng);
-                    _renderizarETANoSlot(etaSlot, distLocal, calcularETA(distLocal), "HAVERSINE_FALLBACK", coordenadasBus.ts);
+                    const distLocal = calcularDistanciaHaversine(latEst, lngEst, coordsBus.lat, coordsBus.lng);
+                    _renderizarETANoSlot(etaSlot, distLocal, calcularETA(distLocal), "HAVERSINE_FALLBACK", coordsBus.ts);
                     return;
                 }
                 const etaTexto = resEta.etaMinutos <= 2 ? "A chegar!" : `~ ${resEta.etaMinutos} min`;
-                _renderizarETANoSlot(etaSlot, resEta.distanciaKm, etaTexto, resEta.metodo, coordenadasBus.ts);
+                _renderizarETANoSlot(etaSlot, resEta.distanciaKm, etaTexto, resEta.metodo, coordsBus.ts);
             }).catch(function () {
-                const distLocal = calcularDistanciaHaversine(latEst, lngEst, coordenadasBus.lat, coordenadasBus.lng);
-                _renderizarETANoSlot(etaSlot, distLocal, calcularETA(distLocal), "HAVERSINE_FALLBACK", coordenadasBus.ts);
+                const distLocal = calcularDistanciaHaversine(latEst, lngEst, coordsBus.lat, coordsBus.lng);
+                _renderizarETANoSlot(etaSlot, distLocal, calcularETA(distLocal), "HAVERSINE_FALLBACK", coordsBus.ts);
             });
         },
         function () {
-            _renderizarETAFallbackSemGPS(etaSlot, coordenadasBus);
+            _renderizarETAFallbackSemGPS(etaSlot, coordsBus);
         },
         { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
     );
@@ -521,7 +567,9 @@ function _renderizarETANoSlot(slot, distKm, etaTexto, metodo, tsBus) {
  * Fallback quando GPS do passageiro não está disponível.
  */
 function _renderizarETAFallbackSemGPS(slot, coordenadasBus) {
-    const tempoAtras = calcularTempoRelativo(coordenadasBus.ts);
+    const coordsBus = normalizarCoordenadasRadar(coordenadasBus);
+    if (!coordsBus) return;
+    const tempoAtras = calcularTempoRelativo(coordsBus.ts);
     slot.innerHTML = `
         <div style="text-align: center; width: 100%;">
            <h4 style="color: var(--primary); margin: 0 0 5px 0; font-size: 13px;">📍 Autocarro em Movimento</h4>
@@ -649,6 +697,8 @@ let mapInstance = null;
 async function inicializarMapaMobilidade(dadosViagem) {
     const container = document.getElementById('mapa-paradas-container');
     if (!container) return;
+    dadosViagem = dadosViagem || {};
+    const paradasViagem = normalizarArrayMobilidade(dadosViagem.paradas);
 
     container.style.display = 'block';
 
@@ -662,9 +712,9 @@ async function inicializarMapaMobilidade(dadosViagem) {
     let centerLat = -5.6322;
     let centerLng = -35.4267;
 
-    if (dadosViagem.paradas && dadosViagem.paradas.length > 0) {
-        centerLat = dadosViagem.paradas[0].LATITUDE;
-        centerLng = dadosViagem.paradas[0].LONGITUDE;
+    if (paradasViagem.length > 0) {
+        centerLat = paradasViagem[0].LATITUDE;
+        centerLng = paradasViagem[0].LONGITUDE;
     }
 
     mapInstance = L.map('mapa-paradas-container', { zoomControl: false }).setView([centerLat, centerLng], 14);
@@ -707,7 +757,7 @@ async function inicializarMapaMobilidade(dadosViagem) {
                     style: { color: '#0A3D6B', weight: 4 },
                     filter: function (feature) {
                         // Prevent Leaflet crash if export tool generated a null geometry
-                        if (!feature.geometry || !feature.geometry.coordinates) {
+                        if (!feature.geometry || normalizarArrayMobilidade(feature.geometry.coordinates).length === 0) {
                             console.warn("🛡️ [PWA] Invalid GeoJSON feature ignored:", feature);
                             return false; // Skip this feature
                         }
@@ -727,8 +777,8 @@ async function inicializarMapaMobilidade(dadosViagem) {
         }
     }
 
-    if (dadosViagem.paradas && dadosViagem.paradas.length > 0) {
-        dadosViagem.paradas.forEach(parada => {
+    if (paradasViagem.length > 0) {
+        paradasViagem.forEach(parada => {
             const tipoStr = String(parada.TIPO_PARADA || "Secundaria").toUpperCase().trim();
             let popupContent = `<b>${parada.NOME_PARADA}</b><br><span style="font-size:10px; color:gray;">${tipoStr}</span>`;
 
@@ -789,14 +839,16 @@ async function inicializarMapaMobilidade(dadosViagem) {
 
 function atualizarPosicaoOnibusMapa(lat, lng) {
     if (typeof mapInstance === 'undefined' || !mapInstance) return;
+    const coords = normalizarCoordenadasRadar({ lat, lng });
+    if (!coords) return;
 
     if (busMarker === null) {
-        busMarker = L.marker([lat, lng], { icon: busIcon }).addTo(mapInstance);
+        busMarker = L.marker([coords.lat, coords.lng], { icon: busIcon }).addTo(mapInstance);
     } else {
         if (busMarker.slideTo) {
-            busMarker.slideTo([lat, lng], { duration: 2500, keepAtCenter: false });
+            busMarker.slideTo([coords.lat, coords.lng], { duration: 2500, keepAtCenter: false });
         } else {
-            busMarker.setLatLng([lat, lng]);
+            busMarker.setLatLng([coords.lat, coords.lng]);
         }
     }
 }

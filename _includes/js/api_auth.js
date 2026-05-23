@@ -13,7 +13,7 @@ const IAM_STATE = {
 };
 
 const CLIENT_DIRECTORY = {
-  "Ceará-Mirim": "https://script.google.com/macros/s/AKfycbxYQyoS-p0i6HwQfX_tjhWS5sONQ99WBrCdQZZH2p8BMU1Qktfcksfu1PPGx__eNQ_yCg/exec",
+  "Ceará-Mirim": "https://script.google.com/macros/s/AKfycbxJi1Ff78-RaHZ_SOwc7ByljZGMcOtrBYZ0EYSQ5u3JByR1nCwa6_oS5tsPSej8LuAwMg/exec",
 };
 
 async function checkClientGateway() {
@@ -83,12 +83,26 @@ function salvarCliente() {
   if (typeof bootSystem === "function") bootSystem();
 }
 
+function normalizarRespostaApiIAM(data) {
+  if (!data) return { sucesso: false, erro: "Resposta vazia do servidor." };
+  if (Array.isArray(data)) {
+    return data.length === 0
+      ? { sucesso: false, erro: "Resposta inválida do servidor." }
+      : { sucesso: true, dados: data };
+  }
+  if (typeof data !== "object") return { sucesso: false, erro: String(data) };
+  return data;
+}
+
 async function apiCall(action, payload = {}) {
   let token = localStorage.getItem("MAESTRO_TOKEN") || localStorage.getItem("MAESTRO_EST_TOKEN");
+
+  if (!GAS_URL) return { sucesso: false, erro: "Cliente Maestro não configurado." };
 
   if (token === "undefined" || token === "null") {
     token = null;
     localStorage.removeItem("MAESTRO_TOKEN");
+    localStorage.removeItem("MAESTRO_EST_TOKEN");
   }
 
   const body = {
@@ -104,11 +118,12 @@ async function apiCall(action, payload = {}) {
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify(body)
     });
-    const data = await response.json();
+    const data = normalizarRespostaApiIAM(await response.json());
 
     if (data.status === 401 && action !== "invalidarTokenSessao") {
       console.error("401 Unauthorized na rota:", action);
       localStorage.removeItem("MAESTRO_TOKEN");
+      localStorage.removeItem("MAESTRO_EST_TOKEN");
       showToast("Sessão encerrada. Por favor, entre novamente.", "error");
       setTimeout(() => {
         window.location.reload();
@@ -157,7 +172,7 @@ async function fazerLoginOperador() {
   resBox.classList.add('hidden');
 
   try {
-    const res = await apiCall("autenticarUsuario", { identificador: email, email, senha });
+    const res = await apiCall("autenticarOperadorIAM", { login: email, identificador: email, email, senha });
 
     if (res.status === "PRIMEIRO_ACESSO") {
       prepararPrimeiroAcessoIAM(email, senha, res, "OPERADOR");
@@ -324,7 +339,7 @@ async function loginCarteiraIAM() {
   resBox.classList.add('hidden');
 
   try {
-    const res = await apiCall("autenticarUsuario", { identificador: login, senha });
+    const res = await apiCall("autenticarEstudanteIAM", { login, identificador: login, senha });
 
     if (res.status === "PRIMEIRO_ACESSO") {
       prepararPrimeiroAcessoIAM(login, senha, res, "ESTUDANTE");
@@ -428,7 +443,7 @@ async function salvarNovaSenhaPrimeiroAcesso() {
     showToast("Senha definida com sucesso. Entrando...", "success");
 
     if (origem === "OPERADOR") {
-      const auth = await apiCall("autenticarUsuario", { identificador: login, senha: novaSenha });
+      const auth = await apiCall("autenticarOperadorIAM", { login, identificador: login, senha: novaSenha });
       if (auth.sucesso) {
         localStorage.setItem("MAESTRO_TOKEN", auth.token);
         localStorage.setItem("MAESTRO_OPERADOR_NOME", auth.nome || "Operador");
@@ -441,7 +456,7 @@ async function salvarNovaSenhaPrimeiroAcesso() {
       return;
     }
 
-    const auth = await apiCall("autenticarUsuario", { identificador: login, senha: novaSenha });
+    const auth = await apiCall("autenticarEstudanteIAM", { login, identificador: login, senha: novaSenha });
     if (auth.sucesso) {
       finalizarLoginEstudanteIAM(login, novaSenha, auth);
     } else {
@@ -537,7 +552,7 @@ async function solicitarRecuperacaoSenha() {
   btn.disabled = true;
 
   try {
-    const res = await apiCall("recuperarSenhaOperador", { email });
+    const res = await apiCall("solicitarRecuperacao", { email });
     if (res.sucesso) {
       showToast("PIN enviado para o seu e-mail!", "success");
       localStorage.setItem("MAESTRO_RESET_EMAIL", email);

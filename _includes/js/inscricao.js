@@ -212,63 +212,38 @@ async function verificarCPFInscricao() {
     btn.disabled = true;
 
     try {
-        // 1. O Cão de Guarda: Verificar duplicidade via API
+        // 1. Verificar duplicidade por semestre via API
         const resDuplicidade = await apiCall("verificarDuplicidadeCPF", { cpf: cpfRaw });
 
         // Se a API não responder corretamente, tratamos como erro de rede
-        if (!resDuplicidade) throw new Error("Sem resposta do Cão de Guarda");
+        if (!resDuplicidade) throw new Error("Sem resposta da verificacao de CPF");
 
-        if (resDuplicidade.duplicado) {
-            if (resDuplicidade.estudante) {
-                // Preenche dados imutáveis
-                const elNome = document.getElementById('insc-nome') || document.getElementById('input-nome');
-                const elNascimento = document.getElementById('insc-nascimento') || document.getElementById('input-nascimento');
-                const elCid = document.getElementById('insc-cid') || document.getElementById('input-cid');
-                
-                if (elNome && resDuplicidade.estudante.nome) {
-                    elNome.value = resDuplicidade.estudante.nome;
-                    elNome.disabled = true;
-                    elNome.readOnly = true;
-                }
-                if (elNascimento && resDuplicidade.estudante.nascimento) {
-                    elNascimento.value = resDuplicidade.estudante.nascimento;
-                    elNascimento.disabled = true;
-                    elNascimento.readOnly = true;
-                }
-                if (elCid && resDuplicidade.estudante.cid) {
-                    elCid.value = resDuplicidade.estudante.cid;
-                    elCid.disabled = true;
-                    elCid.readOnly = true;
-                }
-                
-                showToast("Dados recuperados com sucesso!", "success");
-                triggerVibration(50);
-                setTimeout(() => { 
-                    if (typeof avancarStep === 'function') {
-                        avancarStep();
-                    } else {
-                        stepperNext(1, 2); 
-                    }
-                }, 1500);
-            } else {
-                // ⛔ Cão de guarda ativado! CPF duplicado legas.
-                const feedbackBox = document.getElementById('cpf-feedback-box');
-                if (feedbackBox) {
-                    feedbackBox.style.background = '#fef2f2';
-                    feedbackBox.style.color = '#991b1b';
-                    feedbackBox.innerHTML = `⚠️ ${resDuplicidade.mensagem}`;
-                    feedbackBox.classList.remove('hidden');
-                } else {
-                    showToast(resDuplicidade.mensagem, "error");
-                }
-                triggerVibration([100, 50, 100]);
-            }
+        if (resDuplicidade.sucesso === false) {
+            showToast(resDuplicidade.erro || "Nao foi possivel verificar o CPF.", "error");
             btn.innerText = "VERIFICAR CPF";
             btn.disabled = false;
-            return; // Bloqueia o avanço padrão e aguarda a transição de resgate
+            triggerVibration([100, 50, 100]);
+            return;
         }
 
-        // ✅ Caminho livre! Prosseguir com o Histórico (Auto-fill)
+        if (resDuplicidade.duplicado) {
+            const mensagemDuplicidade = resDuplicidade.mensagem || "Ja existe uma inscricao ativa para este CPF neste semestre.";
+            const feedbackBox = document.getElementById('cpf-feedback-box');
+            if (feedbackBox) {
+                feedbackBox.style.background = '#fef2f2';
+                feedbackBox.style.color = '#991b1b';
+                feedbackBox.innerHTML = `⚠️ ${mensagemDuplicidade}`;
+                feedbackBox.classList.remove('hidden');
+            } else {
+                showToast(mensagemDuplicidade, "error");
+            }
+            triggerVibration([100, 50, 100]);
+            btn.innerText = "VERIFICAR CPF";
+            btn.disabled = false;
+            return;
+        }
+
+        // Caminho livre: buscar dados do root Firestore para autofill de renovacao.
         const res = await apiCall("verificarCpfRenovacao", { cpf: cpfRaw });
 
         if (!res.sucesso) {
@@ -589,6 +564,17 @@ function getCheckboxValues(name) {
     return Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(el => el.value);
 }
 
+function base64PreenchidoInscricao(valor) {
+    const texto = String(valor || '').trim();
+    if (!texto) return false;
+    const marcador = 'base64,';
+    const idx = texto.indexOf(marcador);
+    if (idx !== -1) {
+        return texto.substring(idx + marcador.length).trim().length > 0;
+    }
+    return true;
+}
+
 function prepararEnvioNativo() {
     const btn = document.getElementById('btn-submeter-inscricao');
 
@@ -607,20 +593,20 @@ function prepararEnvioNativo() {
     }
 
     // Validação do Documento com Foto (RG/CNH) — obrigatório
-    if (!inscricaoArquivos['documento']) {
+    if (!inscricaoArquivos['documento'] || !base64PreenchidoInscricao(inscricaoArquivos['documento'].base64)) {
         showToast("O Documento com Foto (RG ou CNH) é obrigatório.", "error");
         return;
     }
 
     // Validação de Menor Idade
-    if (getRadioValue('insc-menor') === 'Sim' && !inscricaoArquivos['menorIdade']) {
+    if (getRadioValue('insc-menor') === 'Sim' && (!inscricaoArquivos['menorIdade'] || !base64PreenchidoInscricao(inscricaoArquivos['menorIdade'].base64))) {
         showToast("A Declaração de Responsabilidade para menores é obrigatória.", "error");
         return;
     }
 
     // Validação da Foto 3x4: câmera OU arquivo
     const fotoFinal = inscricaoFotoBase64 || (inscricaoArquivos['foto3x4'] ? inscricaoArquivos['foto3x4'].base64 : null);
-    if (!fotoFinal) {
+    if (!base64PreenchidoInscricao(fotoFinal)) {
         showToast("A Foto 3x4 é obrigatória. Use a câmera ou anexe um arquivo.", "error");
         return;
     }
@@ -628,6 +614,7 @@ function prepararEnvioNativo() {
     const estagio = getRadioSimNao('insc-estagio');
     const menorIdade = getRadioSimNao('insc-menor');
     const acompanhado = getRadioSimNao('insc-criancas');
+    const arquivosPayload = Object.assign({}, inscricaoArquivos, { fotoBase64: fotoFinal });
 
     const payloadNativo = {
         // Step 1
@@ -661,7 +648,7 @@ function prepararEnvioNativo() {
         menorIdade: menorIdade,
 
         // Step 4
-        arquivos: inscricaoArquivos,
+        arquivos: arquivosPayload,
         fotoBase64: fotoFinal,
 
         // Metadata
