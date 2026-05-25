@@ -1,0 +1,273 @@
+{
+  "startedAt": "2026-05-25T10:17:37.494Z",
+  "site": "http://artursn002.github.io/System_Maestro",
+  "checks": [
+    {
+      "name": "desktop client config",
+      "status": "warn",
+      "details": "{\"selected\":{\"ok\":true,\"value\":\"https://script.google.com/macros/s/AKfycbwPsGciFa7SMcwYM5vMpvzgJVCkj_SvhJLcYU5Gl-XJxnuRFuPm-Vl_Xtpgo5PAeUyC/exec\",\"text\":\"Ceará-Mirim\"},\"hubVisible\":false,\"gasReadyAfter\":true}"
+    },
+    {
+      "name": "PWA manifest",
+      "status": "pass",
+      "details": "name=Portal Maestro; scope=./; start_url=./"
+    },
+    {
+      "name": "Service worker",
+      "status": "warn",
+      "details": "{\"supported\":true,\"controllers\":0,\"registrations\":[]}"
+    },
+    {
+      "name": "Desktop home",
+      "status": "warn",
+      "details": "PORTAL MAESTRO Acesso Estudantil 📖 Sobre o Maestro 🎧 Suporte 🔒 Privacidade 📜 Termos de Uso Sistema Online ⚡ POWERED BY MAESTRO ⚙️ Configurações PREFERÊNCIAS DO SISTEMA 🌗 Modo Escuro 🔔 Notificações 📍 Partilhar GPS 📷 Câmera ✈️ Forçar Offline 🛡️ Validar Documento Verificar autenticidade de declaração 📖 Sobre o Maestro Como funciona, cores e status 🔐 Acesso da Secretaria Acesso Restrito 📱 Instalar Maestro Adicionar ao ecrã inicial ⚠️ Limpar Dados do Aplicativo Use esta opção se o portal apresentar lentidão ou para forçar a atualização do sistema. Exigirá novo login. 🔔 Notificações Histórico dos últimos 7 dias (Offline). Limpar Tudo"
+    },
+    {
+      "name": "Aluno menu",
+      "status": "pass",
+      "details": ""
+    },
+    {
+      "name": "Aluno consulta CPF",
+      "status": "pass",
+      "details": "Olá, Estudante! 1. Formulário Recebido Os seus dados deram entrada no sistema. 2. Em Auditoria A aguardar análise documental. 3. Resultado"
+    },
+    {
+      "name": "Aluno carteira digital",
+      "status": "fail",
+      "details": "Acesso negado."
+    },
+    {
+      "name": "Operador login",
+      "status": "pass",
+      "details": "nivel=MODERADOR; altCredential=true"
+    },
+    {
+      "name": "Operador API diagnostico",
+      "status": "pass",
+      "details": "{\"getDashboardStats\":{\"sucesso\":true,\"erro\":\"\",\"detalhes\":\"\",\"status\":\"\",\"semestreId\":\"\",\"keys\":[\"sucesso\",\"estatisticas\"]},\"getListaAuditoria\":{\"sucesso\":false,\"erro\":\"Falha ao carregar a fila de auditoria.\",\"detalhes\":\"[Firestore] HTTP 400 (não-retryable): [{\\n \\\"error\\\": {\\n \\\"code\\\": 400,\\n \\\"message\\\": \\\"The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/mga-testes/firestore/indexes?create_composite=Ckxwcm9qZWN0cy9tZ2EtdGVzdGVzL2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9zZW1lc3RyZXMvaW5kZXhlcy9fEAIaIwofc3RhdHVzX3Npc3RlbWEuc3RhdHVzX3ZhbGlkYWNhbxABGgwKCHRlbmFudElkEAEaDAoIX19uYW1lX18QAQ\\\",\\n \\\"status\\\": \\\"FAILED_PRECONDITION\\\"\\n }\\n}\\n]\",\"status\":\"\",\"semestreId\":\"\",\"keys\":[\"sucesso\",\"erro\",\"detalhes\"]},\"listarSemestresMaestro\":{\"sucesso\":true,\"erro\":\"\",\"detalhes\":\"\",\"status\":\"\",\"semestreId\":\"1\",\"keys\":[\"sucesso\",\"semestres\",\"semestreAtual\"]},\"getFiltrosPush\":{\"sucesso\":true,\"erro\":\"\",\"detalhes\":\"\",\"status\":\"\",\"semestreId\":\"\",\"keys\":[\"sucesso\",\"filtros\"]},\"getRotasMotorista\":{\"sucesso\":true,\"erro\":\"\",\"detalhes\":\"\",\"status\":\"\",\"semestreId\":\"\",\"keys\":[\"sucesso\",\"rotas\"]}}"
+    },
+    {
+      "name": "Operador dashboard",
+      "status": "pass",
+      "details": "📊 DASHBOARD Dados oficiais do semestre letivo 0 ATIVOS 0 NA FILA 0 ATENÇÃO 0 INATIVOS Status Global Motor Gemini IA (Gasto/Limite OCR) 0 / 350 Visão Geral BI (Cruzamento) Rotas 23h Inclusão Instituições Top 5 Dias de Utilização Turnos Rotas Ativas VOLTAR AO MENU"
+    },
+    {
+      "name": "Operador auditoria",
+      "status": "warn",
+      "details": "⚠️ Erro ao Carregar Fila Falha ao carregar a fila de auditoria."
+    },
+    {
+      "name": "Operador gestao de semestres",
+      "status": "pass",
+      "details": "GESTAO DE SEMESTRES Supervisor e moderador podem criar, atualizar, arquivar e definir o ciclo oficial usado por auditoria, dashboard e carteira. 🔄 SEMESTRE ATUAL 1 1 Periodo 1 2 Passado Atual Arquivado SALVAR SEMESTRE Limpar 1 ID: 1 2026 - Periodo 1 Vigencia nao informada ATUAL Editar ATUAL PASSADO ARQUIVAR EXCLUIR VOLTAR AO MENU"
+    },
+    {
+      "name": "Operador comunicacao modal",
+      "status": "pass",
+      "details": "📢 CENTRAL DE AVISOS Dispare notificações PUSH diretamente para o telemóvel dos estudantes. Mural Público Alerta Direcionado Esta opção cria um cartão visível no topo da app de todos os estudantes e envia um aviso Push geral. TIPO DE AVISO Informativo Geral Logística e Transporte Urgente / Crítico TÍTULO CORPO DA MENSAGEM DATA DE VALIDADE (EXPIRAÇÃO) Enviar Notificação Push PUBLICAR E NOTIFICAR Cancelar ⬅️ MAESTRO - SMEB Secretaria Municipal de Educação Básica 📌 AVISOS DA SEMANA GERAL V12.10 = Testes Sistema de notificações ativo GERAL V8.5 - Testes Finalizar até Segunda-feira (26/04/2026) Bem-vindo, Artur Silva 🛂 Modo Fiscalização Validar identidades com QR Code 🏁 Finalizar Viagem (Manual) Limpar lotação de um autocarro 🚨 Reportar Avaria (SOS) Aviso urgente à Secretaria e alunos SECRETARIA E LOGÍSTICA 🚌 Fluxo de Rotas (GPS) Assumir Rastreio ou Finalizar Viagem 📂 Mesa de Auditoria Validar documentos e gerir matrículas 📢 Central de Comunicação Disparar avisos Push e Mural 📊 Painel Analítico Estatísticas de uso e BI SEM Gestao de Semestres Criar, arquivar e definir o semestre atual ADMINISTRAÇÃO DO SISTEMA ⚙️ Sala das Máquinas CRON, Motores e Gestão de Contas Sair do Sistema ..."
+    },
+    {
+      "name": "Operador modo fiscalizacao",
+      "status": "pass",
+      "details": "🛂 VALIDAÇÃO Aponte a câmara para o QR Code do aluno 📷 LER VÍDEO CONTÍNUO 📱 USAR CÂMARA NATIVA Request Camera Permissions Scan an Image File ❌ CANCELAR CÂMARA OU DIGITE O ID MANUALMENTE VERIFICAR ESTUDANTE Voltar ao Menu"
+    },
+    {
+      "name": "Moderador sala das maquinas",
+      "status": "pass",
+      "details": "⚙️ SALA DAS MÁQUINAS Controlo de automações e estado do servidor. ESTADO DOS MOTORES (CRON) Sincronização Forms (ETL) Auditoria Inteligente (OCR/IA) Emissão de Carteiras (PDFs) Fila de Envio de E-mails AÇÕES FORÇADAS MANUAIS 🔄 SINCRONIZAR FORMS 🔍 AUDITAR OCR 📄 EMITIR PDFS 📧 FILA DE E-MAILS VOLTAR AO MENU"
+    },
+    {
+      "name": "mobile client config",
+      "status": "warn",
+      "details": "{\"selected\":{\"ok\":true,\"value\":\"https://script.google.com/macros/s/AKfycbwPsGciFa7SMcwYM5vMpvzgJVCkj_SvhJLcYU5Gl-XJxnuRFuPm-Vl_Xtpgo5PAeUyC/exec\",\"text\":\"Ceará-Mirim\"},\"hubVisible\":false,\"gasReadyAfter\":true}"
+    },
+    {
+      "name": "Mobile home",
+      "status": "warn",
+      "details": "PORTAL MAESTRO Acesso Estudantil 📖 Sobre o Maestro 🎧 Suporte 🔒 Privacidade 📜 Termos de Uso Sistema Online ⚡ POWERED BY MAESTRO ⚙️ Configurações PREFERÊNCIAS DO SISTEMA 🌗 Modo Escuro 🔔 Notificações 📍 Partilhar GPS 📷 Câmera ✈️ Forçar Offline 🛡️ Validar Documento Verificar autenticidade de declaração 📖 Sobre o Maestro Como funciona, cores e status 🔐 Acesso da Secretaria Acesso Restrito 📱 Instalar Maestro Adicionar ao ecrã inicial ⚠️ Limpar Dados do Aplicativo Use esta opção se o portal apresentar lentidão ou para forçar a atualização do sistema. Exigirá novo login. 🔔 Notificações Histórico dos últimos 7 dias (Offline). Limpar Tudo"
+    },
+    {
+      "name": "Mobile aluno menu",
+      "status": "pass",
+      "details": ""
+    },
+    {
+      "name": "offline client config",
+      "status": "warn",
+      "details": "{\"selected\":{\"ok\":true,\"value\":\"https://script.google.com/macros/s/AKfycbwPsGciFa7SMcwYM5vMpvzgJVCkj_SvhJLcYU5Gl-XJxnuRFuPm-Vl_Xtpgo5PAeUyC/exec\",\"text\":\"Ceará-Mirim\"},\"hubVisible\":false,\"gasReadyAfter\":true}"
+    },
+    {
+      "name": "PWA offline reload",
+      "status": "pass",
+      "details": "MAESTRO - SMEB Secretaria Municipal de Educação Básica Selecione o seu perfil de acesso 🎓 Acesso do Estudante Carteira Digital e Consulta de Status 🗣️ Voz da Comunidade Ver Mural da Semana 📖 Sobre o Maestro 🎧 Suporte 🔒 Privacidade 📜 Termos de Uso Operando Offline ⚡ POWERED BY MAESTRO ⚙️ Configurações PREFERÊNCIAS DO SISTEMA 🌗 Modo Escuro 🔔 Notificações 📍 Partilhar GPS 📷 Câmera ✈️ Forçar Offline 🛡️ Validar Documento Verificar autenticidade de declaração 📖 Sobre o Maestro Como funciona, cores e status 🔐 Acesso da Secretaria Acesso Restrito 📱 Instalar Maestro Adicionar ao ecrã inicial ⚠️ Limpar Dados do Aplicativo Use esta opção se o portal apresentar lentidão ou para forçar a atualização do sistema. Exigirá novo login. 🔔 Notificações Histórico dos últimos 7 dias (Offline). Limpar Tudo"
+    }
+  ],
+  "console": [
+    {
+      "label": "offline",
+      "type": "error",
+      "text": "Erro na chamada API: TypeError: Failed to fetch at apiCall (https://artursn002.github.io/System_Maestro/app.js?v=12.15:1598:28) at carregarAvisosSMEB (https://artursn002.github.io/System_Maestro/app.js?v=12.15:537:23) at bootSystem (https://artursn002.github.io/System_Maestro/app.js?v=12.15:342:3)"
+    },
+    {
+      "label": "offline",
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "label": "offline",
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_INTERNET_DISCONNECTED"
+    },
+    {
+      "label": "offline",
+      "type": "error",
+      "text": "Erro na chamada API: TypeError: Failed to fetch at apiCall (https://artursn002.github.io/System_Maestro/app.js?v=12.15:1598:28) at bootSystem (https://artursn002.github.io/System_Maestro/app.js?v=12.15:236:23) at checkClientGateway (https://artursn002.github.io/System_Maestro/app.js?v=12.15:1518:43) at window.onload (https://artursn002.github.io/System_Maestro/app.js?v=12.15:810:49)"
+    },
+    {
+      "label": "offline",
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_INTERNET_DISCONNECTED"
+    },
+    {
+      "label": "offline",
+      "type": "error",
+      "text": "Erro na chamada API: TypeError: Failed to fetch at apiCall (https://artursn002.github.io/System_Maestro/app.js?v=12.15:1598:28) at carregarAvisosSMEB (https://artursn002.github.io/System_Maestro/app.js?v=12.15:537:23) at bootSystem (https://artursn002.github.io/System_Maestro/app.js?v=12.15:342:3)"
+    }
+  ],
+  "pageErrors": [],
+  "network": [],
+  "pwa": {
+    "manifestLink": "https://artursn002.github.io/System_Maestro/manifest.json",
+    "manifest": {
+      "id": "./",
+      "name": "Portal Maestro",
+      "short_name": "Portal Maestro",
+      "description": "Portal Oficial de Mobilidade",
+      "start_url": "./",
+      "scope": "./",
+      "display": "standalone",
+      "display_override": [
+        "standalone",
+        "minimal-ui"
+      ],
+      "orientation": "portrait",
+      "background_color": "#F8F9FA",
+      "theme_color": "#0A3D6B",
+      "lang": "pt-BR",
+      "categories": [
+        "education",
+        "utilities",
+        "productivity"
+      ],
+      "icons": [
+        {
+          "src": "icone.png",
+          "sizes": "512x512",
+          "type": "image/png",
+          "purpose": "any maskable"
+        }
+      ]
+    },
+    "manifestError": "",
+    "sw": {
+      "supported": true,
+      "controllers": 0,
+      "registrations": []
+    }
+  },
+  "operatorSession": {
+    "nivel": "MODERADOR",
+    "hasToken": true,
+    "actions": [
+      "fiscalizar",
+      "encerrarRota",
+      "reportarSos",
+      "gerirRotas",
+      "auditoria",
+      "comunicacao",
+      "dashboard",
+      "semestres",
+      "salaMaquinas",
+      "motoristaRotas gerirRotas",
+      "reportarSos",
+      "fiscalizar"
+    ]
+  },
+  "screenshots": {
+    "qa-2026-05-25-desktop-home": "C:/Users/asn03/Downloads/Maestro/System Maestro V12/GitHub/System_Maestro/output/playwright/qa-2026-05-25-desktop-home.png",
+    "qa-2026-05-25-student-menu": "C:/Users/asn03/Downloads/Maestro/System Maestro V12/GitHub/System_Maestro/output/playwright/qa-2026-05-25-student-menu.png",
+    "qa-2026-05-25-student-status": "C:/Users/asn03/Downloads/Maestro/System Maestro V12/GitHub/System_Maestro/output/playwright/qa-2026-05-25-student-status.png",
+    "qa-2026-05-25-student-wallet-attempt": "C:/Users/asn03/Downloads/Maestro/System Maestro V12/GitHub/System_Maestro/output/playwright/qa-2026-05-25-student-wallet-attempt.png",
+    "qa-2026-05-25-operator-hub": "C:/Users/asn03/Downloads/Maestro/System Maestro V12/GitHub/System_Maestro/output/playwright/qa-2026-05-25-operator-hub.png",
+    "qa-2026-05-25-operator-dashboard": "C:/Users/asn03/Downloads/Maestro/System Maestro V12/GitHub/System_Maestro/output/playwright/qa-2026-05-25-operator-dashboard.png",
+    "qa-2026-05-25-operator-auditoria": "C:/Users/asn03/Downloads/Maestro/System Maestro V12/GitHub/System_Maestro/output/playwright/qa-2026-05-25-operator-auditoria.png",
+    "qa-2026-05-25-operator-semestres": "C:/Users/asn03/Downloads/Maestro/System Maestro V12/GitHub/System_Maestro/output/playwright/qa-2026-05-25-operator-semestres.png",
+    "qa-2026-05-25-operator-comunicacao-modal": "C:/Users/asn03/Downloads/Maestro/System Maestro V12/GitHub/System_Maestro/output/playwright/qa-2026-05-25-operator-comunicacao-modal.png",
+    "qa-2026-05-25-operator-fiscalizacao": "C:/Users/asn03/Downloads/Maestro/System Maestro V12/GitHub/System_Maestro/output/playwright/qa-2026-05-25-operator-fiscalizacao.png",
+    "qa-2026-05-25-operator-sala-maquinas": "C:/Users/asn03/Downloads/Maestro/System Maestro V12/GitHub/System_Maestro/output/playwright/qa-2026-05-25-operator-sala-maquinas.png",
+    "qa-2026-05-25-mobile-home": "C:/Users/asn03/Downloads/Maestro/System Maestro V12/GitHub/System_Maestro/output/playwright/qa-2026-05-25-mobile-home.png",
+    "qa-2026-05-25-mobile-student-menu": "C:/Users/asn03/Downloads/Maestro/System Maestro V12/GitHub/System_Maestro/output/playwright/qa-2026-05-25-mobile-student-menu.png",
+    "qa-2026-05-25-offline-reload": "C:/Users/asn03/Downloads/Maestro/System Maestro V12/GitHub/System_Maestro/output/playwright/qa-2026-05-25-offline-reload.png"
+  },
+  "operatorApiDiagnostics": {
+    "getDashboardStats": {
+      "sucesso": true,
+      "erro": "",
+      "detalhes": "",
+      "status": "",
+      "semestreId": "",
+      "keys": [
+        "sucesso",
+        "estatisticas"
+      ]
+    },
+    "getListaAuditoria": {
+      "sucesso": false,
+      "erro": "Falha ao carregar a fila de auditoria.",
+      "detalhes": "[Firestore] HTTP 400 (não-retryable): [{\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/mga-testes/firestore/indexes?create_composite=Ckxwcm9qZWN0cy9tZ2EtdGVzdGVzL2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9zZW1lc3RyZXMvaW5kZXhlcy9fEAIaIwofc3RhdHVzX3Npc3RlbWEuc3RhdHVzX3ZhbGlkYWNhbxABGgwKCHRlbmFudElkEAEaDAoIX19uYW1lX18QAQ\",\n    \"status\": \"FAILED_PRECONDITION\"\n  }\n}\n]",
+      "status": "",
+      "semestreId": "",
+      "keys": [
+        "sucesso",
+        "erro",
+        "detalhes"
+      ]
+    },
+    "listarSemestresMaestro": {
+      "sucesso": true,
+      "erro": "",
+      "detalhes": "",
+      "status": "",
+      "semestreId": "1",
+      "keys": [
+        "sucesso",
+        "semestres",
+        "semestreAtual"
+      ]
+    },
+    "getFiltrosPush": {
+      "sucesso": true,
+      "erro": "",
+      "detalhes": "",
+      "status": "",
+      "semestreId": "",
+      "keys": [
+        "sucesso",
+        "filtros"
+      ]
+    },
+    "getRotasMotorista": {
+      "sucesso": true,
+      "erro": "",
+      "detalhes": "",
+      "status": "",
+      "semestreId": "",
+      "keys": [
+        "sucesso",
+        "rotas"
+      ]
+    }
+  },
+  "finishedAt": "2026-05-25T10:19:36.620Z"
+}

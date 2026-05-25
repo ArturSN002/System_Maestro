@@ -167,7 +167,28 @@ function restaurarPWAOfflineMaestro() {
   return true;
 }
 
-async function bootSystem() {
+function obterViewAtivaMaestro() {
+  return Array.from(document.querySelectorAll('.view-section')).find(section => {
+    const style = window.getComputedStyle(section);
+    return section.classList.contains('active-view') &&
+      style.display !== 'none' &&
+      style.visibility !== 'hidden' &&
+      section.offsetParent !== null;
+  });
+}
+
+function garantirViewInicialMaestro() {
+  const ativa = obterViewAtivaMaestro();
+
+  if (!ativa && typeof switchView === "function") {
+    switchView("view-hub");
+    return true;
+  }
+
+  return !!ativa;
+}
+
+async function bootSystem(options = {}) {
   try {
     const res = await apiCall("getConfiguracoesPWA");
 
@@ -272,12 +293,13 @@ async function bootSystem() {
     restaurarPWAOfflineMaestro();
   }
 
-  const lastView = sessionStorage.getItem('MAESTRO_LAST_VIEW') || 'view-hub';
+  const lastView = options.forceView || sessionStorage.getItem('MAESTRO_LAST_VIEW') || 'view-hub';
   switchView(lastView);
 
   carregarAvisosSMEB();
   verificarSessaoAtiva();
   restaurarSessaoEstudante();
+  garantirViewInicialMaestro();
 
   ocultarSplashScreen();
   if (typeof window.atualizarContadorNotificacoes === 'function') window.atualizarContadorNotificacoes();
@@ -738,12 +760,12 @@ function aplicarTemaAtual() {
   }
 }
 
-window.onload = function () {
+window.onload = async function () {
   if (localStorage.getItem('MAESTRO_DARK_MODE') === 'true') {
     document.body.classList.add('dark-theme');
   }
 
-  if (typeof checkClientGateway === 'function') checkClientGateway();
+  if (typeof checkClientGateway === 'function') await checkClientGateway();
 
   const urlParams = new URLSearchParams(window.location.search);
   const idParam = urlParams.get('id');

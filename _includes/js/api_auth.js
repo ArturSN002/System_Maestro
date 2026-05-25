@@ -13,7 +13,7 @@ const IAM_STATE = {
 };
 
 const CLIENT_DIRECTORY = {
-  "Ceará-Mirim": "https://script.google.com/macros/s/AKfycbwPsGciFa7SMcwYM5vMpvzgJVCkj_SvhJLcYU5Gl-XJxnuRFuPm-Vl_Xtpgo5PAeUyC/exec",
+  "Ceará-Mirim": "https://script.google.com/macros/s/AKfycbxxZq0c5Chf6PR-nwjvZ-Ed9xgp55U1u5SVxnbFCNr2NQX3YMSrpNKyT4NdtV_yJ_4qSg/exec",
 };
 
 async function checkClientGateway() {
@@ -32,7 +32,8 @@ async function checkClientGateway() {
       gateway.classList.remove("active-view");
     }
     GAS_URL = savedUrl;
-    if (typeof bootSystem === "function") bootSystem();
+    if (typeof bootSystem === "function") await bootSystem();
+    return true;
   } else {
     if (splash) {
       splash.style.opacity = "0";
@@ -59,10 +60,11 @@ async function checkClientGateway() {
         select.appendChild(option);
       }
     }
+    return false;
   }
 }
 
-function salvarCliente() {
+async function salvarCliente() {
   const select = document.getElementById("client-select");
   if (!select) return;
   const selectedUrl = select.value;
@@ -80,7 +82,13 @@ function salvarCliente() {
   const splash = document.getElementById("splash-screen");
   if (splash) splash.classList.remove("hidden");
 
-  if (typeof bootSystem === "function") bootSystem();
+  sessionStorage.setItem("MAESTRO_LAST_VIEW", "view-hub");
+
+  if (typeof bootSystem === "function") {
+    await bootSystem({ forceView: "view-hub" });
+  } else if (typeof switchView === "function") {
+    switchView("view-hub");
+  }
 }
 
 function normalizarRespostaApiIAM(data) {
@@ -396,7 +404,25 @@ async function loginCarteiraIAM() {
   resBox.classList.add('hidden');
 
   try {
-    const res = await apiCall("autenticarEstudanteIAM", { login, identificador: login, senha });
+    let res = await apiCall("autenticarEstudanteIAM", {
+      login,
+      identificador: login,
+      senha,
+      canal: "carteira",
+      origemCarteira: true
+    });
+
+    if (!res.sucesso && String(login || "").replace(/\D/g, "").length === 11) {
+      const fallbackCarteira = await apiCall("autenticarCarteiraDigital", {
+        login,
+        identificador: login,
+        senha,
+        senhaDigitada: senha
+      });
+      if (fallbackCarteira && (fallbackCarteira.sucesso || fallbackCarteira.status === "PRIMEIRO_ACESSO" || fallbackCarteira.erro)) {
+        res = fallbackCarteira;
+      }
+    }
 
     if (res.status === "PRIMEIRO_ACESSO") {
       prepararPrimeiroAcessoIAM(login, senha, res, "ESTUDANTE");
@@ -405,6 +431,17 @@ async function loginCarteiraIAM() {
 
     if (!res.sucesso) {
       resBox.innerText = res.erro || "Login inválido.";
+      const cpfLogin = String(login || "").replace(/\D/g, "");
+      if (cpfLogin.length === 11 && /acesso negado|senha incorreta/i.test(resBox.innerText)) {
+        try {
+          const statusCpf = await apiCall("consultarStatusCPF", { cpf: cpfLogin });
+          if (statusCpf && statusCpf.encontrado) {
+            resBox.innerText = "Carteira digital nao liberada com este PIN. Acompanhe a inscricao pelo CPF ou entre com o ID/e-mail e a senha ja definida.";
+          }
+        } catch (statusError) {
+          console.warn("Nao foi possivel consultar o status do CPF apos falha de carteira:", statusError);
+        }
+      }
       resBox.classList.remove('hidden');
       return;
     }
