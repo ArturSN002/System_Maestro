@@ -873,6 +873,25 @@ async function dispararAvisoPublico() {
         const adapterResultadoPush = adapterComunicacaoMaestro("pushResult");
         const res = adapterResultadoPush ? adapterResultadoPush(resRaw) : resRaw;
 
+        if (res.sucesso) {
+            showToast("Aviso afixado e alunos notificados!", "success");
+            fecharModalAvisosFiscal();
+            btn.innerHTML = 'PUBLICAR AVISO';
+            btn.disabled = false;
+        } else {
+            showToast(res.erro || "Falha ao publicar.", "error");
+            btn.innerHTML = 'TENTAR NOVAMENTE';
+            btn.disabled = false;
+        }
+    } catch (e) {
+        showToast("Erro na comunicação: " + e.message, "error");
+        btn.innerHTML = 'TENTAR NOVAMENTE';
+        btn.disabled = false;
+    }
+}
+
+async function dispararPushLoteManual() {
+    if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
 
     const rota = document.getElementById('filtro-rota-push').value;
     const turno = document.getElementById('filtro-turno-push').value;
