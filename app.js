@@ -19,6 +19,7 @@
 {% include js/mobilidade.js %}
 {% include js/operacao.js %}
 {% include js/admin_dashboard.js %}
+{% include js/admin_semestres.js %}
 {% include js/admin_fiscal.js %}
 {% include js/admin_sos.js %}
 

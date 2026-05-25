@@ -287,7 +287,14 @@ async function carregarFilaAuditoria(ehPesquisa = false) {
 
     try {
         const pesquisaAtual = ehPesquisa ? (document.getElementById('auditoria-pesquisa')?.value.trim() || "") : "";
-        const res = await apiCall("getListaAuditoria", { pesquisa: pesquisaAtual, limite: 300 });
+        const semesterContext = (window.MaestroData && window.MaestroData.contexts && window.MaestroData.contexts.semester)
+            ? window.MaestroData.contexts.semester.get()
+            : {};
+        const res = await apiCall("getListaAuditoria", {
+            pesquisa: pesquisaAtual,
+            limite: 300,
+            semestreId: semesterContext.semestreId || semesterContext.semestreAtual || ""
+        });
         if (res.sucesso) {
             arrayAlunosAuditoria = Array.isArray(res.lista) ? res.lista.map(normalizarAlunoAuditoria) : [];
             aplicarFiltrosAuditoria();

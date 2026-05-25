@@ -59,6 +59,53 @@
          <button class="btn-solid dark-bg" style="margin-top: 15px;" onclick="switchView('view-admin-hub')">Voltar ao Menu</button>
       </section>
 
+      <section id="view-semestres" class="view-section">
+         <div class="form-card" style="padding: 15px; margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 15px; flex-wrap: wrap;">
+               <div>
+                  <h2 style="margin:0; font-size: 16px; color: var(--primary);">GESTAO DE SEMESTRES</h2>
+                  <p style="font-size: 10px; color: var(--text-sub); margin: 5px 0 0;">Supervisor e moderador podem criar, atualizar, arquivar e definir o ciclo oficial usado por auditoria, dashboard e carteira.</p>
+               </div>
+               <button onclick="carregarSemestresMaestro()" style="background: none; border: none; font-size: 20px; cursor: pointer;" aria-label="Atualizar semestres">Atualizar</button>
+            </div>
+
+            <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+               <span class="label-sm" style="color: #059669;">SEMESTRE ATUAL</span>
+               <strong id="semestres-atual-label" style="display:block; color: var(--text-main); font-size: 15px; margin-top: 4px;">-</strong>
+               <span id="semestres-atual-id" style="font-size: 11px; color: var(--text-sub);">-</span>
+            </div>
+
+            <div class="grid-desktop" style="gap: 10px; align-items: end;">
+               <input type="text" id="semestre-id" class="input-field" style="margin:0;" placeholder="ID: 2026_1">
+               <input type="text" id="semestre-label" class="input-field" style="margin:0;" placeholder="Nome exibido: 2026.1">
+               <input type="number" id="semestre-ano" class="input-field" style="margin:0;" placeholder="Ano">
+               <select id="semestre-periodo" class="input-field" style="margin:0;">
+                  <option value="">Periodo</option>
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+               </select>
+               <input type="date" id="semestre-inicio" class="input-field" style="margin:0;" aria-label="Inicio do semestre">
+               <input type="date" id="semestre-fim" class="input-field" style="margin:0;" aria-label="Fim do semestre">
+               <select id="semestre-status" class="input-field" style="margin:0;">
+                  <option value="PASSADO">Passado</option>
+                  <option value="ATUAL">Atual</option>
+                  <option value="ARQUIVADO">Arquivado</option>
+               </select>
+            </div>
+
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
+               <button class="btn-solid" style="width: auto; margin: 0; padding: 10px 14px;" onclick="salvarSemestreMaestroUI()">Salvar semestre</button>
+               <button class="btn-text" style="margin: 0; padding: 10px 14px;" onclick="limparFormularioSemestreMaestro()">Limpar</button>
+            </div>
+         </div>
+
+         <div id="semestres-lista-container" class="grid-desktop">
+            <div class="text-center" style="padding: 30px;"><div class="loader" style="margin: 0 auto;"></div></div>
+         </div>
+
+         <button class="btn-solid dark-bg" style="margin-top: 15px;" onclick="switchView('view-admin-hub')">Voltar ao Menu</button>
+      </section>
+
       <section id="view-moderador" class="view-section">
          <div class="form-card" style="padding: 15px; border: 2px solid #333;">
             <div class="form-header" style="margin-bottom: 20px;">

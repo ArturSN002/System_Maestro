@@ -82,16 +82,17 @@ function atualizarManifestDinamicoMaestro(themeConfig) {
   const themeColor = light.primary || (window.THEME_LIGHT && window.THEME_LIGHT.primary) || "#0A3D6B";
   const backgroundColor = light.secondary || (window.THEME_LIGHT && window.THEME_LIGHT.secondary) || "#F8F9FA";
   const manifestLink = document.querySelector('link[rel="manifest"]');
+  const appBaseUrl = new URL("./", window.location.href).href;
 
   if (!manifestLink || typeof Blob === "undefined" || !window.URL || typeof window.URL.createObjectURL !== "function") return null;
 
   const manifest = {
-    id: "./",
+    id: appBaseUrl,
     name: nome,
     short_name: shortName,
     description: "Portal Oficial de Mobilidade",
-    start_url: "./",
-    scope: "./",
+    start_url: appBaseUrl,
+    scope: appBaseUrl,
     display: "standalone",
     display_override: ["standalone", "minimal-ui"],
     orientation: "portrait",
@@ -263,6 +264,8 @@ async function bootSystem() {
       if (elCnpj && contatoConfig.CNPJ) { elCnpj.innerText = "CNPJ: " + contatoConfig.CNPJ; elCnpj.classList.remove('hidden'); }
 
       initPWA();
+    } else {
+      restaurarPWAOfflineMaestro();
     }
   } catch (e) {
     console.warn("A arrancar em modo offline persistente.");

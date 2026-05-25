@@ -145,10 +145,11 @@
         "view-fiscal",
         "view-auditoria",
         "view-dashboard",
+        "view-semestres",
         "view-notificacoes",
         "view-radar"
       ]),
-      actions: ["publico", "fiscalizar", "encerrarRota", "reportarSos", "gerirRotas", "auditoria", "comunicacao", "dashboard", "radar"]
+      actions: ["publico", "fiscalizar", "encerrarRota", "reportarSos", "gerirRotas", "auditoria", "comunicacao", "dashboard", "semestres", "radar"]
     },
     MODERADOR: {
       label: "Moderador",
@@ -158,17 +159,18 @@
         "view-fiscal",
         "view-auditoria",
         "view-dashboard",
+        "view-semestres",
         "view-notificacoes",
         "view-moderador",
         "view-painel-motorista"
       ]),
-      actions: ["publico", "estudante", "fiscalizar", "encerrarRota", "reportarSos", "gerirRotas", "auditoria", "comunicacao", "dashboard", "salaMaquinas", "motoristaRotas", "radar"]
+      actions: ["publico", "estudante", "fiscalizar", "encerrarRota", "reportarSos", "gerirRotas", "auditoria", "comunicacao", "dashboard", "semestres", "salaMaquinas", "motoristaRotas", "radar"]
     }
   };
 
   const NAVIGATION_MENU_GROUPS = {
     "menu-grupo-campo": ["fiscalizar", "encerrarRota", "reportarSos"],
-    "menu-grupo-secretaria": ["gerirRotas", "auditoria", "comunicacao", "dashboard"],
+    "menu-grupo-secretaria": ["gerirRotas", "auditoria", "comunicacao", "dashboard", "semestres"],
     "menu-grupo-moderador": ["salaMaquinas"]
   };
 
@@ -848,6 +850,7 @@
       canDashboard: profileHasAction(level, "dashboard"),
       canCommunicate: profileHasAction(level, "comunicacao"),
       canModerate: isModerator,
+      canManageSemesters: profileHasAction(level, "semestres"),
       canUseMachineRoom: profileHasAction(level, "salaMaquinas"),
       canFiscalize: profileHasAction(level, "fiscalizar"),
       canDriveRoute: profileHasAction(level, "motoristaRotas"),

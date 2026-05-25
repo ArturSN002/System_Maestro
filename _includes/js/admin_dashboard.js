@@ -88,7 +88,12 @@ function salvarCacheDashboardMaestro(statsObj) {
 }
 
 async function buscarDashboardStatsServidorMaestro() {
-    const res = await apiCall("getDashboardStats");
+    const semesterContext = (window.MaestroData && window.MaestroData.contexts && window.MaestroData.contexts.semester)
+        ? window.MaestroData.contexts.semester.get()
+        : {};
+    const res = await apiCall("getDashboardStats", {
+        semestreId: semesterContext.semestreId || semesterContext.semestreAtual || ""
+    });
     const dashboardStats = normalizarDashboardStatsMaestro(res);
     if (!dashboardStatsValido(dashboardStats)) {
         const erro = dashboardStats && dashboardStats.erro ? dashboardStats.erro : "Dados do Dashboard indisponiveis.";
