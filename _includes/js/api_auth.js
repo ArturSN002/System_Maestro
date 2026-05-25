@@ -13,7 +13,7 @@ const IAM_STATE = {
 };
 
 const CLIENT_DIRECTORY = {
-  "Ceará-Mirim": "https://script.google.com/macros/s/AKfycbw3C2zpd8IoqxFkJkRGq7maOqjO9vKtnqCGCCZrnHIullbFUsCzNhHk16B0T6e4vgn0RQ/exec",
+  "Ceará-Mirim": "https://script.google.com/macros/s/AKfycbxF1qmx4rexq8X3kFlxqkq4OhY6GZeiFSQRsqhVbAdWRHXXQgHK0esWwOaJsw4HPz7k6A/exec",
 };
 
 async function checkClientGateway() {
@@ -102,7 +102,115 @@ function normalizarRespostaApiIAM(data) {
   return data;
 }
 
-async function apiCall(action, payload = {}) {
+function obterSemestrePayloadApiMaestro(payload) {
+  if (payload && (payload.semestreId || payload.semestre_id || payload.semestreAlvo || payload.semestre)) {
+    return payload.semestreId || payload.semestre_id || payload.semestreAlvo || payload.semestre;
+  }
+
+  try {
+    const semesterContext = window.MaestroData && window.MaestroData.contexts && window.MaestroData.contexts.semester
+      ? window.MaestroData.contexts.semester.get()
+      : {};
+    return semesterContext.semestreId || semesterContext.semestreAtual || semesterContext.activeSemesterId || "";
+  } catch (e) {
+    return "";
+  }
+}
+
+function obterTenantPayloadApiMaestro(payload) {
+  if (payload && (payload.tenantId || payload.tenantID || payload.tenant_id)) {
+    return payload.tenantId || payload.tenantID || payload.tenant_id;
+  }
+
+  try {
+    const tenantContext = window.MaestroData && window.MaestroData.contexts && window.MaestroData.contexts.tenant
+      ? window.MaestroData.contexts.tenant.get()
+      : {};
+    return tenantContext.tenantId || tenantContext.tenantID || tenantContext.tenant_id || "";
+  } catch (e) {
+    return "";
+  }
+}
+
+function acaoApiUsaSemestreMaestro(action) {
+  return [
+    "verificarDuplicidadeCPF",
+    "verificarCpfRenovacao",
+    "submeterInscricaoNativa",
+    "validarDocumentoPublico",
+    "consultarStatusCPF",
+    "registrarPushToken",
+    "getViagensDisponiveisPortal",
+    "realizarCheckInOnibus",
+    "solicitarCargoGuia",
+    "abdicarCargoGuia",
+    "atualizarGPSOnibus",
+    "statusRadarOnibus",
+    "sincronizarCacheFiscal",
+    "consultarEstudantePorId",
+    "getFotoEstudanteBase64",
+    "declararEmergenciaOnibus",
+    "encerrarRotaManual",
+    "getFiltrosPush",
+    "dispararPushLoteManual",
+    "getListaAuditoria",
+    "verFicheiroBase64",
+    "atualizarStatusAluno",
+    "enviarParecerOperador",
+    "getDashboardStats",
+    "forcarExecucaoMotor",
+    "healthcheckMaestro",
+    "atualizarEstagioCarteira"
+  ].indexOf(String(action || "")) !== -1;
+}
+
+function prepararPayloadApiMaestro(action, payload) {
+  const base = payload && typeof payload === "object" && !Array.isArray(payload)
+    ? Object.assign({}, payload)
+    : {};
+  const semestreId = obterSemestrePayloadApiMaestro(base);
+  const tenantId = obterTenantPayloadApiMaestro(base);
+
+  if (acaoApiUsaSemestreMaestro(action) && semestreId && !base.semestreId) {
+    base.semestreId = semestreId;
+  }
+
+  if (tenantId && !base.tenantId) {
+    base.tenantId = tenantId;
+  }
+
+  return base;
+}
+
+function obterTimeoutApiMaestro(action, options) {
+  if (options && Number(options.timeoutMs) > 0) return Number(options.timeoutMs);
+  const acao = String(action || "");
+  if (acao === "getListaAuditoria") return 10000;
+  if (acao === "submeterInscricaoNativa" || acao === "atualizarEstagioCarteira") return 120000;
+  if (acao === "forcarExecucaoMotor") return 180000;
+  if (acao === "getDashboardStats") return 45000;
+  return 30000;
+}
+
+function normalizarErroBackendMaestro(data, action) {
+  if (!data || data.sucesso !== false) return data;
+
+  const detalhes = String(data.detalhes || data.erro || "");
+  if (/function .* is not defined|is not defined/i.test(detalhes)) {
+    data.codigo = data.codigo || "GAS_DEPLOY_DESATUALIZADO";
+    data.erro = "Backend publicado desatualizado. Atualize a biblioteca GAS e tente novamente.";
+  } else if (/FIRESTORE_INDEX_REQUIRED|requires an index|create_composite|FAILED_PRECONDITION/i.test(detalhes)) {
+    data.codigo = data.codigo || "FIRESTORE_INDEX_REQUIRED";
+    data.erro = "Indice Firestore ausente para esta consulta. Crie o indice indicado no console Firebase.";
+  } else if (/quota|429/i.test(detalhes)) {
+    data.codigo = data.codigo || "QUOTA_LIMIT";
+  }
+
+  data.action = data.action || action;
+  return data;
+}
+
+async function apiCall(action, payload = {}, options = {}) {
   let token = localStorage.getItem("MAESTRO_TOKEN") || localStorage.getItem("MAESTRO_EST_TOKEN");
 
   if (!GAS_URL) return { sucesso: false, erro: "Cliente Maestro não configurado." };
@@ -113,27 +221,50 @@ async function apiCall(action, payload = {}) {
     localStorage.removeItem("MAESTRO_EST_TOKEN");
   }
 
+  const payloadFinal = prepararPayloadApiMaestro(action, payload);
   const body = {
     action: action,
     token: token,
-    payload: payload
+    payload: payloadFinal
   };
+  const timeoutMs = obterTimeoutApiMaestro(action, options);
+  const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+  const timeoutId = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
 
   try {
-    const response = await fetch(GAS_URL, {
+    const fetchOptions = {
       method: 'POST',
       redirect: "follow",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify(body)
-    });
-    const data = normalizarRespostaApiIAM(await response.json());
+    };
+    if (controller) fetchOptions.signal = controller.signal;
+
+    const response = await fetch(GAS_URL, fetchOptions);
+    if (timeoutId) clearTimeout(timeoutId);
+
+    let data;
+    try {
+      data = normalizarRespostaApiIAM(await response.json());
+    } catch (parseError) {
+      return {
+        sucesso: false,
+        erro: "Resposta invalida do backend.",
+        detalhes: parseError.message,
+        status: response.status || 502,
+        action: action
+      };
+    }
+    data = normalizarErroBackendMaestro(data, action);
 
     if (data.status === 401 && action !== "invalidarTokenSessao") {
       console.error("401 Unauthorized na rota:", action);
       localStorage.removeItem("MAESTRO_TOKEN");
       localStorage.removeItem("MAESTRO_EST_TOKEN");
-      limparContextsSessaoMaestro();
-      showToast("Sessão encerrada. Por favor, entre novamente.", "error");
+      if (typeof limparContextsSessaoMaestro === "function") limparContextsSessaoMaestro();
+      if (typeof showToast === "function") {
+        showToast("Sessão encerrada. Por favor, entre novamente.", "error");
+      }
       setTimeout(() => {
         window.location.reload();
       }, 2000);
@@ -142,8 +273,19 @@ async function apiCall(action, payload = {}) {
 
     return data;
   } catch (error) {
+    if (timeoutId) clearTimeout(timeoutId);
     console.error("Erro na chamada API:", error);
-    return { sucesso: false, erro: "Falha na ligação ao servidor." };
+    const abortado = error && error.name === "AbortError";
+    return {
+      sucesso: false,
+      erro: abortado
+        ? "Tempo limite excedido ao comunicar com o backend."
+        : "Falha na ligacao ao servidor.",
+      detalhes: error && error.message ? error.message : String(error),
+      status: abortado ? 408 : 0,
+      codigo: abortado ? "API_TIMEOUT" : "NETWORK_ERROR",
+      action: action
+    };
   }
 }
 

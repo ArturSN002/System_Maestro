@@ -292,7 +292,7 @@ async function carregarFilaAuditoria(ehPesquisa = false) {
             : {};
         const res = await apiCall("getListaAuditoria", {
             pesquisa: pesquisaAtual,
-            limite: 300,
+            limite: 50,
             semestreId: semesterContext.semestreId || semesterContext.semestreAtual || ""
         });
         if (res.sucesso) {
@@ -304,6 +304,7 @@ async function carregarFilaAuditoria(ehPesquisa = false) {
                     <span class="error-icon">⚠️</span>
                     <h3>Erro ao Carregar Fila</h3>
                     <p>${escapeHTMLAuditoria(res.erro)}</p>
+                    ${res.detalhes ? `<small>${escapeHTMLAuditoria(res.detalhes)}</small>` : ""}
                 </div>
             `;
         }

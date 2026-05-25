@@ -214,9 +214,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+function obterSemestreAtualInscricaoMaestro() {
+    try {
+        const semesterContext = window.MaestroData && window.MaestroData.contexts && window.MaestroData.contexts.semester
+            ? window.MaestroData.contexts.semester.get()
+            : {};
+        return semesterContext.semestreId || semesterContext.semestreAtual || semesterContext.activeSemesterId || "";
+    } catch (e) {
+        return "";
+    }
+}
+
 async function verificarCPFInscricao() {
     const cpfRaw = document.getElementById('insc-cpf').value.replace(/\D/g, '');
     const btn = document.getElementById('btn-insc-verificar');
+    const semestreId = obterSemestreAtualInscricaoMaestro();
 
     if (cpfRaw.length !== 11) {
         showToast("CPF inválido. Informe 11 dígitos.", "error");
@@ -229,7 +241,7 @@ async function verificarCPFInscricao() {
 
     try {
         // 1. Verificar duplicidade por semestre via API
-        const resDuplicidade = await apiCall("verificarDuplicidadeCPF", { cpf: cpfRaw });
+        const resDuplicidade = await apiCall("verificarDuplicidadeCPF", { cpf: cpfRaw, semestreId: semestreId });
 
         // Se a API não responder corretamente, tratamos como erro de rede
         if (!resDuplicidade) throw new Error("Sem resposta da verificacao de CPF");
@@ -263,7 +275,7 @@ async function verificarCPFInscricao() {
         }
 
         // Caminho livre: buscar dados do root Firestore para autofill de renovacao.
-        const res = await apiCall("verificarCpfRenovacao", { cpf: cpfRaw });
+        const res = await apiCall("verificarCpfRenovacao", { cpf: cpfRaw, semestreId: semestreId });
 
         if (!res.sucesso) {
             showToast(res.erro || "Erro ao verificar CPF.", "error");
@@ -719,10 +731,13 @@ function prepararEnvioNativo() {
     const menorIdade = getRadioSimNao('insc-menor');
     const acompanhado = getRadioSimNao('insc-criancas');
     const arquivosPayload = Object.assign({}, inscricaoArquivos, { fotoBase64: fotoFinal });
+    const semestreId = obterSemestreAtualInscricaoMaestro();
 
     const payloadNativo = {
         // Step 1
         cpf: cpf,
+        semestreId: semestreId,
+        semestreAlvo: semestreId,
 
         // Step 2
         nome: nome,
