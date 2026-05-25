@@ -283,7 +283,7 @@ async function carregarFilaAuditoria(ehPesquisa = false) {
     // Sempre que carregar a lista ou pesquisar, volta à página 1
     paginaAtualAuditoria = 1;
 
-    container.innerHTML = '<div class="text-center" style="padding: 30px;"><div class="loader" style="margin: 0 auto;"></div><p style="font-size: 11px; margin-top: 10px;">A puxar a fila de trabalho...</p></div>';
+    container.innerHTML = '<div class="loading-state-box"><div class="loader"></div><p>A puxar a fila de trabalho...</p></div>';
 
     try {
         const pesquisaAtual = ehPesquisa ? (document.getElementById('auditoria-pesquisa')?.value.trim() || "") : "";
@@ -299,10 +299,22 @@ async function carregarFilaAuditoria(ehPesquisa = false) {
             arrayAlunosAuditoria = Array.isArray(res.lista) ? res.lista.map(normalizarAlunoAuditoria) : [];
             aplicarFiltrosAuditoria();
         } else {
-            container.innerHTML = `<div class="error-box">Erro: ${escapeHTMLAuditoria(res.erro)}</div>`;
+            container.innerHTML = `
+                <div class="error-state-box">
+                    <span class="error-icon">⚠️</span>
+                    <h3>Erro ao Carregar Fila</h3>
+                    <p>${escapeHTMLAuditoria(res.erro)}</p>
+                </div>
+            `;
         }
     } catch (e) {
-        container.innerHTML = `<div class="error-box">Falha ao ligar à base de dados: ${escapeHTMLAuditoria(e.message)}</div>`;
+        container.innerHTML = `
+            <div class="error-state-box">
+                <span class="error-icon">📡</span>
+                <h3>Falha na Ligação</h3>
+                <p>Não foi possível conectar com o servidor: ${escapeHTMLAuditoria(e.message)}</p>
+            </div>
+        `;
     }
 }
 
@@ -353,7 +365,7 @@ function renderizarListaAuditoria() {
     const container = document.getElementById('auditoria-fila-container');
 
     if (!arrayAlunosAuditoriaFiltrado || arrayAlunosAuditoriaFiltrado.length === 0) {
-        container.innerHTML = `<div style="text-align: center; padding: 30px; background: #fff; border: 1px dashed #ccc; border-radius: 8px;"><h3 style="color: var(--success); margin:0;">🎉 Fila Vazia!</h3><p style="font-size: 12px; color: #666;">Todos os pedidos foram atendidos ou não há resultados.</p></div>`;
+        container.innerHTML = `<div class="empty-state-box"><h3>🎉 Fila Vazia!</h3><p>Todos os pedidos foram atendidos ou não há resultados.</p></div>`;
         return;
     }
 
@@ -363,13 +375,27 @@ function renderizarListaAuditoria() {
     const fim = inicio + ITENS_POR_PAGINA;
     const itensPagina = arrayAlunosAuditoriaFiltrado.slice(inicio, fim);
 
-    let html = '';
+    let html = `
+        <div class="auditoria-table-wrapper">
+            <table class="auditoria-table">
+                <thead>
+                    <tr>
+                        <th>Estudante</th>
+                        <th>Submissão</th>
+                        <th>Status</th>
+                        <th>Estágio</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
     itensPagina.forEach(aluno => {
-        let corBadge = '#333'; let bgBadge = '#f0f0f0';
-        if (aluno.statusAuditoria === "ANALISE_HUMANA" || aluno.statusAuditoria === "PENDENCIA") { corBadge = '#d97706'; bgBadge = '#fef3c7'; }
-        else if (aluno.statusAuditoria === "ALERTA_FRAUDE" || aluno.statusAtividade === "SUSPENSO") { corBadge = '#dc2626'; bgBadge = '#fee2e2'; }
-        else if (aluno.statusAuditoria === "PENDENTE") { corBadge = '#4b5563'; bgBadge = '#f3f4f6'; }
-        else if (aluno.statusAtividade === "ATIVO") { corBadge = '#059669'; bgBadge = '#d1fae5'; }
+        let badgeClass = 'badge-auditoria-pendente';
+        if (aluno.statusAuditoria === "ANALISE_HUMANA" || aluno.statusAuditoria === "PENDENCIA") { badgeClass = 'badge-auditoria-retido'; }
+        else if (aluno.statusAuditoria === "ALERTA_FRAUDE" || aluno.statusAtividade === "SUSPENSO") { badgeClass = 'badge-auditoria-fraude'; }
+        else if (aluno.statusAuditoria === "PENDENTE") { badgeClass = 'badge-auditoria-pendente'; }
+        else if (aluno.statusAtividade === "ATIVO") { badgeClass = 'badge-auditoria-ativo'; }
 
         let d = new Date(aluno.timestamp);
         let strData = d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -382,31 +408,48 @@ function renderizarListaAuditoria() {
         const semestreSeguro = escapeHTMLAuditoria(aluno.semestreId || aluno.semestreAtual || "");
         const estagio = aluno.estagio || {};
         const badgeEstagio = (estagio.ativo || estagio.tipoVinculo || estagio.statusValidacao)
-            ? `<span class="auditoria-badge" style="color:#075985; background:#e0f2fe; margin-left: 6px; display: inline-block; margin-top: 4px;">Estagio ${escapeHTMLAuditoria(estagio.statusValidacao || "")}</span>`
+            ? `<span class="auditoria-badge badge-auditoria-estagio">Estagio ${escapeHTMLAuditoria(estagio.statusValidacao || "")}</span>`
             : "";
 
         html += `
-        <div class="auditoria-linha">
-            <div class="auditoria-info">
-                <h4 class="auditoria-nome">${nomeTratado}</h4>
-                <span class="auditoria-data">Submetido: ${strDataSeguro}</span>
-                <span class="auditoria-badge" style="color: ${corBadge}; background: ${bgBadge}; margin-left: 0; display: inline-block; margin-top: 4px;">${statusAuditoria}</span>
-                ${badgeEstagio}
-            </div>
-            <button class="btn-solid" style="width: auto; margin: 0; padding: 8px 12px; font-size: 11px;" data-cpf="${cpfAluno}" data-semestre-id="${semestreSeguro}" onclick="abrirModalRaioX(this.dataset.cpf, this.dataset.semestreId)">Detalhar</button>
-        </div>`;
+        <tr class="auditoria-row">
+            <td data-label="Estudante">
+                <div class="auditoria-student-info">
+                    <strong class="auditoria-nome">${nomeTratado}</strong>
+                    <span class="auditoria-sub-info">CPF: ${cpfAluno}</span>
+                </div>
+            </td>
+            <td data-label="Submissão">
+                <span class="auditoria-data">${strDataSeguro}</span>
+            </td>
+            <td data-label="Status">
+                <span class="auditoria-badge ${badgeClass}">${statusAuditoria}</span>
+            </td>
+            <td data-label="Estágio">
+                ${badgeEstagio || '<span class="text-light">-</span>'}
+            </td>
+            <td data-label="Ações">
+                <button class="btn-solid btn-auditoria-detalhar" data-cpf="${cpfAluno}" data-semestre-id="${semestreSeguro}" onclick="abrirModalRaioX(this.dataset.cpf, this.dataset.semestreId)">Detalhar</button>
+            </td>
+        </tr>`;
     });
+
+    html += `
+                </tbody>
+            </table>
+        </div>
+    `;
 
     // Rodapé de Paginação
     if (totalPaginas > 1) {
-        const btnPrevDisabled = paginaAtualAuditoria === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="mudarPaginaAuditoria(-1)"`;
-        const btnNextDisabled = paginaAtualAuditoria === totalPaginas ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="mudarPaginaAuditoria(1)"`;
+        const btnPrevDisabled = paginaAtualAuditoria === 1 ? 'disabled' : `onclick="mudarPaginaAuditoria(-1)"`;
+        const btnNextDisabled = paginaAtualAuditoria === totalPaginas ? 'disabled' : `onclick="mudarPaginaAuditoria(1)"`;
 
         html += `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding: 10px; background: var(--secondary); border-radius: 8px; border: 1px solid var(--border);">
-            <button class="btn-solid dark-bg" style="width: auto; margin: 0; padding: 8px 15px;" ${btnPrevDisabled}>⬅ Ant.</button>
-            <span style="font-size: 12px; font-weight: 600; color: var(--text-main);">Pág. ${paginaAtualAuditoria} de ${totalPaginas}</span>
-            <button class="btn-solid dark-bg" style="width: auto; margin: 0; padding: 8px 15px;" ${btnNextDisabled}>Próx. ➡</button>
+        <div class="auditoria-paginacao">
+            <button class="btn-solid dark-bg btn-paginacao" ${btnPrevDisabled}>⬅ Ant.</button>
+            <span class="paginacao-texto">Pág. ${paginaAtualAuditoria} de ${totalPaginas}</span>
+            <button class="btn-solid dark-bg btn-paginacao" ${btnNextDisabled}>Próx. ➡</button>
         </div>`;
     }
 
@@ -830,25 +873,6 @@ async function dispararAvisoPublico() {
         const adapterResultadoPush = adapterComunicacaoMaestro("pushResult");
         const res = adapterResultadoPush ? adapterResultadoPush(resRaw) : resRaw;
 
-        if (res.sucesso) {
-            showToast("Aviso afixado e alunos notificados!", "success");
-            fecharModalAvisosFiscal();
-            btn.innerHTML = 'PUBLICAR AVISO';
-            btn.disabled = false;
-        } else {
-            showToast(res.erro || "Falha ao publicar.", "error");
-            btn.innerHTML = 'TENTAR NOVAMENTE';
-            btn.disabled = false;
-        }
-    } catch (e) {
-        showToast("Erro na comunicação: " + e.message, "error");
-        btn.innerHTML = 'TENTAR NOVAMENTE';
-        btn.disabled = false;
-    }
-}
-
-async function dispararPushSegmentado() {
-    if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
 
     const rota = document.getElementById('filtro-rota-push').value;
     const turno = document.getElementById('filtro-turno-push').value;

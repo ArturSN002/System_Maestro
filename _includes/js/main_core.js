@@ -678,11 +678,63 @@ function aplicarTemaAtual() {
   if (metaThemeColor) metaThemeColor.content = theme.primary;
 
   const logoAtual = (tokens && tokens.assets && tokens.assets.logo) || (legacyTheme && legacyTheme.logo);
+  const logoEl = document.getElementById('ui-logo');
+  const splashLogo = document.getElementById('splash-logo');
+  const sistemaNome = window.PWA_NOME || "SYSTEM MAESTRO";
+
+  const configurarFallbackLogo = (imgEl, fallbackSrc, placeholderText) => {
+    if (!imgEl) return;
+
+    // Remove placeholder anterior se houver para evitar duplicatas
+    const existingPlaceholder = imgEl.parentNode.querySelector('.logo-placeholder');
+    if (existingPlaceholder) {
+      existingPlaceholder.remove();
+    }
+
+    imgEl.classList.remove('hidden');
+
+    imgEl.onerror = () => {
+      const currentSrc = imgEl.src;
+      const isAbsoluteFallback = currentSrc.endsWith(fallbackSrc) || currentSrc.includes('/' + fallbackSrc);
+      if (!isAbsoluteFallback) {
+        console.warn(`[LogoFallback] Falha ao carregar logotipo remoto, tentando fallback local: ${fallbackSrc}`);
+        imgEl.src = fallbackSrc;
+      } else {
+        console.error(`[LogoFallback] Falha ao carregar fallback local de logotipo: ${fallbackSrc}. Exibindo placeholder.`);
+        imgEl.classList.add('hidden');
+
+        let placeholder = imgEl.parentNode.querySelector('.logo-placeholder');
+        if (!placeholder) {
+          placeholder = document.createElement('div');
+          placeholder.className = 'logo-placeholder';
+          imgEl.parentNode.insertBefore(placeholder, imgEl.nextSibling);
+        }
+        placeholder.textContent = placeholderText;
+        placeholder.style.setProperty('background', `linear-gradient(135deg, ${theme.primary} 0%, ${theme.accent} 100%)`, 'important');
+        placeholder.style.setProperty('-webkit-background-clip', 'text', 'important');
+        placeholder.style.setProperty('-webkit-text-fill-color', 'transparent', 'important');
+      }
+    };
+  };
+
   if (logoAtual && logoAtual !== "") {
-    const logoEl = document.getElementById('ui-logo');
-    const splashLogo = document.getElementById('splash-logo');
-    if (logoEl) { logoEl.src = logoAtual; logoEl.classList.remove('hidden'); }
-    if (splashLogo) { splashLogo.src = logoAtual; splashLogo.classList.remove('hidden'); }
+    if (logoEl) {
+      configurarFallbackLogo(logoEl, "MGA.png", sistemaNome);
+      logoEl.src = logoAtual;
+    }
+    if (splashLogo) {
+      configurarFallbackLogo(splashLogo, "icone.png", sistemaNome);
+      splashLogo.src = logoAtual;
+    }
+  } else {
+    if (logoEl) {
+      configurarFallbackLogo(logoEl, "MGA.png", sistemaNome);
+      logoEl.src = "MGA.png";
+    }
+    if (splashLogo) {
+      configurarFallbackLogo(splashLogo, "icone.png", sistemaNome);
+      splashLogo.src = "icone.png";
+    }
   }
 }
 

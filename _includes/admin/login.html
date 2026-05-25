@@ -2,7 +2,7 @@
 <section id="view-login-fiscal" class="view-section">
   <div class="form-card dark-form">
     <div class="form-header">
-      <span style="font-size: 36px; display: block; margin-bottom: 5px;">🛡️</span>
+      <span class="login-badge-icon">🛡️</span>
       <h2>Acesso Restrito</h2>
       <p>Identificação Operacional</p>
     </div>
@@ -11,16 +11,16 @@
       <input type="password" id="fiscal-senha" class="input-field" placeholder="Senha" autocomplete="current-password">
       <button type="submit" class="btn-solid accent-bg" id="btn-login-fiscal">AUTENTICAR</button>
     </form>
-    <div id="res-login-fiscal" class="error-box hidden" style="margin-top: 10px;"></div>
-    <button class="btn-text text-light" style="margin-top: 10px; font-size: 11px;" onclick="abrirRecuperacaoSenha()">Esqueci-me da senha</button>
+    <div id="res-login-fiscal" class="error-box hidden mt-10"></div>
+    <button class="btn-text text-light mt-10" onclick="abrirRecuperacaoSenha()">Esqueci-me da senha</button>
     <button class="btn-text text-light" onclick="switchView('view-hub')">Cancelar</button>
   </div>
 </section>
 
-<section id="view-recuperar-senha" class="view-section" style="display: none;">
+<section id="view-recuperar-senha" class="view-section hidden">
   <div class="form-card dark-form">
     <div class="form-header">
-      <span style="font-size: 36px; display: block; margin-bottom: 5px;">📧</span>
+      <span class="login-badge-icon">📧</span>
       <h2>Recuperação de Senha</h2>
       <p>Informe o e-mail cadastrado para receber o PIN de recuperação</p>
     </div>
@@ -30,24 +30,24 @@
   </div>
 </section>
 
-<section id="view-redefinir-senha" class="view-section" style="display: none;">
+<section id="view-redefinir-senha" class="view-section hidden">
   <div class="form-card dark-form">
     <div class="form-header">
-      <span style="font-size: 36px; display: block; margin-bottom: 5px;">🔑</span>
+      <span class="login-badge-icon">🔑</span>
       <h2>Redefinir Senha</h2>
       <p>Insira o PIN recebido no e-mail e a sua nova senha</p>
     </div>
     <form onsubmit="event.preventDefault(); confirmarRedefinicaoSenha();">
     <input type="text" id="redefinir-pin" class="input-field uppercase text-center" placeholder="PIN de 6 dígitos" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code">
-    <div style="position: relative;">
+    <div class="pos-relative">
       <input type="password" id="redefinir-nova-senha" class="input-field" placeholder="Nova senha" autocomplete="new-password">
-      <button type="button" aria-label="Mostrar ou ocultar nova senha" onclick="const campo=document.getElementById('redefinir-nova-senha'); campo.type=campo.type==='password'?'text':'password'; this.textContent='👁';" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); border:0; background:transparent; color:var(--primary); font-size:16px; cursor:pointer;">👁</button>
+      <button type="button" aria-label="Mostrar ou ocultar nova senha" onclick="const campo=document.getElementById('redefinir-nova-senha'); campo.type=campo.type==='password'?'text':'password'; this.textContent='👁';" class="pwd-toggle-btn">👁</button>
     </div>
-    <div style="position: relative;">
+    <div class="pos-relative">
       <input type="password" id="redefinir-confirmar-senha" class="input-field" placeholder="Confirmar nova senha" autocomplete="new-password">
-      <button type="button" aria-label="Mostrar ou ocultar confirmação de senha" onclick="const campo=document.getElementById('redefinir-confirmar-senha'); campo.type=campo.type==='password'?'text':'password'; this.textContent='👁';" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); border:0; background:transparent; color:var(--primary); font-size:16px; cursor:pointer;">👁</button>
+      <button type="button" aria-label="Mostrar ou ocultar confirmação de senha" onclick="const campo=document.getElementById('redefinir-confirmar-senha'); campo.type=campo.type==='password'?'text':'password'; this.textContent='👁';" class="pwd-toggle-btn">👁</button>
     </div>
-    <ul id="senha-regras-recuperacao" style="list-style: none; padding: 0; font-size: 11px; color: var(--text-sub); margin-bottom: 15px;">
+    <ul id="senha-regras-recuperacao" class="pwd-rules-list">
       <li id="regra-tam">❌ Mínimo de 8 caracteres</li>
       <li id="regra-mai">❌ Pelo menos uma letra maiúscula</li>
       <li id="regra-min">❌ Pelo menos uma letra minúscula</li>

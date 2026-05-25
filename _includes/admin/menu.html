@@ -1,8 +1,8 @@
 <!-- COMPONENTE: MENUS OPERACIONAIS (ADMIN E MOTORISTA) -->
 <section id="view-admin-hub" class="view-section">
-  <div class="welcome-text" style="display: flex; justify-content: space-between; align-items: center;">
+  <div class="welcome-text welcome-row">
     <span>Bem-vindo, <span id="nome-operador-logado"
-        style="color: var(--accent); font-weight: 700;">Operador</span></span>
+        class="welcome-operator-name">Operador</span></span>
   </div>
 
   <div id="menu-grupo-campo" class="grid-desktop">
@@ -14,86 +14,86 @@
       </div>
     </button>
 
-    <button class="menu-card outline-card" data-maestro-action="encerrarRota" style="border-color: var(--accent); background: rgba(245, 158, 11, 0.05);"
+    <button class="menu-card outline-card menu-card-accent" data-maestro-action="encerrarRota"
       onclick="abrirModalEncerrarRota()">
-      <span class="icon" style="background: none; filter: none;">🏁</span>
+      <span class="icon menu-card-icon-no-bg">🏁</span>
       <div class="info">
-        <strong style="color: var(--accent);">Finalizar Viagem (Manual)</strong>
+        <strong>Finalizar Viagem (Manual)</strong>
         <span>Limpar lotação de um autocarro</span>
       </div>
     </button>
 
-    <button class="menu-card outline-card" data-maestro-action="reportarSos" style="border-color: var(--danger); background: rgba(239, 68, 68, 0.1);"
+    <button class="menu-card outline-card menu-card-danger" data-maestro-action="reportarSos"
       onclick="abrirModalSOS()">
-      <span class="icon" style="background: var(--danger);">🚨</span>
+      <span class="icon menu-card-icon-danger-bg">🚨</span>
       <div class="info">
-        <strong style="color: var(--danger);">Reportar Avaria (SOS)</strong>
+        <strong>Reportar Avaria (SOS)</strong>
         <span>Aviso urgente à Secretaria e alunos</span>
       </div>
     </button>
   </div>
 
   <div id="menu-grupo-secretaria" class="hidden">
-    <div class="divider-text" style="color: #666; margin-top: 25px;">SECRETARIA E LOGÍSTICA</div>
+    <div class="divider-text mt-25">SECRETARIA E LOGÍSTICA</div>
 
     <button class="menu-card primary-card" data-maestro-action="gerirRotas" onclick="abrirModalSelecaoRota()">
-      <span class="icon" style="background: none; filter: none;">🚌</span>
+      <span class="icon menu-card-icon-no-bg">🚌</span>
       <div class="info">
         <strong>Fluxo de Rotas (GPS)</strong>
         <span>Assumir Rastreio ou Finalizar Viagem</span>
       </div>
     </button>
 
-    <button class="menu-card outline-card" data-maestro-action="auditoria" style="border-color: var(--primary);" onclick="abrirMesaAuditoria()">
-      <span class="icon" style="background: none; filter: none;">📂</span>
+    <button class="menu-card outline-card menu-card-primary" data-maestro-action="auditoria" onclick="abrirMesaAuditoria()">
+      <span class="icon menu-card-icon-no-bg">📂</span>
       <div class="info">
-        <strong style="color: var(--primary);">Mesa de Auditoria</strong>
+        <strong>Mesa de Auditoria</strong>
         <span>Validar documentos e gerir matrículas</span>
       </div>
     </button>
 
-    <button class="menu-card outline-card" data-maestro-action="comunicacao" style="border-color: #3b82f6; background: rgba(59, 130, 246, 0.05);"
+    <button class="menu-card outline-card menu-card-info" data-maestro-action="comunicacao"
       onclick="abrirModalAvisosFiscal()">
-      <span class="icon" style="background: none; filter: none;">📢</span>
+      <span class="icon menu-card-icon-no-bg">📢</span>
       <div class="info">
-        <strong style="color: #3b82f6;">Central de Comunicação</strong>
+        <strong>Central de Comunicação</strong>
         <span>Disparar avisos Push e Mural</span>
       </div>
     </button>
 
     <button class="menu-card outline-card" data-maestro-action="dashboard" onclick="carregarDashboard()">
-      <span class="icon" style="background: none; filter: none;">📊</span>
+      <span class="icon menu-card-icon-no-bg">📊</span>
       <div class="info">
-        <strong style="color: var(--text-main);">Painel Analítico</strong>
+        <strong>Painel Analítico</strong>
         <span>Estatísticas de uso e BI</span>
       </div>
     </button>
-    <button class="menu-card outline-card" data-maestro-action="semestres" style="border-color: var(--secondary);" onclick="abrirGestaoSemestres()">
-      <span class="icon" style="background: none; filter: none;">SEM</span>
+    <button class="menu-card outline-card menu-card-secondary" data-maestro-action="semestres" onclick="abrirGestaoSemestres()">
+      <span class="icon menu-card-icon-no-bg">SEM</span>
       <div class="info">
-        <strong style="color: var(--secondary);">Gestao de Semestres</strong>
+        <strong>Gestao de Semestres</strong>
         <span>Criar, arquivar e definir o semestre atual</span>
       </div>
     </button>
   </div>
 
   <div id="menu-grupo-moderador" class="hidden">
-    <div class="divider-text" style="color: #666; margin-top: 25px;">ADMINISTRAÇÃO DO SISTEMA</div>
+    <div class="divider-text mt-25">ADMINISTRAÇÃO DO SISTEMA</div>
 
-    <button class="menu-card dark-card" data-maestro-action="salaMaquinas" style="border-color: var(--accent);" onclick="abrirPainelModerador()">
+    <button class="menu-card dark-card menu-card-dark" data-maestro-action="salaMaquinas" onclick="abrirPainelModerador()">
       <span class="icon">⚙️</span>
       <div class="info">
-        <strong style="color: var(--accent);">Sala das Máquinas</strong>
+        <strong>Sala das Máquinas</strong>
         <span>CRON, Motores e Gestão de Contas</span>
       </div>
     </button>
   </div>
 
-  <button class="btn-text text-danger" style="margin-top: 20px; font-weight: 700;"
+  <button class="btn-text text-danger mt-20"
     onclick="encerrarSessaoOperador()">Sair do Sistema</button>
 </section>
 
-<div id="view-painel-motorista" class="view-section" style="display: none;">
+<div id="view-painel-motorista" class="view-section hidden">
   <div class="welcome-text">Central Logística do Motorista</div>
 
   <div class="grid-desktop">
@@ -123,8 +123,7 @@
   </button>
   </div>
 
-  <div style="text-align: center; margin-top: 30px; margin-bottom: 20px;">
-    <a href="#" onclick="encerrarSessaoOperador()"
-      style="color: var(--danger); font-size: 14px; font-weight: 600; text-decoration: underline;">Sair do Sistema</a>
+  <div class="text-center mt-20 mb-20">
+    <a href="#" onclick="encerrarSessaoOperador()" class="btn-text text-danger">Sair do Sistema</a>
   </div>
 </div>

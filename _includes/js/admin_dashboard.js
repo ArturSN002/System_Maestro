@@ -199,15 +199,22 @@ function renderizarDashboardUI(payload) {
 
     // 3. Renderização Segura: Tenta renderizar gráficos evitando travamento total em caso de corrupção
     try {
-        const baseColor = '#3B82F6';
+        // Obter cores do tema dinamicamente
+        const style = getComputedStyle(document.body);
+        const primaryColor = style.getPropertyValue('--primary').trim() || '#3B82F6';
+        const accentColor = style.getPropertyValue('--accent').trim() || '#F59E0B';
+        const successColor = style.getPropertyValue('--success').trim() || '#10B981';
+        const warningColor = style.getPropertyValue('--warning').trim() || '#FBBF24';
+        const dangerColor = style.getPropertyValue('--danger').trim() || '#EF4444';
+        const textColor = style.getPropertyValue('--text-muted').trim() || '#aaaaaa';
 
         // 4. Verificações Condicionais e Renderização Segura (Blindado contra Undefined/Null e Array Conversions)
         const st = graficos.status || {};
         renderChart('chart-status', 'doughnut',
             ["Ativos", "Pendentes", "Retidos (Humana)", "Cancelados/Suspensos"],
             [st["Ativos"] || 0, st["Pendentes"] || 0, st["Retidos (Humana)"] || 0, st["Cancelados/Suspensos"] || 0],
-            ['#10B981', '#FBBF24', '#F97316', '#EF4444'],
-            { plugins: { legend: { display: true, position: 'right', labels: { color: '#ddd', boxWidth: 12 } } } }
+            [successColor, warningColor, accentColor, dangerColor],
+            { plugins: { legend: { display: true, position: 'right', labels: { color: textColor, boxWidth: 12 } } } }
         );
 
         const safeRenderBar = (key, canvasId, color, options = {}) => {
@@ -215,23 +222,23 @@ function renderizarDashboardUI(payload) {
             if (extraido.labels.length > 0) renderChart(canvasId, 'bar', extraido.labels, extraido.data, color, options);
         };
 
-        safeRenderBar('instituicoes', 'chart-instituicoes', baseColor, { indexAxis: 'y' });
-        safeRenderBar('dias', 'chart-dias', baseColor, { indexAxis: 'y' });
-        safeRenderBar('rotas', 'chart-rotas', baseColor, { indexAxis: 'y' });
-        safeRenderBar('turnos', 'chart-turnos', baseColor);
+        safeRenderBar('instituicoes', 'chart-instituicoes', primaryColor, { indexAxis: 'y' });
+        safeRenderBar('dias', 'chart-dias', primaryColor, { indexAxis: 'y' });
+        safeRenderBar('rotas', 'chart-rotas', primaryColor, { indexAxis: 'y' });
+        safeRenderBar('turnos', 'chart-turnos', primaryColor);
 
         if (graficos.noturno) {
-            const adesao = extrairEOrdenar(graficos.noturno.adesao);
-            if (adesao.labels.length > 0) renderChart('chart-adesao-23h', 'doughnut', adesao.labels, adesao.data, ['#FBBF24', '#333333'], { plugins: { legend: { display: true, position: 'bottom', labels: { color: '#ddd', boxWidth: 12 } } } });
+            const ads = extrairEOrdenar(graficos.noturno.adesao);
+            if (ads.labels.length > 0) renderChart('chart-adesao-23h', 'doughnut', ads.labels, ads.data, [accentColor, 'rgba(255, 255, 255, 0.1)'], { plugins: { legend: { display: true, position: 'bottom', labels: { color: textColor, boxWidth: 12 } } } });
             
             const bairros = extrairEOrdenar(graficos.noturno.bairros);
-            if (bairros.labels.length > 0) renderChart('chart-bairros-23h', 'bar', bairros.labels, bairros.data, '#F97316', { indexAxis: 'y' });
+            if (bairros.labels.length > 0) renderChart('chart-bairros-23h', 'bar', bairros.labels, bairros.data, accentColor, { indexAxis: 'y' });
         }
 
         const inclusao = graficos.inclusao || {};
         const renderInclusao = (canvas, objData) => {
             const dataSafe = objData || {};
-            renderChart(canvas, 'bar', ['Sim', 'Não'], [dataSafe['Sim'] || 0, dataSafe['Não'] || 0], ['#10B981', '#333']);
+            renderChart(canvas, 'bar', ['Sim', 'Não'], [dataSafe['Sim'] || 0, dataSafe['Não'] || 0], [primaryColor, 'rgba(255, 255, 255, 0.1)']);
         };
 
         renderInclusao('chart-pcd', inclusao.pcd);
@@ -346,8 +353,9 @@ function renderizarDashboardBI() {
         }
     });
 
+    const accentColor = getComputedStyle(document.body).getPropertyValue('--accent').trim() || '#F59E0B';
     const dadosOrdenados = extrairEOrdenar(contagemGrafico);
-    renderChart('chart-bi', 'bar', dadosOrdenados.labels, dadosOrdenados.data, '#F59E0B', { indexAxis: 'x' });
+    renderChart('chart-bi', 'bar', dadosOrdenados.labels, dadosOrdenados.data, accentColor, { indexAxis: 'x' });
 }
 
 function renderChart(canvasId, type, labels, data, colors, options = {}) {
@@ -362,11 +370,59 @@ function renderChart(canvasId, type, labels, data, colors, options = {}) {
         window.myCharts[canvasId].destroy();
     }
 
-    Chart.defaults.color = '#aaaaaa';
-    Chart.defaults.borderColor = '#333333';
+    const style = getComputedStyle(document.body);
+    const textColor = style.getPropertyValue('--text-muted').trim() || '#aaaaaa';
+    const borderColor = style.getPropertyValue('--border').trim() || '#333333';
 
-    const defaultOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } };
-    window.myCharts[canvasId] = new Chart(ctx, { type: type, data: { labels: labels, datasets: [{ data: data, backgroundColor: colors, borderRadius: (type === 'bar' ? 4 : 0), borderWidth: 0 }] }, options: Object.assign(defaultOptions, options) });
+    // Integrar Poppins e cores padrões
+    Chart.defaults.font.family = "'Poppins', 'Segoe UI', system-ui, sans-serif";
+    Chart.defaults.font.size = 11;
+    Chart.defaults.color = textColor;
+    Chart.defaults.borderColor = borderColor;
+
+    const defaultOptions = { 
+        responsive: true, 
+        maintainAspectRatio: false, 
+        plugins: { legend: { display: false } }
+    };
+
+    // Separar as escalas de forma que doughnut/pie não recebam eixos Cartesianos
+    if (type === 'bar') {
+        defaultOptions.scales = {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    precision: 0,
+                    color: textColor
+                },
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.05)'
+                }
+            },
+            x: {
+                ticks: {
+                    color: textColor
+                },
+                grid: {
+                    display: false
+                }
+            }
+        };
+    }
+
+    window.myCharts[canvasId] = new Chart(ctx, { 
+        type: type, 
+        data: { 
+            labels: labels, 
+            datasets: [{ 
+                data: data, 
+                backgroundColor: colors, 
+                borderRadius: type === 'bar' ? 8 : 0, 
+                borderWidth: 0 
+            }] 
+        }, 
+        options: Object.assign(defaultOptions, options) 
+    });
 }
 
 function extrairEOrdenar(obj) {

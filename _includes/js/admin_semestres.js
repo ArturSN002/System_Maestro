@@ -85,34 +85,35 @@
 
   function renderStatusChip(status) {
     const safeStatus = String(status || "PASSADO").toUpperCase();
-    const color = statusColor(safeStatus);
-    return `<span style="display:inline-flex; align-items:center; border-radius:999px; border:1px solid ${color}; color:${color}; padding:3px 8px; font-size:10px; font-weight:700;">${escapeHTML(safeStatus)}</span>`;
+    const statusClass = "status-" + safeStatus.toLowerCase();
+    return `<span class="semestre-chip ${statusClass}">${escapeHTML(safeStatus)}</span>`;
   }
 
   function renderSemestreCard(item, index) {
     const semestre = normalizarSemestreUI(item);
     const isAtual = semestre.status === "ATUAL";
     const isArquivado = semestre.status === "ARQUIVADO";
+    const statusClass = "status-" + semestre.status.toLowerCase();
     const periodo = [semestre.ano, semestre.periodo ? "Periodo " + semestre.periodo : ""].filter(Boolean).join(" - ");
     const vigencia = [semestre.inicio, semestre.fim].filter(Boolean).join(" ate ");
 
     return `
-      <div class="form-card" style="padding: 14px; margin: 0; border-left: 4px solid ${statusColor(semestre.status)};">
-        <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start; flex-wrap:wrap;">
+      <div class="form-card semestre-card ${statusClass}">
+        <div class="semestre-card-header">
           <div>
-            <strong style="display:block; color:var(--text-main); font-size:15px;">${escapeHTML(semestre.label)}</strong>
-            <span style="display:block; font-size:11px; color:var(--text-sub); margin-top:3px;">ID: ${escapeHTML(semestre.id || "-")}</span>
-            <span style="display:block; font-size:11px; color:var(--text-sub); margin-top:3px;">${escapeHTML(periodo || "Periodo nao informado")}</span>
-            <span style="display:block; font-size:11px; color:var(--text-sub); margin-top:3px;">${escapeHTML(vigencia || "Vigencia nao informada")}</span>
+            <strong class="semestre-card-title">${escapeHTML(semestre.label)}</strong>
+            <span class="semestre-card-desc">ID: ${escapeHTML(semestre.id || "-")}</span>
+            <span class="semestre-card-desc">${escapeHTML(periodo || "Periodo nao informado")}</span>
+            <span class="semestre-card-desc">${escapeHTML(vigencia || "Vigencia nao informada")}</span>
           </div>
           ${renderStatusChip(semestre.status)}
         </div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
-          <button class="btn-text" style="margin:0; padding:8px 10px;" onclick="preencherSemestreMaestro(${index})">Editar</button>
-          <button class="btn-solid" style="width:auto; margin:0; padding:8px 10px; background:#059669;" ${isAtual ? "disabled" : ""} data-semestre-id="${escapeHTML(semestre.id)}" onclick="definirSemestreAtualMaestroUI(this.dataset.semestreId)">Atual</button>
-          <button class="btn-solid" style="width:auto; margin:0; padding:8px 10px; background:#2563eb;" ${isAtual ? "disabled" : ""} data-semestre-id="${escapeHTML(semestre.id)}" onclick="marcarSemestrePassadoMaestroUI(this.dataset.semestreId)">Passado</button>
-          <button class="btn-solid" style="width:auto; margin:0; padding:8px 10px; background:#6b7280;" ${isAtual || isArquivado ? "disabled" : ""} data-semestre-id="${escapeHTML(semestre.id)}" onclick="arquivarSemestreMaestroUI(this.dataset.semestreId)">Arquivar</button>
-          <button class="btn-solid text-danger" style="width:auto; margin:0; padding:8px 10px;" ${isAtual ? "disabled" : ""} data-semestre-id="${escapeHTML(semestre.id)}" onclick="excluirSemestreMaestroUI(this.dataset.semestreId)">Excluir</button>
+        <div class="semestre-card-actions">
+          <button class="btn-text" onclick="preencherSemestreMaestro(${index})">Editar</button>
+          <button class="btn-solid btn-semestre-atual" ${isAtual ? "disabled" : ""} data-semestre-id="${escapeHTML(semestre.id)}" onclick="definirSemestreAtualMaestroUI(this.dataset.semestreId)">Atual</button>
+          <button class="btn-solid btn-semestre-passado" ${isAtual ? "disabled" : ""} data-semestre-id="${escapeHTML(semestre.id)}" onclick="marcarSemestrePassadoMaestroUI(this.dataset.semestreId)">Passado</button>
+          <button class="btn-solid btn-semestre-arquivar" ${isAtual || isArquivado ? "disabled" : ""} data-semestre-id="${escapeHTML(semestre.id)}" onclick="arquivarSemestreMaestroUI(this.dataset.semestreId)">Arquivar</button>
+          <button class="btn-solid text-danger btn-semestre-excluir" ${isAtual ? "disabled" : ""} data-semestre-id="${escapeHTML(semestre.id)}" onclick="excluirSemestreMaestroUI(this.dataset.semestreId)">Excluir</button>
         </div>
       </div>
     `;
@@ -150,7 +151,7 @@
 
     const container = byId("semestres-lista-container");
     if (container) {
-      container.innerHTML = '<div class="text-center" style="padding: 30px;"><div class="loader" style="margin: 0 auto;"></div><p style="font-size: 11px; margin-top: 10px;">A carregar semestres...</p></div>';
+      container.innerHTML = '<div class="loading-state-box"><div class="loader"></div><p>A carregar semestres...</p></div>';
     }
 
     try {
@@ -160,7 +161,15 @@
       }
       renderizarSemestresMaestro(res);
     } catch (e) {
-      if (container) container.innerHTML = `<div class="error-box">Erro: ${escapeHTML(e.message)}</div>`;
+      if (container) {
+        container.innerHTML = `
+          <div class="error-state-box">
+            <span class="error-icon">⚠️</span>
+            <h3>Erro ao Carregar Semestres</h3>
+            <p>${escapeHTML(e.message)}</p>
+          </div>
+        `;
+      }
     }
   }
 
