@@ -1343,3 +1343,76 @@ function interceptarMagicLinkRecuperacao(urlParams) {
   console.log("Magic link de recuperação interceptado com sucesso.");
   return true;
 }
+
+/* =========================================================================
+   UX/UI PHASE 7 - SCRIPTS (HEADER, FOOTER, SOBRE MODAL)
+   ========================================================================= */
+
+// Modal Sobre O Maestro
+function abrirModalSobre() {
+  const modal = document.getElementById('modal-sobre');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function fecharModalSobre() {
+  const modal = document.getElementById('modal-sobre');
+  if (modal) modal.classList.add('hidden');
+}
+
+// Botão Voltar (Global)
+function voltarNavegacao() {
+  const viewVoltar = sessionStorage.getItem('MAESTRO_LAST_VIEW') === 'view-login-fiscal' ? 'view-login-fiscal' : 'view-hub';
+  switchView(viewVoltar);
+}
+
+// Event Listener: Scroll para Sticky Header (Glassmorphism)
+window.addEventListener('scroll', function() {
+  const header = document.getElementById('global-header');
+  if (!header) return;
+  if (window.scrollY > 20) {
+    header.classList.add('header-scrolled');
+  } else {
+    header.classList.remove('header-scrolled');
+  }
+});
+
+// Event Listener: Status Offline (Footer)
+function atualizarStatusRodape() {
+  const statusText = document.getElementById('footer-status-text');
+  const statusDot = document.getElementById('footer-status-dot');
+  if (!statusText || !statusDot) return;
+  
+  if (navigator.onLine) {
+    statusText.innerText = "Sistema Online";
+    statusDot.classList.remove('offline');
+  } else {
+    statusText.innerText = "Operando Offline";
+    statusDot.classList.add('offline');
+  }
+}
+
+window.addEventListener('online', atualizarStatusRodape);
+window.addEventListener('offline', atualizarStatusRodape);
+document.addEventListener('DOMContentLoaded', atualizarStatusRodape);
+setTimeout(atualizarStatusRodape, 1000); // garante carregamento async
+
+// Intercepta o switchView para gerenciar o botão Voltar
+const originalSwitchViewPhase7 = window.switchView;
+window.switchView = function(viewId) {
+  if (typeof originalSwitchViewPhase7 === 'function') {
+      originalSwitchViewPhase7(viewId);
+  }
+  
+  const btnConfig = document.getElementById('btn-header-config');
+  const btnBack = document.getElementById('btn-header-back');
+  
+  if (!btnConfig || !btnBack) return;
+
+  if (viewId === 'view-hub' || viewId === 'view-login' || viewId === 'view-login-fiscal') {
+     btnBack.classList.add('hidden');
+     btnConfig.classList.remove('hidden');
+  } else {
+     btnConfig.classList.add('hidden');
+     btnBack.classList.remove('hidden');
+  }
+};

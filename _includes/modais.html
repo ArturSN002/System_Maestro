@@ -198,3 +198,95 @@
           <input type="hidden" id="rx-linha-base" value="">
       </div>
   </div>
+
+  <!-- UX/UI Phase 7: Sobre o Maestro Modal -->
+  <div id="modal-sobre" class="splash-overlay modal-overlay-backdrop hidden">
+    <div class="form-card form-card-modal">
+      <div class="form-header form-header-modal">
+         <span>📖</span>
+         <h2>SOBRE O MAESTRO</h2>
+         <p>Guia de Cores, Turnos e Status Operacionais</p>
+      </div>
+
+      <div style="max-height: 60vh; overflow-y: auto; padding-right: 5px;">
+          <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 15px; text-align: justify;">
+            O <strong>Portal Maestro</strong> é a plataforma oficial de identificação estudantil e logística de frotas. 
+            Este guia ajuda a decodificar as cores exibidas na carteira digital para facilitar a fiscalização.
+          </p>
+
+          <h3 style="font-size: 13px; color: var(--text-main); margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 5px;">Turnos de Acesso</h3>
+          
+          <div class="sobre-color-card">
+              <div class="sobre-color-dot" style="background: #D97706; box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.2);"></div>
+              <div class="sobre-color-info">
+                  <h4>Matutino</h4>
+                  <p>Acesso liberado prioritariamente pela manhã.</p>
+              </div>
+          </div>
+
+          <div class="sobre-color-card">
+              <div class="sobre-color-dot" style="background: #0284C7; box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);"></div>
+              <div class="sobre-color-info">
+                  <h4>Vespertino</h4>
+                  <p>Acesso liberado prioritariamente à tarde.</p>
+              </div>
+          </div>
+
+          <div class="sobre-color-card">
+              <div class="sobre-color-dot" style="background: #6D28D9; box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.2);"></div>
+              <div class="sobre-color-info">
+                  <h4>Noturno</h4>
+                  <p>Acesso liberado prioritariamente à noite.</p>
+              </div>
+          </div>
+
+          <div class="sobre-color-card">
+              <div class="sobre-color-dot" style="background: #0F766E; box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.2);"></div>
+              <div class="sobre-color-info">
+                  <h4>Multi-turnos / Integral</h4>
+                  <p>Acesso liberado em mais de um turno no dia.</p>
+              </div>
+          </div>
+
+          <h3 style="font-size: 13px; color: var(--text-main); margin-top: 20px; margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 5px;">Atributos Especiais</h3>
+          
+          <div class="sobre-color-card">
+              <div class="sobre-color-dot" style="background: #0D9488; box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.2);"></div>
+              <div class="sobre-color-info">
+                  <h4>Em Estágio</h4>
+                  <p>Sinaliza que o estudante tem vínculo de estágio ativo (rotas flexíveis).</p>
+              </div>
+          </div>
+
+          <h3 style="font-size: 13px; color: var(--text-main); margin-top: 20px; margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 5px;">Status de Risco / Operacionais</h3>
+
+          <div class="sobre-color-card">
+              <div class="sobre-color-dot" style="background: #B45309; box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.2);"></div>
+              <div class="sobre-color-info">
+                  <h4>Pendente</h4>
+                  <p>Cadastro em análise ou aguardando documentação da secretaria.</p>
+              </div>
+          </div>
+
+          <div class="sobre-color-card">
+              <div class="sobre-color-dot" style="background: #DC2626; box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);"></div>
+              <div class="sobre-color-info">
+                  <h4>Bloqueado / Fraude</h4>
+                  <p>Acesso estritamente proibido. Exige atenção imediata do fiscal.</p>
+              </div>
+          </div>
+
+          <div class="sobre-color-card">
+              <div class="sobre-color-dot" style="background: #F97316; box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2);"></div>
+              <div class="sobre-color-info">
+                  <h4>Sessão Offline</h4>
+                  <p>Gerado sem internet usando cache local. Dados podem estar desatualizados.</p>
+              </div>
+          </div>
+      </div>
+
+      <div style="margin-top: 20px; text-align: center;">
+         <button class="btn-solid dark-bg" onclick="fecharModalSobre()">Entendido</button>
+      </div>
+    </div>
+  </div>

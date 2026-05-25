@@ -4067,3 +4067,109 @@ body.dark-theme .error-state-box {
   line-height: 1.4 !important;
 }
 
+
+/* =========================================================================
+   UX/UI PHASE 7 - HEADER, FOOTER, SOBRE MODAL
+   ========================================================================= */
+
+/* Header Scrolled */
+.app-header-global {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.app-header-global.header-scrolled {
+  padding: 8px 15px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px) saturate(180%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+body.dark-theme .app-header-global.header-scrolled {
+  background: rgba(15, 23, 42, 0.85);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.header-scrolled #ui-logo {
+  transform: scale(0.85);
+}
+.header-back-btn {
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Footer Redesign */
+.footer-nav-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 15px;
+  margin: 15px 0;
+  text-align: center;
+}
+.footer-link {
+  color: var(--text-main);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+  display: inline-block;
+  width: 100%;
+  box-sizing: border-box;
+}
+.footer-link:active {
+  transform: scale(0.95);
+  background: var(--bg-hover);
+}
+.footer-status-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-sub);
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+.status-dot.offline {
+  background: var(--warning);
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+}
+
+/* Modal Sobre Cores */
+.sobre-color-card {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+}
+.sobre-color-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  margin-right: 15px;
+  flex-shrink: 0;
+}
+.sobre-color-info h4 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  color: var(--text-main);
+}
+.sobre-color-info p {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-sub);
+  line-height: 1.3;
+}

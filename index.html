@@ -51,12 +51,17 @@
 
   <div class="app-wrapper">
     <header class="app-header app-header-global" id="global-header">
-      <button class="icon-btn header-btn" onclick="toggleSidebar('left')" title="Configurações">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-          <path
-            d="M19.43 12.98c.04-.32.07-.64.07-.98 0-.34-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49-.12-.64l2.11 1.65c-.04.32-.07.65-.07.98 0 .33.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z" />
-        </svg>
-      </button>
+      <div id="header-left-actions">
+        <button id="btn-header-config" class="icon-btn header-btn" onclick="toggleSidebar('left')" title="Configurações">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M19.43 12.98c.04-.32.07-.64.07-.98 0-.34-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49-.12-.64l2.11 1.65c-.04.32-.07.65-.07.98 0 .33.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z" />
+          </svg>
+        </button>
+        <button id="btn-header-back" class="icon-btn header-btn hidden" onclick="voltarNavegacao()" title="Voltar" style="font-size: 20px; display: flex; align-items: center; justify-content: center;">
+          ⬅️
+        </button>
+      </div>
 
       <div class="header-brand">
         <img id="ui-logo" src="./MGA.png" width="92" height="92" alt="Logo do Portal Maestro" class="app-emblem hidden">
@@ -92,7 +97,20 @@
       <p id="ui-endereco" class="hidden"></p>
       <p id="ui-email" class="hidden"></p>
       <p id="ui-cnpj" class="hidden"></p>
-      <div class="watermark">⚡ POWERED BY MAESTRO</div>
+      
+      <div class="footer-nav-grid">
+        <a href="#" class="footer-link" onclick="abrirModalSobre(); return false;">📖 Sobre o Maestro</a>
+        <a href="mailto:teste@falso.com" class="footer-link">🎧 Suporte</a>
+        <a href="#" class="footer-link">🔒 Privacidade</a>
+        <a href="#" class="footer-link">📜 Termos de Uso</a>
+      </div>
+      
+      <div class="footer-status-indicator" id="footer-status-indicator">
+        <div class="status-dot" id="footer-status-dot"></div>
+        <span id="footer-status-text">Sistema Online</span>
+      </div>
+      
+      <div class="watermark" style="margin-top: 20px;">⚡ POWERED BY MAESTRO</div>
     </footer>
   </div>
 
@@ -154,6 +172,14 @@
       <div class="info">
         <strong class="menu-card-validador-title">Validar Documento</strong>
         <span style="font-size: 10px;">Verificar autenticidade de declaração</span>
+      </div>
+    </button>
+
+    <button class="menu-card outline-card" onclick="closeAllSidebars(); abrirModalSobre()">
+      <span class="icon" style="font-size: 24px; margin-right: 12px;">📖</span>
+      <div class="info">
+        <strong style="font-size: 14px;">Sobre o Maestro</strong>
+        <span style="font-size: 10px;">Como funciona, cores e status</span>
       </div>
     </button>
 
