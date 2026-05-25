@@ -8,12 +8,23 @@ let paginaAtualAuditoria = 1;     // NOVO: Guarda a página atual
 const ITENS_POR_PAGINA = 10;      // NOVO: Exibe 10 alunos por bloco
 
 function escapeHTMLAuditoria(valor) {
+    if (typeof escapeHTMLMaestro === 'function') return escapeHTMLMaestro(valor);
     return String(valor ?? "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#39;");
+}
+
+function safeDomIdAuditoria(valor) {
+    if (typeof safeDomIdMaestro === 'function') return safeDomIdMaestro(valor);
+    return String(valor || "item").replace(/[^A-Za-z0-9_-]+/g, "_").slice(0, 80);
+}
+
+function safeJsStringAttrAuditoria(valor) {
+    if (typeof safeJsStringAttrMaestro === 'function') return safeJsStringAttrMaestro(valor);
+    return escapeHTMLAuditoria(JSON.stringify(String(valor ?? "")));
 }
 
 function cpfSeguroAuditoria(valor) {
@@ -23,6 +34,210 @@ function cpfSeguroAuditoria(valor) {
 function getSemestreRaioXAtual() {
     const input = document.getElementById('rx-linha-base');
     return input ? String(input.dataset.semestreId || "") : "";
+}
+
+function primeiroValorAuditoria(...valores) {
+    for (const valor of valores) {
+        if (valor !== undefined && valor !== null && String(valor).trim() !== "") return valor;
+    }
+    return "";
+}
+
+function toArrayAuditoria(valor) {
+    if (Array.isArray(valor)) return valor.filter(item => String(item || "").trim() !== "");
+    if (valor === undefined || valor === null || valor === "") return [];
+    return String(valor).split(/[;,|+]/).map(item => item.trim()).filter(Boolean);
+}
+
+function textoTurnosAuditoria(turnos, fallback) {
+    const lista = toArrayAuditoria(turnos);
+    return lista.length ? lista.join(" + ") : String(fallback || "");
+}
+
+function adapterAuditStudentMaestro() {
+    return window.MaestroData &&
+        window.MaestroData.adapters &&
+        typeof window.MaestroData.adapters.auditStudent === "function"
+        ? window.MaestroData.adapters.auditStudent
+        : null;
+}
+
+function adapterComunicacaoMaestro(nome) {
+    return window.MaestroData &&
+        window.MaestroData.adapters &&
+        typeof window.MaestroData.adapters[nome] === "function"
+        ? window.MaestroData.adapters[nome]
+        : null;
+}
+
+function payloadComunicacaoMaestro(nome) {
+    return window.MaestroData &&
+        window.MaestroData.payloadBuilders &&
+        typeof window.MaestroData.payloadBuilders[nome] === "function"
+        ? window.MaestroData.payloadBuilders[nome]
+        : null;
+}
+
+function limitePostagensMuralMaestro(resposta) {
+    if (resposta && (resposta.limiteSemanal || resposta.limitePostagensSemanais)) {
+        return Number(resposta.limiteSemanal || resposta.limitePostagensSemanais) || 4;
+    }
+    return window.MaestroData && window.MaestroData.rules
+        ? Number(window.MaestroData.rules.muralWeeklyPostLimit || 4)
+        : 4;
+}
+
+function renderizarOptionPushMaestro(valor) {
+    const seguro = escapeHTMLAuditoria(valor);
+    return `<option value="${seguro}">${seguro}</option>`;
+}
+
+function normalizarSimNaoAuditoria(valor) {
+    const texto = String(valor || "").trim().toLowerCase();
+    return ["sim", "s", "true", "1", "yes"].includes(texto);
+}
+
+function normalizarEstagioAuditoria(estagioAdaptado, origem) {
+    const source = origem || {};
+    const cond = source.condicionais || {};
+    const anexos = source.anexos_drive || {};
+    const detalhesRaw = source.estagioDetalhes || source.estagio_detalhes || cond.estagio_detalhes || {};
+    const detalhes = detalhesRaw && typeof detalhesRaw === "object" && !Array.isArray(detalhesRaw) ? detalhesRaw : {};
+    const estagioBase = estagioAdaptado && typeof estagioAdaptado === "object" && !Array.isArray(estagioAdaptado) ? estagioAdaptado : {};
+    const estagio = Object.assign({}, detalhes, estagioBase);
+    const ativo = estagio.ativo === true || normalizarSimNaoAuditoria(primeiroValorAuditoria(
+        estagio.ativo,
+        source.estagio,
+        source.estagioAtivo,
+        source.ESTAGIO,
+        source.ESTAGIO_ALUNO,
+        source.transporteEstagio,
+        source.TRANSPORTE_ESTAGIO,
+        cond.estagio,
+        cond.transporte_estagio
+    ));
+
+    return {
+        ativo: ativo,
+        tipoVinculo: primeiroValorAuditoria(estagio.tipoVinculo, estagio.tipo_vinculo, source.tipoVinculoEstagio, source.TIPO_VINCULO_ESTAGIO, cond.tipo_vinculo_estagio),
+        inicio: primeiroValorAuditoria(estagio.inicio, source.inicioEstagio, source.INICIO_ESTAGIO, cond.inicio_estagio),
+        fim: primeiroValorAuditoria(estagio.fim, source.fimEstagio, source.FIM_ESTAGIO, cond.fim_estagio),
+        empresaInstituicao: primeiroValorAuditoria(estagio.empresaInstituicao, estagio.empresa_instituicao, source.empresaInstituicaoEstagio, source.EMPRESA_INSTITUICAO_ESTAGIO, source.EMPRESA_ESTAGIO, cond.empresa_instituicao_estagio),
+        transporte: primeiroValorAuditoria(estagio.transporte, source.transporteEstagio, source.TRANSPORTE_ESTAGIO, cond.transporte_estagio),
+        parada: primeiroValorAuditoria(estagio.parada, source.paradaEstagio, source.PARADA_ESTAGIO, source.ROTA_ESTAGIO, cond.parada_estagio),
+        turno: primeiroValorAuditoria(estagio.turno, source.turnoEstagio, source.TURNO_ESTAGIO, source.TURNO_ESTAGIO_ALUNO, cond.turno_estagio),
+        declaracaoVinculo: primeiroValorAuditoria(estagio.declaracaoVinculo, estagio.declaracao_url, source.declaracaoVinculoEstagio, source.DECLARACAO_VINCULO_ESTAGIO, source.ANEXO_COMPROVANTE_ESTAGIO, anexos.declaracao_vinculo_estagio, anexos.comprovante_estagio),
+        statusValidacao: primeiroValorAuditoria(estagio.statusValidacao, source.statusValidacaoEstagio, source.STATUS_VALIDACAO_ESTAGIO, cond.status_validacao_estagio),
+        alteracaoCiclo: primeiroValorAuditoria(estagio.alteracaoCiclo, source.alteracaoEstagioCiclo, source.ALTERACAO_ESTAGIO_CICLO, cond.alteracao_estagio_ciclo, null)
+    };
+}
+
+function normalizarAlunoAuditoria(raw) {
+    const origem = raw || {};
+    const adapter = adapterAuditStudentMaestro();
+    const adaptado = adapter ? adapter(origem) : {};
+    const cpf = cpfSeguroAuditoria(primeiroValorAuditoria(adaptado.cpf, origem.cpf, origem.CPF_ALUNO));
+    const turnos = toArrayAuditoria(primeiroValorAuditoria(adaptado.turnos, origem.turnos, origem.TURNOS_ALUNO, origem.turno));
+    const turnoTexto = textoTurnosAuditoria(turnos, primeiroValorAuditoria(adaptado.turno, origem.turno, origem.TURNOS_ALUNO));
+    const statusAuditoria = String(primeiroValorAuditoria(adaptado.statusAuditoria, adaptado.statusValidacao, origem.statusAuditoria, origem.statusValidacao, origem.STATUS_VALIDACAO, origem.STATUS_OCR, "PENDENTE")).toUpperCase();
+    const statusAtividade = String(primeiroValorAuditoria(adaptado.statusAtividade, origem.statusAtividade, origem.STATUS_ATIVIDADE, "PENDENTE")).toUpperCase();
+    const statusDocs = String(primeiroValorAuditoria(adaptado.statusDocs, origem.statusDocs, origem.STATUS_DOCS, "")).toUpperCase();
+    const estagio = normalizarEstagioAuditoria(adaptado.estagio, origem);
+
+    return Object.assign({}, origem, adaptado, {
+        id: primeiroValorAuditoria(adaptado.id, origem.id, cpf),
+        cpf: cpf,
+        CPF_ALUNO: cpf,
+        nome: primeiroValorAuditoria(adaptado.nome, origem.nome, origem.NOME_ALUNO, "Desconhecido"),
+        NOME_ALUNO: primeiroValorAuditoria(adaptado.nome, origem.NOME_ALUNO, origem.nome, "Desconhecido"),
+        email: primeiroValorAuditoria(adaptado.email, origem.email, origem.EMAIL_ALUNO),
+        EMAIL_ALUNO: primeiroValorAuditoria(adaptado.email, origem.EMAIL_ALUNO, origem.email),
+        matricula: primeiroValorAuditoria(adaptado.matricula, origem.matricula, origem.MATRICULA_ALUNO),
+        MATRICULA_ALUNO: primeiroValorAuditoria(adaptado.matricula, origem.MATRICULA_ALUNO, origem.matricula),
+        instituicao: primeiroValorAuditoria(adaptado.instituicao, origem.instituicao, origem.INSTITUICAO_ALUNO),
+        INSTITUICAO_ALUNO: primeiroValorAuditoria(adaptado.instituicao, origem.INSTITUICAO_ALUNO, origem.instituicao),
+        rota: primeiroValorAuditoria(adaptado.rota, origem.rota, origem.ROTA_ALUNO),
+        ROTA_ALUNO: primeiroValorAuditoria(adaptado.rota, origem.ROTA_ALUNO, origem.rota),
+        turno: turnoTexto,
+        TURNOS_ALUNO: turnoTexto,
+        turnos: turnos,
+        dias: primeiroValorAuditoria(adaptado.dias, origem.dias, origem.DIAS_ALUNO),
+        semestreId: primeiroValorAuditoria(adaptado.semestreId, origem.semestreId, origem.semestreAtual, origem.semestre),
+        semestreAtual: primeiroValorAuditoria(adaptado.semestreId, origem.semestreAtual, origem.semestreId, origem.semestre),
+        timestamp: primeiroValorAuditoria(adaptado.timestamp, origem.timestamp, 0),
+        statusAuditoria: statusAuditoria,
+        statusValidacao: statusAuditoria,
+        STATUS_VALIDACAO: statusAuditoria,
+        statusAtividade: statusAtividade,
+        STATUS_ATIVIDADE: statusAtividade,
+        statusDocs: statusDocs,
+        STATUS_DOCS: statusDocs,
+        observacoes: primeiroValorAuditoria(adaptado.observacoes, origem.observacoes, origem.OBSERVACOES),
+        documentos: adaptado.documentos || origem.documentos || origem.anexos || origem.anexos_drive || {},
+        estagio: estagio
+    });
+}
+
+function buscarAlunoAuditoria(cpf, semestreId = "") {
+    const cpfLimpo = cpfSeguroAuditoria(cpf);
+    const semestreSeguro = String(semestreId || "").trim();
+    return arrayAlunosAuditoria.find(a => cpfSeguroAuditoria(a.cpf || a.CPF_ALUNO) === cpfLimpo && (!semestreSeguro || String(a.semestreId || a.semestreAtual || "") === semestreSeguro)) ||
+        arrayAlunosAuditoria.find(a => cpfSeguroAuditoria(a.cpf || a.CPF_ALUNO) === cpfLimpo);
+}
+
+function encontrarIndiceAlunoAuditoria(cpf, semestreId = "") {
+    const cpfLimpo = cpfSeguroAuditoria(cpf);
+    const semestreSeguro = String(semestreId || "").trim();
+    let index = arrayAlunosAuditoria.findIndex(a => cpfSeguroAuditoria(a.cpf || a.CPF_ALUNO) === cpfLimpo && (!semestreSeguro || String(a.semestreId || a.semestreAtual || "") === semestreSeguro));
+    if (index === -1) index = arrayAlunosAuditoria.findIndex(a => cpfSeguroAuditoria(a.cpf || a.CPF_ALUNO) === cpfLimpo);
+    return index;
+}
+
+function formatarDataAuditoria(valor) {
+    const texto = String(valor || "").trim();
+    if (!texto) return "";
+    const normalizado = /^\d{4}-\d{2}-\d{2}$/.test(texto) ? `${texto}T00:00:00` : texto;
+    const data = new Date(normalizado);
+    if (Number.isNaN(data.getTime())) return texto;
+    return data.toLocaleDateString('pt-BR');
+}
+
+function renderizarEstagioRaioX(aluno) {
+    const box = document.getElementById('rx-estagio-box');
+    const resumo = document.getElementById('rx-estagio-resumo');
+    const detalhes = document.getElementById('rx-estagio-detalhes');
+    const badge = document.getElementById('rx-estagio-status');
+    if (!box || !resumo || !detalhes || !badge) return;
+
+    const estagio = aluno && aluno.estagio ? aluno.estagio : {};
+    const temDados = estagio.ativo || estagio.tipoVinculo || estagio.inicio || estagio.fim || estagio.empresaInstituicao || estagio.declaracaoVinculo;
+    if (!temDados) {
+        box.style.display = "none";
+        resumo.textContent = "";
+        detalhes.innerHTML = "";
+        badge.textContent = "";
+        return;
+    }
+
+    const periodo = [formatarDataAuditoria(estagio.inicio), formatarDataAuditoria(estagio.fim)].filter(Boolean).join(" ate ");
+    const ciclo = estagio.alteracaoCiclo || {};
+    const cicloTexto = ciclo && typeof ciclo === "object"
+        ? `Alteracoes do ciclo: ${primeiroValorAuditoria(ciclo.usadas, 0)}/${primeiroValorAuditoria(ciclo.limite, 1)}`
+        : "";
+
+    badge.textContent = primeiroValorAuditoria(estagio.statusValidacao, "PENDENTE");
+    resumo.textContent = [
+        primeiroValorAuditoria(estagio.tipoVinculo, "Vinculo informado"),
+        periodo
+    ].filter(Boolean).join(" - ");
+    detalhes.innerHTML = `
+        <div><span>Empresa/instituicao</span><strong>${escapeHTMLAuditoria(primeiroValorAuditoria(estagio.empresaInstituicao, "Nao informado"))}</strong></div>
+        <div><span>Turno</span><strong>${escapeHTMLAuditoria(primeiroValorAuditoria(estagio.turno, "Nao informado"))}</strong></div>
+        <div><span>Parada</span><strong>${escapeHTMLAuditoria(primeiroValorAuditoria(estagio.parada, "Nao informado"))}</strong></div>
+        <div><span>Declaracao</span><strong>${estagio.declaracaoVinculo ? "Anexada" : "Nao anexada"}</strong></div>
+        ${cicloTexto ? `<div style="grid-column: span 2;"><span>Ciclo</span><strong>${escapeHTMLAuditoria(cicloTexto)}</strong></div>` : ""}
+    `;
+    box.style.display = "block";
 }
 
 window.forcarResetSenhaEstudante = async function(cpf) {
@@ -54,6 +269,7 @@ function formatarNomeProprio(nome) {
 
 function abrirMesaAuditoria() {
     if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
+    if (typeof podeExecutarAcaoMaestro === 'function' && !podeExecutarAcaoMaestro("auditoria", { notify: true })) return;
 
     switchView('view-auditoria');
     carregarFilaAuditoria();
@@ -73,7 +289,7 @@ async function carregarFilaAuditoria(ehPesquisa = false) {
         const pesquisaAtual = ehPesquisa ? (document.getElementById('auditoria-pesquisa')?.value.trim() || "") : "";
         const res = await apiCall("getListaAuditoria", { pesquisa: pesquisaAtual, limite: 300 });
         if (res.sucesso) {
-            arrayAlunosAuditoria = Array.isArray(res.lista) ? res.lista : [];
+            arrayAlunosAuditoria = Array.isArray(res.lista) ? res.lista.map(normalizarAlunoAuditoria) : [];
             aplicarFiltrosAuditoria();
         } else {
             container.innerHTML = `<div class="error-box">Erro: ${escapeHTMLAuditoria(res.erro)}</div>`;
@@ -92,29 +308,31 @@ function aplicarFiltrosAuditoria() {
     arrayAlunosAuditoriaFiltrado = arrayAlunosAuditoria.filter(aluno => {
         let matchPesquisa = true;
         if (termo) {
-            const nomeStr = String(aluno.NOME_ALUNO || aluno.nome || "").toLowerCase();
-            const cpfStr = String(aluno.CPF_ALUNO || aluno.cpf || "").toLowerCase();
-            const emailStr = String(aluno.EMAIL_ALUNO || aluno.email || "").toLowerCase();
-            matchPesquisa = nomeStr.includes(termo) || cpfStr.includes(termo) || emailStr.includes(termo);
+            const nomeStr = String(aluno.nome || aluno.NOME_ALUNO || "").toLowerCase();
+            const cpfStr = String(aluno.cpf || aluno.CPF_ALUNO || "").toLowerCase();
+            const emailStr = String(aluno.email || aluno.EMAIL_ALUNO || "").toLowerCase();
+            const matriculaStr = String(aluno.matricula || aluno.MATRICULA_ALUNO || "").toLowerCase();
+            matchPesquisa = nomeStr.includes(termo) || cpfStr.includes(termo) || emailStr.includes(termo) || matriculaStr.includes(termo);
         }
 
         let matchStatus = true;
         if (status) {
-            const statusVal = String(aluno.STATUS_VALIDACAO || aluno.statusAuditoria || "").toLowerCase();
-            const statusAtv = String(aluno.STATUS_ATIVIDADE || aluno.statusAtividade || "").toLowerCase();
+            const statusVal = String(aluno.statusAuditoria || aluno.statusValidacao || aluno.STATUS_VALIDACAO || "").toLowerCase();
+            const statusAtv = String(aluno.statusAtividade || aluno.STATUS_ATIVIDADE || "").toLowerCase();
             matchStatus = (statusVal === status || statusAtv === status);
         }
 
         let matchInst = true;
         if (instituicao) {
-            const instVal = String(aluno.INSTITUICAO_ALUNO || aluno.instituicao || "").toLowerCase();
+            const instVal = String(aluno.instituicao || aluno.INSTITUICAO_ALUNO || "").toLowerCase();
             matchInst = (instVal === instituicao);
         }
 
         let matchTurno = true;
         if (turno) {
-            const turnoVal = String(aluno.TURNOS_ALUNO || aluno.turno || "").toLowerCase();
-            matchTurno = (turnoVal === turno);
+            const turnoVal = String(aluno.turno || aluno.TURNOS_ALUNO || "").toLowerCase();
+            const turnosVal = toArrayAuditoria(aluno.turnos).join(" ").toLowerCase();
+            matchTurno = (turnoVal === turno || turnoVal.includes(turno) || turnosVal.includes(turno));
         }
 
         return matchPesquisa && matchStatus && matchInst && matchTurno;
@@ -154,6 +372,11 @@ function renderizarListaAuditoria() {
         const nomeTratado = escapeHTMLAuditoria(formatarNomeProprio(aluno.nome || aluno.NOME_ALUNO));
         const statusAuditoria = escapeHTMLAuditoria(aluno.statusAuditoria || aluno.STATUS_VALIDACAO || "");
         const strDataSeguro = escapeHTMLAuditoria(strData);
+        const semestreSeguro = escapeHTMLAuditoria(aluno.semestreId || aluno.semestreAtual || "");
+        const estagio = aluno.estagio || {};
+        const badgeEstagio = (estagio.ativo || estagio.tipoVinculo || estagio.statusValidacao)
+            ? `<span class="auditoria-badge" style="color:#075985; background:#e0f2fe; margin-left: 6px; display: inline-block; margin-top: 4px;">Estagio ${escapeHTMLAuditoria(estagio.statusValidacao || "")}</span>`
+            : "";
 
         html += `
         <div class="auditoria-linha">
@@ -161,8 +384,9 @@ function renderizarListaAuditoria() {
                 <h4 class="auditoria-nome">${nomeTratado}</h4>
                 <span class="auditoria-data">Submetido: ${strDataSeguro}</span>
                 <span class="auditoria-badge" style="color: ${corBadge}; background: ${bgBadge}; margin-left: 0; display: inline-block; margin-top: 4px;">${statusAuditoria}</span>
+                ${badgeEstagio}
             </div>
-            <button class="btn-solid" style="width: auto; margin: 0; padding: 8px 12px; font-size: 11px;" data-cpf="${cpfAluno}" onclick="abrirModalRaioX(this.dataset.cpf)">Detalhar 🔍</button>
+            <button class="btn-solid" style="width: auto; margin: 0; padding: 8px 12px; font-size: 11px;" data-cpf="${cpfAluno}" data-semestre-id="${semestreSeguro}" onclick="abrirModalRaioX(this.dataset.cpf, this.dataset.semestreId)">Detalhar</button>
         </div>`;
     });
 
@@ -190,25 +414,30 @@ function mudarPaginaAuditoria(direcao) {
     document.getElementById('view-auditoria').scrollIntoView({ behavior: 'smooth' });
 }
 
-function abrirModalRaioX(cpf) {
+function abrirModalRaioX(cpf, semestreId = "") {
     const cpfLimpo = cpfSeguroAuditoria(cpf);
-    const aluno = arrayAlunosAuditoria.find(a => cpfSeguroAuditoria(a.cpf || a.CPF_ALUNO) === cpfLimpo);
+    const aluno = buscarAlunoAuditoria(cpfLimpo, semestreId);
     if (!aluno) return;
 
     const nomeTratado = formatarNomeProprio(aluno.nome || aluno.NOME_ALUNO);
-    const semestreId = String(aluno.semestreId || aluno.semestreAtual || aluno.semestre || "");
+    const semestreAluno = String(aluno.semestreId || aluno.semestreAtual || aluno.semestre || "");
 
     document.getElementById('rx-nome').innerText = nomeTratado;
     document.getElementById('rx-cpf').innerText = cpfLimpo;
     document.getElementById('rx-matricula').innerText = aluno.matricula || aluno.MATRICULA_ALUNO || "";
     document.getElementById('rx-email').innerText = aluno.email || aluno.EMAIL_ALUNO || "";
-    document.getElementById('rx-logistica').innerText = `${aluno.instituicao || aluno.INSTITUICAO_ALUNO || ""} • ${aluno.turno || aluno.TURNOS_ALUNO || ""}`;
+    document.getElementById('rx-logistica').innerText = [
+        aluno.instituicao || aluno.INSTITUICAO_ALUNO || "",
+        aluno.turno || aluno.TURNOS_ALUNO || "",
+        aluno.rota || aluno.ROTA_ALUNO || ""
+    ].filter(Boolean).join(" - ");
     document.getElementById('rx-status-badge').innerText = aluno.statusAtividade || aluno.STATUS_ATIVIDADE || "";
 
     document.getElementById('rx-novo-status').value = aluno.statusAtividade || aluno.STATUS_ATIVIDADE || "";
     document.getElementById('rx-notas').value = aluno.observacoes || "";
     document.getElementById('rx-linha-base').value = cpfLimpo;
-    document.getElementById('rx-linha-base').dataset.semestreId = semestreId;
+    document.getElementById('rx-linha-base').dataset.semestreId = semestreAluno;
+    renderizarEstagioRaioX(aluno);
 
     let anexoHtml = '';
     const docsMapa = {
@@ -220,7 +449,7 @@ function abrirModalRaioX(cpf) {
     };
 
     for (const [chave, rotulo] of Object.entries(docsMapa)) {
-        anexoHtml += `<button class="btn-chip-anexo" data-cpf="${cpfLimpo}" data-tipo="${chave}" data-semestre-id="${escapeHTMLAuditoria(semestreId)}" onclick="abrirDocumentoSeguro(this.dataset.cpf, this.dataset.tipo, this.dataset.semestreId)">${escapeHTMLAuditoria(rotulo)}</button>`;
+        anexoHtml += `<button class="btn-chip-anexo" data-cpf="${cpfLimpo}" data-tipo="${chave}" data-semestre-id="${escapeHTMLAuditoria(semestreAluno)}" onclick="abrirDocumentoSeguro(this.dataset.cpf, this.dataset.tipo, this.dataset.semestreId)">${escapeHTMLAuditoria(rotulo)}</button>`;
     }
 
     document.getElementById('rx-documentos-grid').innerHTML = anexoHtml;
@@ -283,16 +512,18 @@ async function gravarDecisaoAuditoria() {
         if (res.sucesso) {
             showToast("Alteração guardada com sucesso!", "success");
             fecharModalRaioX();
-            let alunoIndex = arrayAlunosAuditoria.findIndex(a => cpfSeguroAuditoria(a.cpf || a.CPF_ALUNO) === cpf && String(a.semestreId || a.semestreAtual || "") === semestreId);
-            if (alunoIndex === -1) alunoIndex = arrayAlunosAuditoria.findIndex(a => cpfSeguroAuditoria(a.cpf || a.CPF_ALUNO) === cpf);
+            let alunoIndex = encontrarIndiceAlunoAuditoria(cpf, semestreId);
             if (alunoIndex !== -1) {
-                arrayAlunosAuditoria[alunoIndex].statusAtividade = res.statusAtividade || novoStatus;
-                arrayAlunosAuditoria[alunoIndex].STATUS_ATIVIDADE = res.statusAtividade || novoStatus;
-                arrayAlunosAuditoria[alunoIndex].statusAuditoria = res.statusValidacao || arrayAlunosAuditoria[alunoIndex].statusAuditoria;
-                arrayAlunosAuditoria[alunoIndex].STATUS_VALIDACAO = res.statusValidacao || arrayAlunosAuditoria[alunoIndex].STATUS_VALIDACAO;
-                arrayAlunosAuditoria[alunoIndex].statusDocs = res.statusDocs || arrayAlunosAuditoria[alunoIndex].statusDocs;
-                arrayAlunosAuditoria[alunoIndex].STATUS_DOCS = res.statusDocs || arrayAlunosAuditoria[alunoIndex].STATUS_DOCS;
-                arrayAlunosAuditoria[alunoIndex].observacoes = res.observacoes || notas;
+                arrayAlunosAuditoria[alunoIndex] = normalizarAlunoAuditoria(Object.assign({}, arrayAlunosAuditoria[alunoIndex], {
+                    statusAtividade: res.statusAtividade || novoStatus,
+                    STATUS_ATIVIDADE: res.statusAtividade || novoStatus,
+                    statusAuditoria: res.statusValidacao || arrayAlunosAuditoria[alunoIndex].statusAuditoria,
+                    statusValidacao: res.statusValidacao || arrayAlunosAuditoria[alunoIndex].statusValidacao,
+                    STATUS_VALIDACAO: res.statusValidacao || arrayAlunosAuditoria[alunoIndex].STATUS_VALIDACAO,
+                    statusDocs: res.statusDocs || arrayAlunosAuditoria[alunoIndex].statusDocs,
+                    STATUS_DOCS: res.statusDocs || arrayAlunosAuditoria[alunoIndex].STATUS_DOCS,
+                    observacoes: res.observacoes || notas
+                }));
                 aplicarFiltrosAuditoria();
             }
         } else {
@@ -361,6 +592,7 @@ document.addEventListener('keydown', (e) => {
 
 async function abrirPainelModerador() {
     if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
+    if (typeof podeExecutarAcaoMaestro === 'function' && !podeExecutarAcaoMaestro("salaMaquinas", { notify: true })) return;
 
     switchView('view-moderador');
     const loader = document.getElementById('loader-sincronizacao-motores');
@@ -442,14 +674,23 @@ async function enviarMensagemParaMural() {
             if (btn.disabled) btn.innerHTML = 'A AUDITAR CONTEÚDO... 🤖';
         }, 1500);
 
-        const res = await apiCall("publicarMensagemMural", { idEstudante: currentWalletId, nomeEstudante: currentStudentName, categoria: categoria, mensagem: mensagem });
+        const builderMural = payloadComunicacaoMaestro("muralPost");
+        const payloadMural = builderMural ? builderMural({
+            idEstudante: currentWalletId,
+            usuarioLogadoId: currentWalletId,
+            nomeEstudante: currentStudentName,
+            categoria: categoria,
+            mensagem: mensagem
+        }) : { idEstudante: currentWalletId, nomeEstudante: currentStudentName, categoria: categoria, mensagem: mensagem };
+        const res = await apiCall("publicarMensagemMural", payloadMural);
 
         if (res.sucesso) {
             showToast(res.msg || "Mensagem aprovada e partilhada!", "success");
             fecharModalMural();
             abrirMuralDaSemana();
         } else {
-            showToast(res.erro || "Falha ao submeter.", "error");
+            const limite = limitePostagensMuralMaestro(res);
+            showToast(res.erro || `Limite semanal de ${limite} publicacoes atingido.`, "error");
             btn.innerHTML = 'TENTAR NOVAMENTE';
             btn.disabled = false;
         }
@@ -464,6 +705,8 @@ async function enviarMensagemParaMural() {
 // V9.2.5: NOVO MOTOR DE AVISOS PUSH DO FISCAL
 // ------------------------------------------------------------------------
 function abrirModalAvisosFiscal() {
+    if (typeof podeExecutarAcaoMaestro === 'function' && !podeExecutarAcaoMaestro("comunicacao", { notify: true })) return;
+
     document.getElementById('modal-novo-aviso-fiscal').classList.remove('hidden');
 
     // Reseta os campos
@@ -508,17 +751,20 @@ async function carregarFiltrosParaPush() {
 
     try {
         const res = await apiCall("getFiltrosPush");
-        if (res.sucesso && res.filtros) {
+        const adapterFiltros = adapterComunicacaoMaestro("pushFilters");
+        const filtrosNormalizados = adapterFiltros ? adapterFiltros(res) : res;
+        const filtros = (filtrosNormalizados && filtrosNormalizados.filtros) || {};
+        if (filtrosNormalizados.sucesso !== false && filtros) {
             let htmlRota = '<option value="TODAS">Qualquer Rota</option>';
-            res.filtros.rotas.forEach(r => htmlRota += `<option value="${r}">${r}</option>`);
+            (filtros.rotas || []).forEach(r => htmlRota += renderizarOptionPushMaestro(r));
             selectRota.innerHTML = htmlRota;
 
             let htmlTurno = '<option value="TODOS">Qualquer Turno</option>';
-            res.filtros.turnos.forEach(t => htmlTurno += `<option value="${t}">${t}</option>`);
+            (filtros.turnos || []).forEach(t => htmlTurno += renderizarOptionPushMaestro(t));
             selectTurno.innerHTML = htmlTurno;
 
             let htmlInst = '<option value="TODAS">Qualquer Instituição</option>';
-            res.filtros.instituicoes.forEach(i => htmlInst += `<option value="${i}">${i}</option>`);
+            (filtros.instituicoes || []).forEach(i => htmlInst += renderizarOptionPushMaestro(i));
             selectInst.innerHTML = htmlInst;
         }
     } catch (e) {
@@ -551,7 +797,8 @@ async function dispararAvisoPublico() {
     btn.disabled = true;
 
     try {
-        const res = await apiCall("publicarAvisoNotificacao", {
+        const builderAviso = payloadComunicacaoMaestro("avisoPublico");
+        const payloadAviso = builderAviso ? builderAviso({
             tipoAviso: tipo,
             titulo: titulo,
             mensagem: mensagem,
@@ -561,7 +808,20 @@ async function dispararAvisoPublico() {
             enviarPush: enviarPush,
             operadorNome: nomeOp,
             operadorCargo: nivelOp
-        });
+        }) : {
+            tipoAviso: tipo,
+            titulo: titulo,
+            mensagem: mensagem,
+            validade: validadeAviso,
+            validadeAviso: validadeAviso,
+            ASSUNTO_VALIDADE: validadeAviso,
+            enviarPush: enviarPush,
+            operadorNome: nomeOp,
+            operadorCargo: nivelOp
+        };
+        const resRaw = await apiCall("publicarAvisoNotificacao", payloadAviso);
+        const adapterResultadoPush = adapterComunicacaoMaestro("pushResult");
+        const res = adapterResultadoPush ? adapterResultadoPush(resRaw) : resRaw;
 
         if (res.sucesso) {
             showToast("Aviso afixado e alunos notificados!", "success");
@@ -601,7 +861,8 @@ async function dispararPushSegmentado() {
     btn.disabled = true;
 
     try {
-        const res = await apiCall("dispararPushLoteManual", {
+        const builderPush = payloadComunicacaoMaestro("pushSegmentado");
+        const payloadPush = builderPush ? builderPush({
             titulo: titulo,
             mensagem: mensagem,
             rota: rota,
@@ -609,7 +870,18 @@ async function dispararPushSegmentado() {
             instituicao: inst,
             operadorNome: nomeOp,
             operadorCargo: nivelOp
-        });
+        }) : {
+            titulo: titulo,
+            mensagem: mensagem,
+            rota: rota,
+            turno: turno,
+            instituicao: inst,
+            operadorNome: nomeOp,
+            operadorCargo: nivelOp
+        };
+        const resRaw = await apiCall("dispararPushLoteManual", payloadPush);
+        const adapterResultadoPush = adapterComunicacaoMaestro("pushResult");
+        const res = adapterResultadoPush ? adapterResultadoPush(resRaw) : resRaw;
 
         if (res.sucesso) {
             showToast(`Lote enviado para ${res.enviados} dispositivos.`, "success");
@@ -630,7 +902,9 @@ async function dispararPushSegmentado() {
 
 function calcularTempoRelativo(tsServidor) {
     const agoraLocal = new Date().getTime();
-    const diffEmMinutos = Math.floor((agoraLocal - tsServidor) / 60000);
+    const tsNormalizado = typeof tsServidor === "string" ? new Date(tsServidor).getTime() : Number(tsServidor);
+    if (!Number.isFinite(tsNormalizado)) return "Agora mesmo";
+    const diffEmMinutos = Math.floor((agoraLocal - tsNormalizado) / 60000);
     if (diffEmMinutos <= 0) return "Agora mesmo";
     if (diffEmMinutos < 60) return diffEmMinutos + (diffEmMinutos === 1 ? " min atrás" : " mins atrás");
     const horas = Math.floor(diffEmMinutos / 60);
@@ -659,23 +933,47 @@ async function abrirMuralDaSemana() {
 
     try {
         const res = await apiCall("getMuralDaSemana");
-        if (!res.sucesso) { container.innerHTML = `${btnNovoPostHTML}<div class="error-box">${escapeHTMLAuditoria(res.erro)}</div>`; return; }
-        if (!res.mensagens || res.mensagens.length === 0) {
+        const adapterMural = adapterComunicacaoMaestro("muralFeed");
+        const muralNormalizado = adapterMural ? adapterMural(res, currentWalletId) : res;
+        const mensagensMural = (muralNormalizado && muralNormalizado.mensagens) || [];
+        const limiteSemanal = limitePostagensMuralMaestro(muralNormalizado);
+        if (!muralNormalizado.sucesso) { container.innerHTML = `${btnNovoPostHTML}<div class="error-box">${escapeHTMLAuditoria(muralNormalizado.erro)}</div>`; return; }
+        if (!mensagensMural.length) {
             container.innerHTML = `${btnNovoPostHTML}<div class="text-center" style="padding: 30px 10px; color: var(--text-sub); border: 1px dashed var(--border); border-radius: 8px;">Ainda não há contribuições nos últimos 7 dias.<br><br><b>Seja o primeiro a partilhar uma ideia!</b></div>`;
             return;
         }
 
-        let html = btnNovoPostHTML;
-        res.mensagens.forEach((msg, index) => {
-            const upAtivo = currentWalletId && msg.arrayUpsInfo.includes(currentWalletId) ? 'color: var(--primary); font-weight: bold;' : 'color: #999;';
-            const downAtivo = currentWalletId && msg.arrayDownsInfo.includes(currentWalletId) ? 'color: var(--danger); font-weight: bold;' : 'color: #999;';
+        let html = btnNovoPostHTML + `<div style="text-align: center; margin: -8px 0 16px; font-size: 11px; color: var(--text-sub);">Limite: ${limiteSemanal} publicacoes por estudante a cada semana.</div>`;
+        mensagensMural.forEach((msg, index) => {
+            const upsInfo = Array.isArray(msg.arrayUpsInfo) ? msg.arrayUpsInfo : [];
+            const downsInfo = Array.isArray(msg.arrayDownsInfo) ? msg.arrayDownsInfo : [];
+            const upAtivo = currentWalletId && (msg.meuVoto === "up" || upsInfo.includes(currentWalletId)) ? 'color: var(--primary); font-weight: bold;' : 'color: #999;';
+            const downAtivo = currentWalletId && (msg.meuVoto === "down" || downsInfo.includes(currentWalletId)) ? 'color: var(--danger); font-weight: bold;' : 'color: #999;';
             const coroa = index === 0 && msg.pontuacao > 0 ? '👑 Top Semanal' : '';
-            const tempoCorrigido = calcularTempoRelativo(msg.tsMensagem);
+            const tsMural = msg.tsMensagem || msg.criadoEm || (msg.raw && (msg.raw.tsMensagem || msg.raw.timestamp_epoch || msg.raw.criado_em));
+            const tempoCorrigido = calcularTempoRelativo(tsMural);
+            const idElementoSeguro = safeDomIdAuditoria(msg.id);
+            const categoriaBruta = String(msg.categoria || "");
+            const categoriaSegura = escapeHTMLAuditoria(categoriaBruta);
+            const mensagemSegura = escapeHTMLAuditoria(msg.mensagem);
+            const autorSeguro = escapeHTMLAuditoria(msg.autor || msg.autorNome);
+            const votosUpSeguro = escapeHTMLAuditoria(msg.votosUp || 0);
+            const votosDownSeguro = escapeHTMLAuditoria(msg.votosDown || 0);
+            msg.categoria = categoriaBruta;
 
             let iconCat = '🗣️';
             if (msg.categoria.indexOf('Sugestão') !== -1) iconCat = '💡';
             if (msg.categoria.indexOf('Reclamação') !== -1) iconCat = '⚠️';
             if (msg.categoria.indexOf('Achados') !== -1) iconCat = '🎒';
+
+            window.MaestroMuralIdMap = window.MaestroMuralIdMap || {};
+            window.MaestroMuralIdMap[idElementoSeguro] = String(msg.id || "");
+            msg.id = idElementoSeguro;
+            msg.categoria = categoriaSegura;
+            msg.mensagem = mensagemSegura;
+            msg.autor = autorSeguro;
+            msg.votosUp = votosUpSeguro;
+            msg.votosDown = votosDownSeguro;
 
             html += `
             <div class="form-card" style="padding: 15px; margin-bottom: 15px; border-left: 4px solid var(--primary); border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: left;">
@@ -708,14 +1006,25 @@ async function votarNoMural(idMensagem, tipoVoto) {
         return;
     }
 
-    const btnUp = document.getElementById(`count-up-${idMensagem}`).parentNode;
-    const btnDown = document.getElementById(`count-down-${idMensagem}`).parentNode;
+    const idElementoSeguro = safeDomIdAuditoria(idMensagem);
+    const idMensagemApi = (window.MaestroMuralIdMap && window.MaestroMuralIdMap[idElementoSeguro]) || idMensagem;
+    const contadorUp = document.getElementById(`count-up-${idElementoSeguro}`);
+    const contadorDown = document.getElementById(`count-down-${idElementoSeguro}`);
+    const btnUp = contadorUp ? contadorUp.parentNode : null;
+    const btnDown = contadorDown ? contadorDown.parentNode : null;
 
     if (btnUp) { btnUp.style.pointerEvents = 'none'; btnUp.style.opacity = '0.5'; }
     if (btnDown) { btnDown.style.pointerEvents = 'none'; btnDown.style.opacity = '0.5'; }
 
     try {
-        const res = await apiCall("votarMensagemMural", { idEstudante: currentWalletId, idMensagem: idMensagem, tipoVoto: tipoVoto });
+        const builderVoto = payloadComunicacaoMaestro("muralVote");
+        const payloadVoto = builderVoto ? builderVoto({
+            idEstudante: currentWalletId,
+            usuarioLogadoId: currentWalletId,
+            idMensagem: idMensagemApi,
+            tipoVoto: tipoVoto
+        }) : { idEstudante: currentWalletId, idMensagem: idMensagemApi, tipoVoto: tipoVoto };
+        const res = await apiCall("votarMensagemMural", payloadVoto);
         if (res.sucesso) {
             setTimeout(abrirMuralDaSemana, 1000);
         } else {
@@ -921,6 +1230,10 @@ function uiDeclararSOS() {
 // CORREÇÕES DO MODAL DE ROTAS (Resolver o Botão Estático)
 // ========================================================================
 function abrirModalSelecaoRota() {
+    if (typeof podeExecutarAcaoMaestro === 'function' &&
+        !podeExecutarAcaoMaestro("gerirRotas", { notify: false }) &&
+        !podeExecutarAcaoMaestro("motoristaRotas", { notify: true })) return;
+
     const modal = document.getElementById('modal-selecao-rota');
     if (!modal) return;
 
@@ -953,6 +1266,9 @@ function fecharModalSelecaoRota() {
 // ========================================================================
 
 function abrirModoFiscalizacaoGlobal() {
+    if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
+    if (typeof podeExecutarAcaoMaestro === 'function' && !podeExecutarAcaoMaestro("fiscalizar", { notify: true })) return;
+
     // Leva qualquer operador para a tela isolada da câmara
     switchView('view-fiscal');
     iniciarScanner();
@@ -960,6 +1276,12 @@ function abrirModoFiscalizacaoGlobal() {
 
 function fecharModoFiscalizacao() {
     fecharScanner();
+
+    const nav = window.MaestroNavigation || (window.MaestroData && window.MaestroData.navigation);
+    if (nav && typeof nav.getDefaultView === "function") {
+        switchView(nav.getDefaultView());
+        return;
+    }
 
     // Devolve o utilizador à tela correta baseada no nível guardado no login
     const nivel = localStorage.getItem("MAESTRO_OPERADOR_NIVEL") || "";
@@ -978,6 +1300,10 @@ function fecharModoFiscalizacao() {
 // ========================================================================
 
 function abrirModalSelecaoRota() {
+    if (typeof podeExecutarAcaoMaestro === 'function' &&
+        !podeExecutarAcaoMaestro("gerirRotas", { notify: false }) &&
+        !podeExecutarAcaoMaestro("motoristaRotas", { notify: true })) return;
+
     const modal = document.getElementById('modal-selecao-rota');
     if (!modal) return;
 
@@ -1072,6 +1398,7 @@ function logoutOperadorGlobal() {
         localStorage.removeItem("MAESTRO_OPERADOR_NIVEL");
         localStorage.removeItem("MAESTRO_OPERADOR_NOME");
         localStorage.removeItem("MAESTRO_OPERADOR_EMAIL");
+        if (typeof limparContextsSessaoMaestro === 'function') limparContextsSessaoMaestro("operator");
 
         // Dá refresh na página para limpar a memória por completo
         window.location.href = window.location.pathname;

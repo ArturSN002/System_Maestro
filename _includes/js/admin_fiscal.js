@@ -85,6 +85,12 @@ function fecharModoFiscalizacao() {
     fecharScanner();
 
     // Devolve o utilizador à tela correta baseada no nível guardado no login
+    const nav = window.MaestroNavigation || (window.MaestroData && window.MaestroData.navigation);
+    if (nav && typeof nav.getDefaultView === "function") {
+        switchView(nav.getDefaultView());
+        return;
+    }
+
     const nivel = localStorage.getItem("MAESTRO_OPERADOR_NIVEL") || "";
 
     if (nivel === "MOTORISTA") {
@@ -98,6 +104,7 @@ function fecharModoFiscalizacao() {
 
 function abrirModoFiscalizacaoGlobal() {
     if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
+    if (typeof podeExecutarAcaoMaestro === 'function' && !podeExecutarAcaoMaestro("fiscalizar", { notify: true })) return;
 
     // Leva qualquer operador para a tela isolada da câmara
     switchView('view-fiscal');

@@ -1,12 +1,17 @@
 {
+  "id": "./",
   "name": "Portal Maestro",
   "short_name": "Portal Maestro",
   "description": "Portal Oficial de Mobilidade",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
   "background_color": "#F8F9FA",
   "theme_color": "#0A3D6B",
+  "lang": "pt-BR",
+  "categories": ["education", "utilities", "productivity"],
   "icons": [
     {
       "src": "icone.png",

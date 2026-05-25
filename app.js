@@ -8,6 +8,7 @@
 {% include js/js_global.js %}
 {% include js/main_core.js %}
 {% include js/api_auth.js %}
+{% include js/data_layer.js %}
 
 // 2. Módulos do Estudante
 {% include js/carteira.js %}

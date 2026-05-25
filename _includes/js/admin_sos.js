@@ -7,6 +7,7 @@
 // ------------------------------------------------------------------------
 function abrirModalEncerrarRota() {
     if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
+    if (typeof podeExecutarAcaoMaestro === 'function' && !podeExecutarAcaoMaestro("encerrarRota", { notify: true })) return;
 
     document.getElementById('modal-encerrar-rota').classList.remove('hidden');
     document.getElementById('input-encerrar-onibus').value = '';
@@ -56,6 +57,7 @@ async function dispararEncerramentoRota() {
 // ------------------------------------------------------------------------
 function abrirModalSOS() {
     if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
+    if (typeof podeExecutarAcaoMaestro === 'function' && !podeExecutarAcaoMaestro("reportarSos", { notify: true })) return;
 
     document.getElementById('modal-sos-fiscal').classList.remove('hidden');
     document.getElementById('sos-id-onibus').value = '';

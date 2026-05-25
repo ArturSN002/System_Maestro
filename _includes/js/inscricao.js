@@ -117,10 +117,26 @@ function stepperNext(current, next) {
 
         const condEstagio = document.getElementById('cond-estagio');
         if (condEstagio && condEstagio.classList.contains('cond-visible')) {
-            const parada = document.getElementById('insc-parada-estagio').value.trim();
-            const turnoEst = document.getElementById('insc-turno-estagio').value;
-            if (!parada || !turnoEst) {
-                showToast("Preencha os dados do estágio (parada e turno).", "error");
+            const tipoVinculo = getValorCampoInscricao('insc-tipo-vinculo-estagio');
+            const inicioEstagio = getValorCampoInscricao('insc-inicio-estagio');
+            const fimEstagio = getValorCampoInscricao('insc-fim-estagio');
+            const empresaEstagio = getValorCampoInscricao('insc-empresa-estagio');
+            const parada = getValorCampoInscricao('insc-parada-estagio');
+            const turnoEst = getValorCampoInscricao('insc-turno-estagio');
+            const periodo = validarPeriodoEstagioInscricao(inicioEstagio, fimEstagio);
+
+            if (!tipoVinculo || !inicioEstagio || !fimEstagio || !empresaEstagio || !parada || !turnoEst) {
+                showToast("Preencha todos os dados do estagio.", "error");
+                return;
+            }
+
+            if (!periodo.sucesso) {
+                showToast(periodo.erro, "error");
+                return;
+            }
+
+            if (!declaracaoEstagioAnexadaInscricao()) {
+                showToast("Anexe a declaracao de vinculo do estagio.", "error");
                 return;
             }
         }
@@ -232,6 +248,9 @@ async function verificarCPFInscricao() {
             if (feedbackBox) {
                 feedbackBox.style.background = '#fef2f2';
                 feedbackBox.style.color = '#991b1b';
+                if (typeof escapeHTMLMaestro === 'function') {
+                    feedbackBox.textContent = "⚠️ " + mensagemDuplicidade;
+                } else
                 feedbackBox.innerHTML = `⚠️ ${mensagemDuplicidade}`;
                 feedbackBox.classList.remove('hidden');
             } else {
@@ -275,6 +294,26 @@ async function verificarCPFInscricao() {
             }
             if (elRota && d.rota) {
                 _selecionarOpcaoSelect(elRota, d.rota);
+            }
+
+            if (d.estagio === 'Sim') {
+                const radioEstagio = document.querySelector('input[name="insc-estagio"][value="Sim"]');
+                if (radioEstagio) radioEstagio.checked = true;
+                toggleCondField('cond-estagio', true);
+
+                const elTipoEstagio = document.getElementById('insc-tipo-vinculo-estagio');
+                const elTurnoEstagio = document.getElementById('insc-turno-estagio');
+                const elInicioEstagio = document.getElementById('insc-inicio-estagio');
+                const elFimEstagio = document.getElementById('insc-fim-estagio');
+                const elEmpresaEstagio = document.getElementById('insc-empresa-estagio');
+                const elParadaEstagio = document.getElementById('insc-parada-estagio');
+
+                if (elTipoEstagio && d.tipoVinculoEstagio) _selecionarOpcaoSelect(elTipoEstagio, d.tipoVinculoEstagio);
+                if (elTurnoEstagio && d.turnoEstagio) _selecionarOpcaoSelect(elTurnoEstagio, d.turnoEstagio);
+                if (elInicioEstagio && d.inicioEstagio) elInicioEstagio.value = d.inicioEstagio;
+                if (elFimEstagio && d.fimEstagio) elFimEstagio.value = d.fimEstagio;
+                if (elEmpresaEstagio && d.empresaInstituicaoEstagio) elEmpresaEstagio.value = d.empresaInstituicaoEstagio;
+                if (elParadaEstagio && d.paradaEstagio) elParadaEstagio.value = d.paradaEstagio;
             }
 
             const feedbackBox = document.getElementById('cpf-feedback-box');
@@ -335,43 +374,59 @@ function toggleCondField(fieldId, show) {
         field.classList.remove('cond-visible');
         // Clear sub-inputs when hidden
         field.querySelectorAll('input, select').forEach(el => {
-            if (el.type === 'text' || el.type === 'tel') el.value = '';
+            if (el.type === 'text' || el.type === 'tel' || el.type === 'date') el.value = '';
+            if (el.type === 'file') el.value = '';
             if (el.tagName === 'SELECT') el.selectedIndex = 0;
         });
+        if (fieldId === 'cond-estagio') limparArquivoInscricao('estagio');
     }
 }
 
 // ----- Step 4: File Upload Processing -----
 
+function getLabelArquivoInscricao(tipoDoc) {
+    const labelIds = {
+        menorIdade: 'label-insc-menor'
+    };
+    return document.getElementById(labelIds[tipoDoc] || `label-insc-${tipoDoc}`);
+}
+
+function limparArquivoInscricao(tipoDoc) {
+    delete inscricaoArquivos[tipoDoc];
+    const inputIds = {
+        menorIdade: 'insc-file-menor'
+    };
+    const statusSpan = document.getElementById(`status-insc-${tipoDoc}`);
+    const labelUpload = getLabelArquivoInscricao(tipoDoc);
+    const inputArquivo = document.getElementById(inputIds[tipoDoc] || `insc-file-${tipoDoc}`);
+
+    if (inputArquivo) inputArquivo.value = "";
+    if (statusSpan) {
+        statusSpan.innerText = "Nenhum arquivo selecionado";
+        statusSpan.style.color = "var(--text-sub)";
+    }
+    if (labelUpload) {
+        labelUpload.classList.remove('file-attached');
+        labelUpload.innerHTML = "Toque para selecionar o arquivo";
+    }
+}
+
 function processarArquivoInscricao(inputElement, tipoDoc) {
     const file = inputElement.files[0];
     const statusSpan = document.getElementById(`status-insc-${tipoDoc}`);
-    const labelUpload = document.getElementById(`label-insc-${tipoDoc}`);
+    const labelUpload = getLabelArquivoInscricao(tipoDoc);
 
     if (!file) {
-        delete inscricaoArquivos[tipoDoc];
-        if (statusSpan) {
-            statusSpan.innerText = "Nenhum arquivo selecionado";
-            statusSpan.style.color = "var(--text-sub)";
-        }
-        if (labelUpload) {
-            labelUpload.classList.remove('file-attached');
-            labelUpload.innerHTML = "📎 Toque para selecionar o arquivo";
-        }
+        limparArquivoInscricao(tipoDoc);
         return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
         showToast("Arquivo muito grande (Máximo 5MB).", "error");
-        inputElement.value = "";
-        delete inscricaoArquivos[tipoDoc];
+        limparArquivoInscricao(tipoDoc);
         if (statusSpan) {
             statusSpan.innerText = "Erro: Arquivo demasiado pesado.";
             statusSpan.style.color = "var(--danger)";
-        }
-        if (labelUpload) {
-            labelUpload.classList.remove('file-attached');
-            labelUpload.innerHTML = "📎 Toque para selecionar o arquivo";
         }
         return;
     }
@@ -394,15 +449,10 @@ function processarArquivoInscricao(inputElement, tipoDoc) {
     };
     reader.onerror = function () {
         showToast("Falha na leitura do arquivo.", "error");
-        inputElement.value = "";
-        delete inscricaoArquivos[tipoDoc];
+        limparArquivoInscricao(tipoDoc);
         if (statusSpan) {
             statusSpan.innerText = "Erro na leitura.";
             statusSpan.style.color = "var(--danger)";
-        }
-        if (labelUpload) {
-            labelUpload.classList.remove('file-attached');
-            labelUpload.innerHTML = "📎 Toque para selecionar o arquivo";
         }
     };
     reader.readAsDataURL(file);
@@ -575,6 +625,37 @@ function base64PreenchidoInscricao(valor) {
     return true;
 }
 
+function getValorCampoInscricao(id) {
+    const el = document.getElementById(id);
+    return el ? String(el.value || '').trim() : '';
+}
+
+function validarPeriodoEstagioInscricao(inicio, fim) {
+    if (!inicio || !fim) {
+        return { sucesso: false, erro: "Informe inicio e fim do vinculo de estagio." };
+    }
+
+    const dataInicio = new Date(`${inicio}T00:00:00`);
+    const dataFim = new Date(`${fim}T00:00:00`);
+    if (Number.isNaN(dataInicio.getTime()) || Number.isNaN(dataFim.getTime())) {
+        return { sucesso: false, erro: "Periodo de estagio invalido." };
+    }
+    if (dataFim < dataInicio) {
+        return { sucesso: false, erro: "A data final do estagio deve ser posterior ao inicio." };
+    }
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    if (dataFim < hoje) {
+        return { sucesso: false, erro: "A data final do estagio deve estar vigente." };
+    }
+
+    return { sucesso: true };
+}
+
+function declaracaoEstagioAnexadaInscricao() {
+    return !!(inscricaoArquivos.estagio && base64PreenchidoInscricao(inscricaoArquivos.estagio.base64));
+}
+
 function prepararEnvioNativo() {
     const btn = document.getElementById('btn-submeter-inscricao');
 
@@ -612,6 +693,29 @@ function prepararEnvioNativo() {
     }
 
     const estagio = getRadioSimNao('insc-estagio');
+    const tipoVinculoEstagio = getValorCampoInscricao('insc-tipo-vinculo-estagio');
+    const inicioEstagio = getValorCampoInscricao('insc-inicio-estagio');
+    const fimEstagio = getValorCampoInscricao('insc-fim-estagio');
+    const empresaInstituicaoEstagio = getValorCampoInscricao('insc-empresa-estagio');
+    const paradaEstagio = getValorCampoInscricao('insc-parada-estagio');
+    const turnoEstagio = getValorCampoInscricao('insc-turno-estagio');
+
+    if (estagio === 'Sim') {
+        const periodo = validarPeriodoEstagioInscricao(inicioEstagio, fimEstagio);
+        if (!tipoVinculoEstagio || !empresaInstituicaoEstagio || !paradaEstagio || !turnoEstagio) {
+            showToast("Preencha todos os dados do estagio. Volte a etapa 3.", "error");
+            return;
+        }
+        if (!periodo.sucesso) {
+            showToast(periodo.erro, "error");
+            return;
+        }
+        if (!declaracaoEstagioAnexadaInscricao()) {
+            showToast("A declaracao de vinculo do estagio e obrigatoria.", "error");
+            return;
+        }
+    }
+
     const menorIdade = getRadioSimNao('insc-menor');
     const acompanhado = getRadioSimNao('insc-criancas');
     const arquivosPayload = Object.assign({}, inscricaoArquivos, { fotoBase64: fotoFinal });
@@ -639,8 +743,27 @@ function prepararEnvioNativo() {
         bairro23h: document.getElementById('insc-bairro-23h').value,
         estagio: estagio,
         transporteEstagio: estagio,
-        paradaEstagio: document.getElementById('insc-parada-estagio').value.trim(),
-        turnoEstagio: document.getElementById('insc-turno-estagio').value,
+        tipoVinculoEstagio: tipoVinculoEstagio,
+        inicioEstagio: inicioEstagio,
+        fimEstagio: fimEstagio,
+        empresaInstituicaoEstagio: empresaInstituicaoEstagio,
+        paradaEstagio: paradaEstagio,
+        turnoEstagio: turnoEstagio,
+        declaracaoVinculoEstagio: inscricaoArquivos.estagio ? {
+            tipo: inscricaoArquivos.estagio.tipo,
+            nome: inscricaoArquivos.estagio.nome,
+            anexada: true
+        } : null,
+        estagioDetalhes: {
+            ativo: estagio === 'Sim',
+            tipoVinculo: tipoVinculoEstagio,
+            inicio: inicioEstagio,
+            fim: fimEstagio,
+            empresaInstituicao: empresaInstituicaoEstagio,
+            parada: paradaEstagio,
+            turno: turnoEstagio,
+            declaracaoAnexada: declaracaoEstagioAnexadaInscricao()
+        },
         possuiDeficiencia: getRadioValue('insc-pcd'),
         cidDeficiencia: document.getElementById('insc-cid').value.trim(),
         acompanhado: acompanhado,
@@ -702,7 +825,8 @@ function _resetarFormularioInscricao() {
     const textIds = [
         'insc-cpf', 'insc-nome', 'insc-email', 'insc-rg', 'insc-contato', 'insc-matricula',
         'insc-inicio-semestre', 'insc-fim-semestre',
-        'insc-parada-estagio', 'insc-cid'
+        'insc-tipo-vinculo-estagio', 'insc-inicio-estagio', 'insc-fim-estagio',
+        'insc-empresa-estagio', 'insc-parada-estagio', 'insc-cid'
     ];
     textIds.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
 
@@ -719,14 +843,16 @@ function _resetarFormularioInscricao() {
     document.querySelectorAll('.cond-field').forEach(cf => cf.classList.remove('cond-visible'));
 
     // Reset file inputs (inclui novos campos: documento e foto3x4)
-    const fileIds = ['insc-file-documento', 'insc-file-residencia', 'insc-file-vinculo', 'insc-file-foto3x4'];
+    const fileIds = ['insc-file-documento', 'insc-file-residencia', 'insc-file-vinculo', 'insc-file-foto3x4', 'insc-file-menor', 'insc-file-estagio'];
     fileIds.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
 
-    const statusIds = ['status-insc-documento', 'status-insc-residencia', 'status-insc-vinculo', 'status-insc-foto3x4'];
+    const statusIds = ['status-insc-documento', 'status-insc-residencia', 'status-insc-vinculo', 'status-insc-foto3x4', 'status-insc-menorIdade', 'status-insc-estagio'];
     statusIds.forEach(id => {
         const el = document.getElementById(id);
         if (el) { el.innerText = 'Nenhum arquivo selecionado'; el.style.color = 'var(--text-sub)'; }
     });
+
+    ['documento', 'residencia', 'vinculo', 'foto3x4', 'menorIdade', 'estagio'].forEach(limparArquivoInscricao);
 
     // Reset da câmera sem deixar hardware ativo fora da tela de inscrição.
     finalizarInscricaoLimparHardware();

@@ -13,7 +13,7 @@ const IAM_STATE = {
 };
 
 const CLIENT_DIRECTORY = {
-  "Ceará-Mirim": "https://script.google.com/macros/s/AKfycbzNmN4emdPNQpBvrMu8lpga6zeKoMSn1QMcM-wngAWOWf5UhUPqGnEII6gZAWaplc4Z5g/exec",
+  "Ceará-Mirim": "https://script.google.com/macros/s/AKfycbxn9RrLEF6TTC1YG-LddUiM1Srl1AB8JdrQ2khKm7XPDdyjvzOZjfiEH6XgL24XhOxTAg/exec",
 };
 
 async function checkClientGateway() {
@@ -124,6 +124,7 @@ async function apiCall(action, payload = {}) {
       console.error("401 Unauthorized na rota:", action);
       localStorage.removeItem("MAESTRO_TOKEN");
       localStorage.removeItem("MAESTRO_EST_TOKEN");
+      limparContextsSessaoMaestro();
       showToast("Sessão encerrada. Por favor, entre novamente.", "error");
       setTimeout(() => {
         window.location.reload();
@@ -150,6 +151,60 @@ function temSessaoOperadorAtiva() {
     nivelOperador !== "undefined" &&
     nivelOperador !== "null"
   );
+}
+
+function sincronizarOperatorSessionMaestro(res, login, tokenValido) {
+  if (!window.MaestroData || !window.MaestroData.contexts || !window.MaestroData.contexts.operator) return null;
+
+  return window.MaestroData.contexts.operator.set({
+    token: tokenValido || (res && (res.token || res.tokenSessao || res.hashAcesso || res.sessionToken)) || localStorage.getItem("MAESTRO_TOKEN"),
+    nome: (res && res.nome) || localStorage.getItem("MAESTRO_OPERADOR_NOME") || "Operador",
+    email: (res && (res.email || res.identificador)) || login || localStorage.getItem("MAESTRO_OPERADOR_EMAIL") || "",
+    nivel: String((res && res.nivel) || localStorage.getItem("MAESTRO_OPERADOR_NIVEL") || "OPERADOR").toUpperCase(),
+    perfil: String((res && res.nivel) || localStorage.getItem("MAESTRO_OPERADOR_NIVEL") || "OPERADOR").toUpperCase(),
+    tenantId: res && (res.tenantId || res.tenantID || res.tenant_id)
+  });
+}
+
+function sincronizarStudentIdentityMaestro(res, login) {
+  if (!window.MaestroData || !window.MaestroData.contexts || !window.MaestroData.contexts.student) return null;
+
+  const dados = Object.assign({}, res || {}, {
+    idCarteira: (res && (res.idCarteira || res.identificador)) || login || "",
+    identificador: (res && res.identificador) || login || "",
+    token: (res && res.token) || localStorage.getItem("MAESTRO_EST_TOKEN") || ""
+  });
+
+  return window.MaestroData.contexts.student.set(dados);
+}
+
+function sincronizarSessoesMaestroDoStorage() {
+  if (!window.MaestroData || !window.MaestroData.contexts) return;
+
+  if (localStorage.getItem("MAESTRO_TOKEN")) {
+    sincronizarOperatorSessionMaestro({}, localStorage.getItem("MAESTRO_OPERADOR_EMAIL") || "", localStorage.getItem("MAESTRO_TOKEN"));
+  }
+
+  if (localStorage.getItem("MAESTRO_EST_TOKEN")) {
+    const cacheBruto = localStorage.getItem("MAESTRO_WALLET_CACHE") || localStorage.getItem("MAESTRO_OFFLINE_WALLET") || "{}";
+    try {
+      sincronizarStudentIdentityMaestro(JSON.parse(cacheBruto), "");
+    } catch (erro) {
+      console.warn("Nao foi possivel sincronizar studentIdentity do cache local:", erro);
+    }
+  }
+}
+
+function limparContextsSessaoMaestro(tipo) {
+  if (!window.MaestroData || !window.MaestroData.contexts) return;
+
+  if ((!tipo || tipo === "operator") && window.MaestroData.contexts.operator) {
+    window.MaestroData.contexts.operator.clear();
+  }
+
+  if ((!tipo || tipo === "student") && window.MaestroData.contexts.student) {
+    window.MaestroData.contexts.student.clear();
+  }
 }
 
 // ========================================================================
@@ -201,6 +256,7 @@ async function fazerLoginOperador() {
       localStorage.setItem("MAESTRO_OPERADOR_NOME", res.nome || "Operador");
       localStorage.setItem("MAESTRO_OPERADOR_NIVEL", String(res.nivel || "OPERADOR").toUpperCase());
       localStorage.setItem("MAESTRO_OPERADOR_EMAIL", res.email || email);
+      sincronizarOperatorSessionMaestro(res, email, tokenValido);
 
       const elNome = document.getElementById('nome-operador-logado');
       if (elNome) elNome.innerText = res.nome || "Operador";
@@ -235,6 +291,7 @@ function finalizarLoginOperadorIAM(res, login, resBox) {
   localStorage.setItem("MAESTRO_OPERADOR_NOME", res.nome || "Operador");
   localStorage.setItem("MAESTRO_OPERADOR_NIVEL", String(res.nivel || "OPERADOR").toUpperCase());
   localStorage.setItem("MAESTRO_OPERADOR_EMAIL", res.email || login);
+  sincronizarOperatorSessionMaestro(res, login, tokenValido);
 
   const elNome = document.getElementById('nome-operador-logado');
   if (elNome) elNome.innerText = res.nome || "Operador";
@@ -376,6 +433,7 @@ function finalizarLoginEstudanteIAM(login, senha, res) {
   if (res.token) localStorage.setItem("MAESTRO_EST_TOKEN", res.token);
   localStorage.setItem("MAESTRO_WALLET_CACHE", JSON.stringify(res));
   localStorage.setItem("MAESTRO_WALLET_CREDS", JSON.stringify({ id: login, senha }));
+  sincronizarStudentIdentityMaestro(res, login);
 
   renderizarCarteira(res);
   switchView('view-wallet');
@@ -449,6 +507,7 @@ async function salvarNovaSenhaPrimeiroAcesso() {
         localStorage.setItem("MAESTRO_OPERADOR_NOME", auth.nome || "Operador");
         localStorage.setItem("MAESTRO_OPERADOR_NIVEL", String(auth.nivel || "OPERADOR").toUpperCase());
         localStorage.setItem("MAESTRO_OPERADOR_EMAIL", auth.email || login);
+        sincronizarOperatorSessionMaestro(auth, login, auth.token);
         configurarInterfacePorNivel(String(auth.nivel || "OPERADOR").toUpperCase());
       } else {
         switchView('view-login-fiscal');
@@ -473,11 +532,23 @@ async function salvarNovaSenhaPrimeiroAcesso() {
 
 document.addEventListener("DOMContentLoaded", () => {
   inicializarValidadorSenhaIAM();
+  sincronizarSessoesMaestroDoStorage();
   window.loginCarteira = loginCarteiraIAM;
 });
 
 function configurarInterfacePorNivel(nivel) {
   if (!temSessaoOperadorAtiva()) return;
+
+  const nav = window.MaestroNavigation || (window.MaestroData && window.MaestroData.navigation);
+  if (nav && typeof nav.applyVisibility === "function") {
+    const perfil = nav.normalizeProfile ? nav.normalizeProfile(nivel) : String(nivel || "OPERADOR").toUpperCase();
+    nav.applyVisibility(perfil);
+    switchView(nav.getDefaultView ? nav.getDefaultView(perfil) : 'view-admin-hub');
+    if (perfil === "MOTORISTA" && typeof popularSelectFrotaMotorista === 'function') {
+      popularSelectFrotaMotorista();
+    }
+    return;
+  }
 
   const mCampo = document.getElementById('menu-grupo-campo');
   const mSecretaria = document.getElementById('menu-grupo-secretaria');
@@ -514,11 +585,13 @@ function verificarSessaoAtiva() {
   const nome = localStorage.getItem("MAESTRO_OPERADOR_NOME");
 
   if (token && nivel && token !== "undefined" && token !== "null") {
+    sincronizarOperatorSessionMaestro({}, localStorage.getItem("MAESTRO_OPERADOR_EMAIL") || "", token);
     const elNome = document.getElementById('nome-operador-logado');
     if (elNome) elNome.innerText = nome || "Operador";
     configurarInterfacePorNivel(nivel);
   } else {
     localStorage.removeItem("MAESTRO_TOKEN");
+    limparContextsSessaoMaestro("operator");
   }
 }
 
@@ -527,6 +600,7 @@ function encerrarSessaoOperador() {
   localStorage.removeItem("MAESTRO_OPERADOR_NOME");
   localStorage.removeItem("MAESTRO_OPERADOR_NIVEL");
   localStorage.removeItem("MAESTRO_OPERADOR_EMAIL");
+  limparContextsSessaoMaestro("operator");
 
   // CRITICAL FIX: Destroy the view memory to prevent the session loop
   sessionStorage.removeItem('MAESTRO_LAST_VIEW');
@@ -617,6 +691,11 @@ async function confirmarRedefinicaoSenha() {
 // ========================================================================
 
 function obterCpfPrivacidadeEstudante() {
+  if (window.MaestroData && window.MaestroData.contexts && window.MaestroData.contexts.student) {
+    const identity = window.MaestroData.contexts.student.get();
+    if (identity && identity.cpf) return String(identity.cpf).replace(/\D/g, "");
+  }
+
   const cacheBruto = localStorage.getItem("MAESTRO_WALLET_CACHE") || localStorage.getItem("MAESTRO_OFFLINE_WALLET") || "{}";
 
   try {
@@ -713,6 +792,7 @@ function limparCarteiraLocalAposAnonimizacao() {
   localStorage.removeItem("MAESTRO_FCM_TOKEN");
   localStorage.removeItem("MAESTRO_FCM_TOKEN_TEMP");
   localStorage.removeItem("FCM_SYNCED_ID");
+  limparContextsSessaoMaestro("student");
 
   if (typeof currentWalletId !== "undefined") currentWalletId = "";
   if (typeof currentWalletSenha !== "undefined") currentWalletSenha = "";

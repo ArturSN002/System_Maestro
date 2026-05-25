@@ -3,6 +3,9 @@
 // ========================================================================
 
 let deferredPrompt;
+const MAESTRO_PWA_VERSION = "12.15.0";
+window.MAESTRO_PWA_VERSION = MAESTRO_PWA_VERSION;
+window.MAESTRO_MANIFEST_URL = null;
 
 // Promessa global de prontidão do Firebase — consumidores aguardam esta promessa
 window.firebaseReady = null;
@@ -18,16 +21,182 @@ window.addEventListener('beforeinstallprompt', (e) => {
   deferredPrompt = e;
 });
 
+function sincronizarContextsMaestroDoBoot(configPWA) {
+  if (!configPWA || !window.MaestroData || !window.MaestroData.contexts) return null;
+
+  const contexts = window.MaestroData.contexts;
+  const themeConfig = contexts.theme.set(configPWA);
+  const tenantId = configPWA.tenantId || configPWA.tenantID || configPWA.tenant_id ||
+    (configPWA.config && (configPWA.config.tenantId || configPWA.config.tenantID || configPWA.config.tenant_id)) ||
+    "";
+  const clientUrl = localStorage.getItem("MAESTRO_CLIENT_URL") || GAS_URL || "";
+
+  contexts.tenant.set({
+    tenantId: tenantId,
+    clientUrl: clientUrl,
+    cidade: themeConfig && themeConfig.brand ? themeConfig.brand.cidade : "",
+    cepsValidos: themeConfig && themeConfig.rules ? themeConfig.rules.cepsValidos : [],
+    source: "bootSystem"
+  });
+
+  contexts.semester.set({
+    semestreId: configPWA.semestreId || configPWA.semestreAtual ||
+      (configPWA.config && (configPWA.config.semestreId || configPWA.config.semestreAtual || configPWA.config.SEMESTRE_ATIVO)) ||
+      "",
+    label: configPWA.semestreLabel || configPWA.semestreNome ||
+      (configPWA.config && (configPWA.config.semestreLabel || configPWA.config.semestreNome)) ||
+      "",
+    docsValidityMonths: themeConfig && themeConfig.rules ? themeConfig.rules.docsValidityMonths : null,
+    lgpdRetentionMonths: themeConfig && themeConfig.rules ? themeConfig.rules.lgpdRetentionMonths : null,
+    source: "bootSystem"
+  });
+
+  if (window.MaestroTheme && typeof window.MaestroTheme.apply === "function") {
+    window.MaestroTheme.apply(themeConfig, {
+      dark: localStorage.getItem('MAESTRO_DARK_MODE') === 'true'
+    });
+  }
+
+  return themeConfig;
+}
+
+function sanitizarUrlPWAMaestro(valor, fallback) {
+  const fallbackSeguro = fallback || "icone.png";
+  if (!valor) return fallbackSeguro;
+  if (window.MaestroData && window.MaestroData.safeRender && typeof window.MaestroData.safeRender.url === "function") {
+    return window.MaestroData.safeRender.url(valor) || fallbackSeguro;
+  }
+  return String(valor || fallbackSeguro);
+}
+
+function atualizarManifestDinamicoMaestro(themeConfig) {
+  const theme = themeConfig || {};
+  const brand = theme.brand || {};
+  const pwa = theme.pwa || {};
+  const logos = theme.logos || {};
+  const colors = theme.colors || {};
+  const light = colors.light || {};
+  const nome = pwa.name || brand.secretaria || window.PWA_NOME || "Portal Maestro";
+  const shortName = brand.abreviacao || nome.slice(0, 12);
+  const icon = sanitizarUrlPWAMaestro(pwa.icon || logos.appIcon || window.PWA_ICONE, "icone.png");
+  const themeColor = light.primary || (window.THEME_LIGHT && window.THEME_LIGHT.primary) || "#0A3D6B";
+  const backgroundColor = light.secondary || (window.THEME_LIGHT && window.THEME_LIGHT.secondary) || "#F8F9FA";
+  const manifestLink = document.querySelector('link[rel="manifest"]');
+
+  if (!manifestLink || typeof Blob === "undefined" || !window.URL || typeof window.URL.createObjectURL !== "function") return null;
+
+  const manifest = {
+    id: "./",
+    name: nome,
+    short_name: shortName,
+    description: "Portal Oficial de Mobilidade",
+    start_url: "./",
+    scope: "./",
+    display: "standalone",
+    display_override: ["standalone", "minimal-ui"],
+    orientation: "portrait",
+    background_color: backgroundColor,
+    theme_color: themeColor,
+    lang: "pt-BR",
+    categories: ["education", "utilities", "productivity"],
+    icons: [
+      {
+        src: icon,
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "any maskable"
+      }
+    ]
+  };
+
+  if (window.MAESTRO_MANIFEST_URL) {
+    try { window.URL.revokeObjectURL(window.MAESTRO_MANIFEST_URL); } catch (e) { }
+  }
+
+  const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: "application/manifest+json" });
+  window.MAESTRO_MANIFEST_URL = window.URL.createObjectURL(blob);
+  manifestLink.setAttribute("href", window.MAESTRO_MANIFEST_URL);
+  return manifest;
+}
+
+function restaurarPWAOfflineMaestro() {
+  const storedTheme = window.MaestroData && window.MaestroData.contexts && window.MaestroData.contexts.theme
+    ? window.MaestroData.contexts.theme.get()
+    : {};
+  const themeConfig = storedTheme && Object.keys(storedTheme).length ? storedTheme : {};
+  const brand = themeConfig.brand || {};
+  const pwa = themeConfig.pwa || {};
+  const logos = themeConfig.logos || {};
+  const colors = themeConfig.colors || {};
+  const light = colors.light || {};
+  const dark = colors.dark || {};
+
+  window.PWA_NOME = pwa.name || brand.secretaria || "Portal Maestro";
+  window.PWA_ICONE = pwa.icon || logos.appIcon || "icone.png";
+  window.THEME_LIGHT = {
+    primary: light.primary || "#0A3D6B",
+    secondary: light.secondary || "#F8F9FA",
+    accent: light.accent || "#F29900",
+    logo: logos.light || logos.emblem || "MGA.png"
+  };
+  window.THEME_DARK = {
+    primary: dark.primary || "#8AB4F8",
+    secondary: dark.secondary || "#121212",
+    accent: dark.accent || "#F29900",
+    logo: logos.dark || logos.emblem || window.THEME_LIGHT.logo
+  };
+
+  document.title = window.PWA_NOME;
+  const elNome = document.getElementById('ui-nome-sistema');
+  if (elNome) elNome.innerText = window.PWA_NOME.toUpperCase();
+  const elSetor = document.getElementById('ui-nome-setor');
+  if (elSetor) elSetor.innerText = brand.setor || "Acesso Estudantil";
+  const appleTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+  if (appleTitle) appleTitle.setAttribute("content", window.PWA_NOME);
+  const appName = document.querySelector('meta[name="application-name"]');
+  if (appName) appName.setAttribute("content", window.PWA_NOME);
+  const appleIcon = document.getElementById("apple-touch-icon");
+  if (appleIcon) appleIcon.setAttribute("href", sanitizarUrlPWAMaestro(window.PWA_ICONE, "icone.png"));
+  const favicon = document.querySelector('link[rel="icon"]');
+  if (favicon) favicon.setAttribute("href", sanitizarUrlPWAMaestro(window.PWA_ICONE, "icone.png"));
+
+  atualizarManifestDinamicoMaestro(themeConfig);
+  if (typeof aplicarTemaAtual === 'function') aplicarTemaAtual();
+  initPWA();
+  return true;
+}
+
 async function bootSystem() {
   try {
     const res = await apiCall("getConfiguracoesPWA");
 
     if (res.sucesso) {
-      window.PWA_NOME = res.pwa.NOME;
-      window.PWA_ICONE = res.pwa.ICONE;
+      const themeConfig = sincronizarContextsMaestroDoBoot(res) ||
+        (window.MaestroData && window.MaestroData.adapters ? window.MaestroData.adapters.themeConfig(res) : null) ||
+        {};
+      const brandConfig = themeConfig.brand || {};
+      const pwaConfig = themeConfig.pwa || {};
+      const colorConfig = themeConfig.colors || {};
+      const logoConfig = themeConfig.logos || {};
+      const lightColors = colorConfig.light || {};
+      const darkColors = colorConfig.dark || {};
 
-      window.THEME_LIGHT = { primary: res.ui.COR_PRIMARIA_LIGHT, secondary: res.ui.COR_SECUNDARIA_LIGHT, accent: res.ui.COR_DE_DESTAQUE_LIGHT, logo: res.ui.LOGO_LIGHT };
-      window.THEME_DARK = { primary: res.ui.COR_PRIMARIA_DARK, secondary: res.ui.COR_SECUNDARIA_DARK, accent: res.ui.COR_DE_DESTAQUE_DARK, logo: res.ui.LOGO_DARK };
+      window.PWA_NOME = pwaConfig.name || (res.pwa && res.pwa.NOME) || brandConfig.secretaria || "Portal Maestro";
+      window.PWA_ICONE = pwaConfig.icon || (res.pwa && res.pwa.ICONE) || logoConfig.appIcon || "icone.png";
+
+      window.THEME_LIGHT = {
+        primary: lightColors.primary || (res.ui && res.ui.COR_PRIMARIA_LIGHT),
+        secondary: lightColors.secondary || (res.ui && res.ui.COR_SECUNDARIA_LIGHT),
+        accent: lightColors.accent || (res.ui && res.ui.COR_DE_DESTAQUE_LIGHT),
+        logo: logoConfig.light || (res.ui && (res.ui.LOGO_URL_LIGHT || res.ui.LOGO_LIGHT))
+      };
+      window.THEME_DARK = {
+        primary: darkColors.primary || (res.ui && res.ui.COR_PRIMARIA_DARK),
+        secondary: darkColors.secondary || (res.ui && res.ui.COR_SECUNDARIA_DARK),
+        accent: darkColors.accent || (res.ui && res.ui.COR_DE_DESTAQUE_DARK),
+        logo: logoConfig.dark || (res.ui && (res.ui.LOGO_URL_DARK || res.ui.LOGO_DARK))
+      };
+      atualizarManifestDinamicoMaestro(themeConfig);
 
       if (res.firebase) {
         window.FIREBASE_CONFIG = {
@@ -57,15 +226,25 @@ async function bootSystem() {
 
       const elNome = document.getElementById('ui-nome-sistema');
       if (elNome) elNome.innerText = window.PWA_NOME.toUpperCase();
+      const appleTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+      if (appleTitle) appleTitle.setAttribute("content", window.PWA_NOME);
+      const appName = document.querySelector('meta[name="application-name"]');
+      if (appName) appName.setAttribute("content", window.PWA_NOME);
+      const appleIcon = document.getElementById("apple-touch-icon");
+      if (appleIcon) appleIcon.setAttribute("href", sanitizarUrlPWAMaestro(window.PWA_ICONE, "icone.png"));
+      const favicon = document.querySelector('link[rel="icon"]');
+      if (favicon) favicon.setAttribute("href", sanitizarUrlPWAMaestro(window.PWA_ICONE, "icone.png"));
 
       const elSetor = document.getElementById('ui-nome-setor');
-      if (elSetor) elSetor.innerText = res.ui.NOME_SISTEMA;
+      if (elSetor) elSetor.innerText = brandConfig.setor || (res.ui && res.ui.NOME_SISTEMA) || "";
 
       // Captura e renderiza o emblema dinâmico (Fallback para LOGO_LIGHT se necessário)
-      const urlEmblema = (res.pwa && res.pwa.EMBLEMA_PWA) || 
-                         (res.ui && res.ui.EMBLEMA_PWA) || 
-                         (res.config && res.config.EMBLEMA_PWA) || 
-                         (res.ui && res.ui.LOGO_LIGHT);
+      const urlEmblema = logoConfig.emblem ||
+                         (res.pwa && res.pwa.EMBLEMA_PWA) ||
+                         (res.ui && res.ui.EMBLEMA_PWA) ||
+                         (res.config && res.config.EMBLEMA_PWA) ||
+                         logoConfig.light ||
+                         (res.ui && (res.ui.LOGO_URL_LIGHT || res.ui.LOGO_LIGHT));
       if (urlEmblema) {
         document.querySelectorAll('img[src*="MGA.png"], .app-emblem, #splash-logo').forEach(img => {
           img.src = urlEmblema;
@@ -73,19 +252,21 @@ async function bootSystem() {
         });
       }
 
+      const contatoConfig = res.contato || {};
       const elEnd = document.getElementById('ui-endereco');
-      if (elEnd && res.contato.ENDERECO) { elEnd.innerText = res.contato.ENDERECO; elEnd.classList.remove('hidden'); }
+      if (elEnd && contatoConfig.ENDERECO) { elEnd.innerText = contatoConfig.ENDERECO; elEnd.classList.remove('hidden'); }
 
       const elEmail = document.getElementById('ui-email');
-      if (elEmail && res.contato.EMAIL) { elEmail.innerText = res.contato.EMAIL; elEmail.classList.remove('hidden'); }
+      if (elEmail && contatoConfig.EMAIL) { elEmail.innerText = contatoConfig.EMAIL; elEmail.classList.remove('hidden'); }
 
       const elCnpj = document.getElementById('ui-cnpj');
-      if (elCnpj && res.contato.CNPJ) { elCnpj.innerText = "CNPJ: " + res.contato.CNPJ; elCnpj.classList.remove('hidden'); }
+      if (elCnpj && contatoConfig.CNPJ) { elCnpj.innerText = "CNPJ: " + contatoConfig.CNPJ; elCnpj.classList.remove('hidden'); }
 
       initPWA();
     }
   } catch (e) {
     console.warn("A arrancar em modo offline persistente.");
+    restaurarPWAOfflineMaestro();
   }
 
   const lastView = sessionStorage.getItem('MAESTRO_LAST_VIEW') || 'view-hub';
@@ -107,15 +288,54 @@ function ocultarSplashScreen() {
   }
 }
 
+function solicitarPrecachePWAMaestro() {
+  if (!('serviceWorker' in navigator)) return;
+  const controller = navigator.serviceWorker.controller;
+  if (controller) {
+    controller.postMessage({
+      type: "PREFETCH_APP_SHELL",
+      version: MAESTRO_PWA_VERSION,
+      storageSchemaVersion: window.MaestroData && window.MaestroData.storage ? window.MaestroData.storage.schemaVersion : ""
+    });
+  }
+}
+
+function sincronizarServiceWorkerMaestro(registration) {
+  if (!registration) return;
+
+  if (registration.waiting) {
+    registration.waiting.postMessage({ type: "SKIP_WAITING" });
+  }
+
+  if (registration.active) {
+    registration.active.postMessage({
+      type: "PREFETCH_APP_SHELL",
+      version: MAESTRO_PWA_VERSION
+    });
+  }
+
+  registration.addEventListener('updatefound', () => {
+    const novoWorker = registration.installing;
+    if (!novoWorker) return;
+    novoWorker.addEventListener('statechange', () => {
+      if (novoWorker.state === 'installed' && navigator.serviceWorker.controller) {
+        novoWorker.postMessage({ type: "SKIP_WAITING" });
+      }
+    });
+  });
+}
+
 function initPWA() {
   if (!window.PWA_NOME) return;
 
   if ('serviceWorker' in navigator) {
+    const versionParam = `v=${encodeURIComponent(MAESTRO_PWA_VERSION)}`;
     if (window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.apiKey) {
-      const swUrl = `./sw.js?apiKey=${window.FIREBASE_CONFIG.apiKey}&projectId=${window.FIREBASE_CONFIG.projectId}&senderId=${window.FIREBASE_CONFIG.messagingSenderId}&appId=${window.FIREBASE_CONFIG.appId}`;
+      const swUrl = `./sw.js?${versionParam}&apiKey=${encodeURIComponent(window.FIREBASE_CONFIG.apiKey)}&projectId=${encodeURIComponent(window.FIREBASE_CONFIG.projectId || "")}&senderId=${encodeURIComponent(window.FIREBASE_CONFIG.messagingSenderId || "")}&appId=${encodeURIComponent(window.FIREBASE_CONFIG.appId || "")}`;
 
       navigator.serviceWorker.register(swUrl)
         .then(registration => {
+          sincronizarServiceWorkerMaestro(registration);
           console.log('SW registado com sucesso com chaves dinâmicas!', registration.scope);
         })
         .catch(err => {
@@ -123,8 +343,11 @@ function initPWA() {
         });
 
     } else {
-      navigator.serviceWorker.register('./sw.js')
-        .then(() => console.log('SW registado em modo apenas-offline.'));
+      navigator.serviceWorker.register(`./sw.js?${versionParam}`)
+        .then((registration) => {
+          sincronizarServiceWorkerMaestro(registration);
+          console.log('SW registado em modo apenas-offline.');
+        });
     }
   }
 }
@@ -147,6 +370,32 @@ function instalarPWA() {
 
 // ... (Código do Bootstrap e PWA mantido) ...
 
+function resolverViewPorPerfilMaestro(viewId) {
+  const nav = window.MaestroNavigation || (window.MaestroData && window.MaestroData.navigation);
+  if (!nav || typeof nav.resolveViewAccess !== "function") {
+    const viewsOperador = [
+      'view-admin-hub', 'view-dashboard', 'view-auditoria', 'view-moderador',
+      'view-fiscal', 'view-notificacoes', 'view-painel-motorista'
+    ];
+
+    if (viewsOperador.indexOf(viewId) !== -1 && typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) {
+      sessionStorage.setItem('MAESTRO_LAST_VIEW', 'view-hub');
+      return 'view-hub';
+    }
+    return viewId;
+  }
+
+  const decision = nav.resolveViewAccess(viewId);
+  if (decision.allowed) return viewId;
+
+  const fallback = decision.fallback || 'view-hub';
+  sessionStorage.setItem('MAESTRO_LAST_VIEW', fallback);
+  if (viewId !== fallback && typeof showToast === 'function') {
+    showToast("Seu perfil nao possui acesso a esta area.", "warning");
+  }
+  return fallback;
+}
+
 function switchView(viewId) {
   // Salvaguarda de hardware: qualquer troca de tela encerra a câmera da inscrição.
   if (typeof finalizarInscricaoLimparHardware === 'function') {
@@ -155,14 +404,11 @@ function switchView(viewId) {
 
   closeAllSidebars();
 
-  const viewsOperador = [
-    'view-admin-hub', 'view-dashboard', 'view-auditoria', 'view-moderador',
-    'view-fiscal', 'view-notificacoes', 'view-painel-motorista'
-  ];
+  viewId = resolverViewPorPerfilMaestro(viewId);
 
-  if (viewsOperador.indexOf(viewId) !== -1 && typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) {
-    sessionStorage.setItem('MAESTRO_LAST_VIEW', 'view-hub');
-    viewId = 'view-hub';
+  const nav = window.MaestroNavigation || (window.MaestroData && window.MaestroData.navigation);
+  if (nav && typeof nav.applyVisibility === "function") {
+    nav.applyVisibility();
   }
 
   let target = document.getElementById(viewId);
@@ -224,26 +470,40 @@ async function carregarAvisosSMEB() {
     const res = await apiCall("getAvisosAtivos");
     const container = document.getElementById('mural-avisos');
     const header = document.getElementById('mural-avisos-header');
+    const adapterAvisos = window.MaestroData &&
+      window.MaestroData.adapters &&
+      typeof window.MaestroData.adapters.avisosAtivos === "function"
+      ? window.MaestroData.adapters.avisosAtivos
+      : null;
+    const avisosNormalizados = adapterAvisos
+      ? adapterAvisos(res)
+      : { avisos: (res && Array.isArray(res.avisos)) ? res.avisos : [] };
+    const avisos = avisosNormalizados.avisos || [];
 
-    if (!res || !res.avisos || res.avisos.length === 0) {
+    if (!avisos.length) {
       if (container) container.classList.add('hidden');
       if (header) header.classList.add('hidden');
       return;
     }
 
     let html = '';
-    res.avisos.forEach(function (aviso) {
+    avisos.forEach(function (aviso) {
       let classeTipo = 'aviso-geral';
-      const tipoNormalizado = aviso.tipo.toLowerCase().trim();
+      const tipoNormalizado = String(aviso.tipo || "").toLowerCase().trim();
+      const tipoSeguro = typeof escapeHTMLMaestro === 'function' ? escapeHTMLMaestro(aviso.tipo) : String(aviso.tipo || "");
+      const tituloSeguro = typeof escapeHTMLMaestro === 'function' ? escapeHTMLMaestro(aviso.titulo) : String(aviso.titulo || "");
+      const assuntoSeguro = typeof safeLinesMaestro === 'function' ? safeLinesMaestro(aviso.assunto) : String(aviso.assunto || "");
+      const imagemSegura = typeof safeUrlAttrMaestro === 'function' ? safeUrlAttrMaestro(aviso.imagem) : String(aviso.imagem || "");
+      const anexoSeguro = typeof safeUrlAttrMaestro === 'function' ? safeUrlAttrMaestro(aviso.anexo) : String(aviso.anexo || "");
       if (tipoNormalizado === 'urgente') classeTipo = 'aviso-urgente';
       if (tipoNormalizado === 'transporte') classeTipo = 'aviso-transporte';
 
       html += `<div class="aviso-card ${classeTipo}">`;
-      if (aviso.imagem) html += `<img src="${aviso.imagem}" class="aviso-imagem" alt="Aviso">`;
-      html += `<span class="aviso-tag">${aviso.tipo}</span>`;
-      html += `<h4 class="aviso-titulo">${aviso.titulo}</h4>`;
-      if (aviso.assunto) html += `<p class="aviso-texto">${aviso.assunto}</p>`;
-      if (aviso.anexo) html += `<a href="${aviso.anexo}" target="_blank" class="aviso-btn-anexo">📄 Baixar Documento</a>`;
+      if (imagemSegura) html += `<img src="${imagemSegura}" class="aviso-imagem" alt="Aviso">`;
+      html += `<span class="aviso-tag">${tipoSeguro}</span>`;
+      html += `<h4 class="aviso-titulo">${tituloSeguro}</h4>`;
+      if (assuntoSeguro) html += `<p class="aviso-texto">${assuntoSeguro}</p>`;
+      if (anexoSeguro) html += `<a href="${anexoSeguro}" target="_blank" rel="noopener noreferrer" class="aviso-btn-anexo">📄 Baixar Documento</a>`;
       html += `</div>`;
     });
 
@@ -265,7 +525,7 @@ let toastTimeout;
 function showToast(msg, type = 'info') {
   const toast = document.getElementById('toast');
   if (!toast) return;
-  toast.innerText = msg;
+  toast.innerText = typeof safeMessageMaestro === 'function' ? safeMessageMaestro(msg, "") : msg;
   toast.style.background = type === 'error' ? 'var(--danger)' : type === 'success' ? 'var(--success)' : type === 'warning' ? '#f59e0b' : '#333';
   toast.style.display = 'block';
 
@@ -348,6 +608,11 @@ async function registrarTokenPush(token) {
   // Extrai o CPF real do cache offline (corrige o bug de identidade fantasma)
   const walletCacheSync = JSON.parse(localStorage.getItem("MAESTRO_OFFLINE_WALLET") || localStorage.getItem("MAESTRO_WALLET_CACHE") || "{}");
   const cpfParaSync = walletCacheSync.cpf || walletCacheSync.cpfAluno;
+  const builderPushToken = window.MaestroData &&
+    window.MaestroData.payloadBuilders &&
+    typeof window.MaestroData.payloadBuilders.pushToken === "function"
+    ? window.MaestroData.payloadBuilders.pushToken
+    : null;
 
   if (!cpfParaSync) {
     console.warn("registrarTokenPush: CPF ausente no cache — registo de push abortado.");
@@ -355,11 +620,16 @@ async function registrarTokenPush(token) {
   }
 
   try {
-    const res = await apiCall("registrarPushToken", {
+    const payloadPush = builderPushToken ? builderPushToken({
       idEstudante: cpfParaSync,
       pushToken: token,
       tokenDispositivo: token
-    });
+    }) : {
+      idEstudante: cpfParaSync,
+      pushToken: token,
+      tokenDispositivo: token
+    };
+    const res = await apiCall("registrarPushToken", payloadPush);
 
     if (res.sucesso) {
       localStorage.setItem("MAESTRO_FCM_TOKEN", token);
@@ -376,14 +646,27 @@ function toggleDarkMode() {
 }
 
 function aplicarTemaAtual() {
-  if (!window.THEME_LIGHT || !window.THEME_DARK) return;
-
   const isDark = document.body.classList.contains('dark-theme');
-  const theme = isDark ? window.THEME_DARK : window.THEME_LIGHT;
+  const legacyTheme = window.THEME_LIGHT && window.THEME_DARK
+    ? (isDark ? window.THEME_DARK : window.THEME_LIGHT)
+    : null;
+  let theme = legacyTheme;
+  let tokens = null;
+
+  if (window.MaestroTheme && typeof window.MaestroTheme.apply === "function") {
+    const storedTheme = window.MaestroData && window.MaestroData.contexts && window.MaestroData.contexts.theme
+      ? window.MaestroData.contexts.theme.get()
+      : {};
+    tokens = window.MaestroTheme.apply(storedTheme, { dark: isDark });
+    if (tokens && tokens.active) theme = tokens.active;
+  }
+
+  if (!theme) return;
 
   document.body.style.setProperty('--primary', theme.primary, 'important');
   document.body.style.setProperty('--secondary', theme.secondary, 'important');
   document.body.style.setProperty('--accent', theme.accent, 'important');
+  document.body.style.setProperty('--font-main', "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 'important');
 
   window.THEME_COLOR = theme.primary;
   window.BG_COLOR = theme.secondary;
@@ -391,11 +674,12 @@ function aplicarTemaAtual() {
   const metaThemeColor = document.getElementById('meta-theme-color');
   if (metaThemeColor) metaThemeColor.content = theme.primary;
 
-  if (theme.logo && theme.logo !== "") {
+  const logoAtual = (tokens && tokens.assets && tokens.assets.logo) || (legacyTheme && legacyTheme.logo);
+  if (logoAtual && logoAtual !== "") {
     const logoEl = document.getElementById('ui-logo');
     const splashLogo = document.getElementById('splash-logo');
-    if (logoEl) { logoEl.src = theme.logo; logoEl.classList.remove('hidden'); }
-    if (splashLogo) { splashLogo.src = theme.logo; splashLogo.classList.remove('hidden'); }
+    if (logoEl) { logoEl.src = logoAtual; logoEl.classList.remove('hidden'); }
+    if (splashLogo) { splashLogo.src = logoAtual; splashLogo.classList.remove('hidden'); }
   }
 }
 
@@ -570,6 +854,7 @@ async function togglePref(tipo, elemento) {
   else if (tipo === 'offline') {
     localStorage.setItem('MAESTRO_PREF_OFFLINE', isLigado ? 'true' : 'false');
     showToast(isLigado ? "Modo Offline Forçado ativo." : "Modo Online restaurado.", "warning");
+    if (isLigado) solicitarPrecachePWAMaestro();
     if (isLigado && typeof abrirTelaCofreOuEntrarDireto === 'function') {
       closeAllSidebars();
       abrirTelaCofreOuEntrarDireto();

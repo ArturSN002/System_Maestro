@@ -78,7 +78,7 @@ Estes dados são geridos dinamicamente através da aba **"Configurações"** do 
 ## 🛠️ Resolução de Problemas e Dicas Comuns (Troubleshooting)
 
 *   **Aplicativo travado ou não atualizando o layout (Erro 404 de Cache):**
-    O Service Worker é extremamente agressivo para manter o modo Offline-First. Sempre que alterar os ficheiros `*.js` (como a recém modularização) ou o CSS, mude a constante `CACHE_NAME` no `sw.js`. Se testar localmente, efetue um "Hard Refresh" (Ctrl+Shift+R) ou limpe a cache do site no painel de ferramentas de desenvolvimento (Application > Clear Storage).
+    O Service Worker é extremamente agressivo para manter o modo Offline-First. Sempre que alterar os ficheiros `*.js` (como a recém modularização), CSS ou a camada de dados, mude a constante `MAESTRO_SW_VERSION` no `sw.js` e alinhe os parâmetros `?v=` de `index.html`. Se testar localmente, efetue um "Hard Refresh" (Ctrl+Shift+R) ou limpe a cache do site no painel de ferramentas de desenvolvimento (Application > Clear Storage).
 *   **Excesso de Cota (429 Quota Exceeded) ou Timeouts no Apps Script:**
     O Google Apps Script tem limites rigorosos de tempo de execução (6 minutos por script). Se os motores CRON (ETL, OCR, PDFs) estiverem travando, verifique o painel do `serviceModerator.gs` para ajustar a quantidade de lotes ou o espaçamento entre os gatilhos.
 *   **Falha no JSON da Inteligência Artificial (Gemini):**

@@ -18,73 +18,133 @@ function mudarAbaDashboard(aba) {
 
 const CACHE_STATS_KEY = "MAESTRO_DASH_STATS";
 
+function normalizarDashboardStatsMaestro(payload) {
+    const adapter = window.MaestroData &&
+        window.MaestroData.adapters &&
+        typeof window.MaestroData.adapters.dashboardStats === "function"
+        ? window.MaestroData.adapters.dashboardStats
+        : null;
+
+    if (adapter) return adapter(payload || {});
+
+    const stats = (payload && (payload.dashboardStats || payload.estatisticas || payload.stats || payload)) || {};
+    return {
+        sucesso: payload && payload.sucesso === false ? false : true,
+        erro: payload && payload.erro ? payload.erro : "",
+        kpis: stats.kpis || {},
+        graficos: stats.graficos || {},
+        consumo: stats.consumo || {},
+        dataMart: Array.isArray(stats.dataMart) ? stats.dataMart : [],
+        filtrosDisponiveis: stats.filtrosDisponiveis || {},
+        atualizadoEm: stats.atualizadoEm || "",
+        origem: stats.origem || "fallback",
+        raw: stats
+    };
+}
+
+function dashboardStatsValido(stats) {
+    return !!(stats && stats.sucesso !== false && stats.graficos && typeof stats.graficos === "object");
+}
+
+function obterCacheDashboardMaestro() {
+    const cachedStatsRaw = localStorage.getItem(CACHE_STATS_KEY);
+    if (!cachedStatsRaw) return null;
+
+    if (window.MaestroData && window.MaestroData.storage) {
+        const tenantContext = window.MaestroData.contexts && window.MaestroData.contexts.tenant
+            ? window.MaestroData.contexts.tenant.get()
+            : {};
+        const cacheValido = window.MaestroData.storage.isDomainFresh("dashboard", {
+            tenantId: tenantContext.tenantId,
+            maxAgeMs: 1000 * 60 * 60 * 6
+        });
+        if (!cacheValido) return null;
+    }
+
+    try {
+        const dashboardStats = normalizarDashboardStatsMaestro(JSON.parse(cachedStatsRaw));
+        return dashboardStatsValido(dashboardStats) ? dashboardStats : null;
+    } catch (erro) {
+        console.warn("Cache do dashboard invalido. Ignorando leitura local.", erro);
+        return null;
+    }
+}
+
+function salvarCacheDashboardMaestro(statsObj) {
+    const dashboardStats = normalizarDashboardStatsMaestro(statsObj);
+    if (!dashboardStatsValido(dashboardStats)) return;
+
+    localStorage.setItem(CACHE_STATS_KEY, JSON.stringify(dashboardStats));
+    if (window.MaestroData && window.MaestroData.storage) {
+        const tenantContext = window.MaestroData.contexts && window.MaestroData.contexts.tenant
+            ? window.MaestroData.contexts.tenant.get()
+            : {};
+        window.MaestroData.storage.markDomain("dashboard", {
+            tenantId: tenantContext.tenantId,
+            source: "getDashboardStats",
+            key: CACHE_STATS_KEY
+        });
+    }
+}
+
+async function buscarDashboardStatsServidorMaestro() {
+    const res = await apiCall("getDashboardStats");
+    const dashboardStats = normalizarDashboardStatsMaestro(res);
+    if (!dashboardStatsValido(dashboardStats)) {
+        const erro = dashboardStats && dashboardStats.erro ? dashboardStats.erro : "Dados do Dashboard indisponiveis.";
+        throw new Error(erro);
+    }
+    return dashboardStats;
+}
+
+function atualizarDashboardComStatsMaestro(dashboardStats, opcoes = {}) {
+    const stats = normalizarDashboardStatsMaestro(dashboardStats);
+    if (!dashboardStatsValido(stats)) {
+        showToast((stats && stats.erro) || "Dados do Dashboard indisponiveis.", "error");
+        return false;
+    }
+
+    window.dadosBI = Array.isArray(stats.dataMart) ? stats.dataMart : [];
+    renderizarDashboardUI(stats);
+    gerarChipsDinamicos();
+
+    if (opcoes.cache !== false) salvarCacheDashboardMaestro(stats);
+
+    const tabAnalise = document.getElementById('tab-analise');
+    if (tabAnalise && tabAnalise.classList.contains('active')) {
+        if (typeof renderizarDashboardBI === "function") renderizarDashboardBI();
+    }
+
+    return true;
+}
+
 async function carregarDashboard() {
     if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
+    if (typeof podeExecutarAcaoMaestro === 'function' && !podeExecutarAcaoMaestro("dashboard", { notify: true })) return;
 
-    const cachedStatsRaw = localStorage.getItem(CACHE_STATS_KEY);
+    const cachedStats = obterCacheDashboardMaestro();
 
-    if (cachedStatsRaw) {
-        const st = JSON.parse(cachedStatsRaw);
-        window.dadosBI = st.dataMart || [];
-        renderizarDashboardUI(st);
+    if (cachedStats) {
+        atualizarDashboardComStatsMaestro(cachedStats, { cache: false });
         switchView('view-dashboard');
-        gerarChipsDinamicos();
 
-        apiCall("getDashboardStats").then(res => {
-            console.warn("🔍 [TELEMETRIA BI] Payload bruto recebido do servidor:");
-            console.dir(res);
-            
-            if (res && res.sucesso === false) {
-                console.error("Erro BI: ", res.erro, res.stack);
-                showToast("Erro ao carregar os dados analíticos: " + res.erro, "error");
-                return;
-            }
-
-            // Aceita o objeto puro ou encapsulado
-            const statsObj = res.stats || res;
-
-            if (statsObj && statsObj.graficos) {
-                localStorage.setItem(CACHE_STATS_KEY, JSON.stringify(statsObj));
-                window.dadosBI = statsObj.dataMart || [];
-                renderizarDashboardUI(statsObj);
-                gerarChipsDinamicos();
-                
-                const tabAnalise = document.getElementById('tab-analise');
-                if (tabAnalise && tabAnalise.classList.contains('active')) {
-                    if (typeof renderizarDashboardBI === "function") renderizarDashboardBI();
-                }
-            }
+        buscarDashboardStatsServidorMaestro().then(stats => {
+            atualizarDashboardComStatsMaestro(stats);
         }).catch(e => {
             console.error("Erro de Rede BI:", e);
-            showToast("Erro ao carregar os dados analíticos: " + e.message, "error");
+            showToast("Erro ao carregar os dados analiticos: " + e.message, "error");
         });
-    } else {
-        showToast("A extrair dados para o Dashboard...", "info");
-        try {
-            const res = await apiCall("getDashboardStats");
-            console.warn("🔍 [TELEMETRIA BI] Payload bruto recebido do servidor:");
-            console.dir(res);
+        return;
+    }
 
-            if (res && res.sucesso === false) {
-                console.error("Erro BI do Servidor: ", res.erro, res.stack);
-                showToast("Erro no servidor: " + res.erro, "error");
-                return;
-            }
-
-            // Aceita o objeto puro ou encapsulado
-            const statsObj = res.stats || res;
-
-            if (statsObj && statsObj.graficos) {
-                localStorage.setItem(CACHE_STATS_KEY, JSON.stringify(statsObj));
-                window.dadosBI = statsObj.dataMart || [];
-                renderizarDashboardUI(statsObj);
-                switchView('view-dashboard');
-                gerarChipsDinamicos();
-            }
-        } catch (err) {
-            console.error("Erro de Rede BI:", err);
-            showToast("Erro de ligação aos dados analíticos: " + err.message, "error");
-        }
+    showToast("A extrair dados para o Dashboard...", "info");
+    try {
+        const stats = await buscarDashboardStatsServidorMaestro();
+        atualizarDashboardComStatsMaestro(stats);
+        switchView('view-dashboard');
+    } catch (err) {
+        console.error("Erro de Rede BI:", err);
+        showToast("Erro de ligacao aos dados analiticos: " + err.message, "error");
     }
 }
 
@@ -95,15 +155,15 @@ async function carregarDashboard() {
  */
 function renderizarDashboardUI(payload) {
     // 1. Guard Clause: Aborta a renderização caso os dados não estejam disponíveis
-    const estatisticas = payload?.estatisticas || payload;
-    if (!estatisticas || !estatisticas.graficos) {
+    const dashboardStats = normalizarDashboardStatsMaestro(payload);
+    if (!dashboardStatsValido(dashboardStats)) {
         showToast("Dados do Dashboard indisponíveis.", "error");
         return;
     }
 
-    const graficos = estatisticas.graficos;
-    const kpis = estatisticas.kpis || {};
-    const consumo = estatisticas.consumo || {};
+    const graficos = dashboardStats.graficos;
+    const kpis = dashboardStats.kpis || {};
+    const consumo = dashboardStats.consumo || {};
 
     // Atualização dos KPIs superiores
     if (document.getElementById('kpi-ativos')) document.getElementById('kpi-ativos').innerText = kpis.ativos || 0;
@@ -113,8 +173,8 @@ function renderizarDashboardUI(payload) {
 
     // Atualização da barra de Uso de IA
     const ocrUsado = consumo?.ocr?.usado || 0;
-    const ocrLimite = consumo?.ocr?.limite || 100;
-    const pctIA = Math.round((ocrUsado / ocrLimite) * 100);
+    const ocrLimite = consumo?.ocr?.limite || 0;
+    const pctIA = ocrLimite > 0 ? Math.round((ocrUsado / ocrLimite) * 100) : 0;
 
     const barraIA = document.getElementById('bar-ia-usage');
     if (document.getElementById('kpi-ia-text') && barraIA) {

@@ -58,7 +58,15 @@ async function solicitarConsentimentoPushAnonimo(cpf) {
             const token = await messaging.getToken({ vapidKey: window.FIREBASE_VAPID_KEY });
             if (token) {
                 const cpfLimpo = cpf.replace(/\D/g, '');
-                await apiCall("registrarPushToken", { idEstudante: cpfLimpo, pushToken: token });
+                const builderPushToken = window.MaestroData &&
+                    window.MaestroData.payloadBuilders &&
+                    typeof window.MaestroData.payloadBuilders.pushToken === "function"
+                    ? window.MaestroData.payloadBuilders.pushToken
+                    : null;
+                const payloadPush = builderPushToken
+                    ? builderPushToken({ cpf: cpfLimpo, idEstudante: cpfLimpo, pushToken: token, tokenDispositivo: token })
+                    : { idEstudante: cpfLimpo, pushToken: token };
+                await apiCall("registrarPushToken", payloadPush);
                 localStorage.setItem('MAESTRO_FCM_TOKEN', token);
                 localStorage.setItem('MAESTRO_PUSH_ATIVO', 'true');
                 showToast("Notificações ativadas com sucesso!", "success");
@@ -87,10 +95,13 @@ function renderizarTimelineEstudante(dados, container) {
 
     const buildObsBox = (obs, colorBorder, colorBg, colorText) => {
         if (!obs || obs.trim() === "") return "";
+        const obsSeguro = typeof safeLinesMaestro === 'function'
+            ? safeLinesMaestro(obs)
+            : String(obs).replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, '<br>');
         return `
       <div style="margin-top: 12px; padding: 12px; background: ${colorBg}; border-left: 4px solid ${colorBorder}; border-radius: 4px; color: ${colorText}; font-size: 12px; line-height: 1.5; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
         <strong style="display:block; margin-bottom:4px; font-size:11px; text-transform:uppercase; opacity:0.8; letter-spacing: 0.5px;">Mensagem do Setor:</strong>
-        ${obs.replace(/\n/g, '<br>')}
+        ${obsSeguro}
       </div>
     `;
     };
@@ -157,7 +168,9 @@ function renderizarTimelineEstudante(dados, container) {
 
 function mostrarErroEstudante(titulo, mensagem) {
     const resBox = document.getElementById('res-estudante');
-    resBox.innerHTML = `<div class="error-box"><strong>${titulo}</strong><br>${mensagem}</div>`;
+    const tituloSeguro = typeof escapeHTMLMaestro === 'function' ? escapeHTMLMaestro(titulo) : String(titulo || "");
+    const mensagemSegura = typeof escapeHTMLMaestro === 'function' ? escapeHTMLMaestro(mensagem) : String(mensagem || "");
+    resBox.innerHTML = `<div class="error-box"><strong>${tituloSeguro}</strong><br>${mensagemSegura}</div>`;
     resBox.classList.remove('hidden');
 }
 

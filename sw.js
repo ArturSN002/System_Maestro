@@ -1,226 +1,305 @@
 /**
  * ============================================================================
- * SERVICE WORKER - PORTAL MAESTRO (V10.3 - MODO OFFLINE & PRIVACIDADE)
- * Responsável pelo cache da aplicação, imagens dinâmicas e Notificações Push.
+ * SERVICE WORKER - PORTAL MAESTRO
+ * App shell offline, cache runtime e push background.
  * ============================================================================
  */
 
-importScripts("https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js");
-importScripts("https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js");
+const MAESTRO_SW_VERSION = "12.15.0-data-layer";
+const CACHE_NAME = "maestro-shell-" + MAESTRO_SW_VERSION;
+const DYNAMIC_CACHE = "maestro-runtime-" + MAESTRO_SW_VERSION;
+const MAP_TILES_CACHE = "maestro-map-tiles-v1";
+const OFFLINE_FALLBACK_URL = "./index.html";
 
-// Puxa as variáveis dinamicamente da URL de registo do Service Worker
-const params = new URL(location).searchParams;
+const ASSETS_TO_CACHE = [
+  "./",
+  "./index.html",
+  "./404.html",
+  "./style.css",
+  "./style.css?v=12.15",
+  "./app.js",
+  "./app.js?v=12.15",
+  "./icone.png",
+  "./MGA.png",
+  "./manifest.json",
+  "./assets/geojson/Rota_UFRN_Noturno_IDA.json",
+  "./assets/geojson/Rota_UFRN_Noturno_VOLTA.json"
+];
 
-const firebaseConfig = {
-  apiKey: params.get('apiKey'),
-  authDomain: params.get('projectId') + ".firebaseapp.com",
-  projectId: params.get('projectId'),
-  storageBucket: params.get('projectId') + ".appspot.com",
-  messagingSenderId: params.get('senderId'),
-  appId: params.get('appId')
-};
+const RUNTIME_CACHE_HOSTS = [
+  "cdn.jsdelivr.net",
+  "unpkg.com",
+  "cdnjs.cloudflare.com",
+  "www.gstatic.com",
+  "fonts.googleapis.com",
+  "fonts.gstatic.com"
+];
 
 let firebaseInicializado = false;
 
 try {
-  // Só inicializa se realmente recebeu a apiKey (evita erros no carregamento sem chaves)
-  if (firebaseConfig.apiKey && firebaseConfig.apiKey !== 'null') {
-      firebase.initializeApp(firebaseConfig);
-      firebaseInicializado = true;
+  importScripts("https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js");
+  importScripts("https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js");
+
+  const params = new URL(self.location.href).searchParams;
+  const projectId = params.get("projectId");
+  const firebaseConfig = {
+    apiKey: params.get("apiKey"),
+    authDomain: projectId ? projectId + ".firebaseapp.com" : "",
+    projectId: projectId,
+    storageBucket: projectId ? projectId + ".appspot.com" : "",
+    messagingSenderId: params.get("senderId"),
+    appId: params.get("appId")
+  };
+
+  if (self.firebase && firebaseConfig.apiKey && firebaseConfig.apiKey !== "null") {
+    firebase.initializeApp(firebaseConfig);
+    firebaseInicializado = true;
   }
-} catch (e) {
-  console.log("Firebase SW já inicializado ou erro na configuração.");
+} catch (error) {
+  console.warn("[SW] Firebase indisponivel no service worker:", error && error.message ? error.message : error);
 }
 
-// CACHES DA VERSÃO 12.12
-const CACHE_NAME = 'maestro-cache-v12.12';
-const DYNAMIC_CACHE = 'maestro-dynamic-v12.12';
+function isHttpRequest(request) {
+  return request && request.url && /^https?:/i.test(request.url);
+}
 
-const ASSETS_TO_CACHE = [
-  './',
-  './index.html',
-  './style.css',
-  './app.js',
-  './icone.png',
-  './manifest.json'
-];
+function isApiRequest(url) {
+  const parsed = new URL(url);
+  const hostname = parsed.hostname;
+  const isGoogleApi = hostname.endsWith("googleapis.com") && hostname !== "fonts.googleapis.com";
+  return hostname === "script.google.com" ||
+    hostname.indexOf("script.google.com") !== -1 ||
+    hostname.indexOf("firestore") !== -1 ||
+    (isGoogleApi && !url.includes("fcm"));
+}
 
-// 1. Instalação: Guarda os ficheiros estáticos (HTML/CSS/JS) no Cache
-self.addEventListener('install', (event) => {
+function isRuntimeCacheHost(hostname) {
+  return RUNTIME_CACHE_HOSTS.indexOf(hostname) !== -1;
+}
+
+function isDriveAsset(url) {
+  return url.includes("drive.google.com/thumbnail") || url.includes("drive.google.com/uc");
+}
+
+function isAppShellAsset(requestUrl) {
+  if (requestUrl.origin !== self.location.origin) return false;
+  return requestUrl.pathname === self.location.pathname.replace(/\/sw\.js$/, "/") ||
+    /\.(?:html|css|js|json|png|jpg|jpeg|webp|svg|ico|woff2?)$/i.test(requestUrl.pathname);
+}
+
+async function matchCached(request) {
+  return caches.match(request).then((cached) => cached || caches.match(request, { ignoreSearch: true }));
+}
+
+async function cacheResponse(cacheName, request, response) {
+  if (!response || request.method !== "GET") return response;
+  if (!(response.ok || response.type === "opaque" || response.type === "opaqueredirect")) return response;
+
+  try {
+    const cache = await caches.open(cacheName);
+    await cache.put(request, response.clone());
+  } catch (error) {
+    console.warn("[SW] Falha ao atualizar cache:", error && error.message ? error.message : error);
+  }
+
+  return response;
+}
+
+async function networkFirst(request, cacheName, fallbackUrl) {
+  try {
+    const networkResponse = await fetch(request);
+    return cacheResponse(cacheName, request, networkResponse);
+  } catch (error) {
+    const cached = await matchCached(request);
+    if (cached) return cached;
+    if (fallbackUrl) return matchCached(fallbackUrl);
+    throw error;
+  }
+}
+
+async function cacheFirst(request, cacheName) {
+  const cached = await matchCached(request);
+  if (cached) return cached;
+  const networkResponse = await fetch(request);
+  return cacheResponse(cacheName, request, networkResponse);
+}
+
+async function staleWhileRevalidate(request, cacheName) {
+  const cached = await matchCached(request);
+  const fetchPromise = fetch(request)
+    .then((networkResponse) => cacheResponse(cacheName, request, networkResponse))
+    .catch(() => cached);
+
+  return cached || fetchPromise;
+}
+
+self.addEventListener("install", (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
-      for (let asset of ASSETS_TO_CACHE) {
+      await Promise.all(ASSETS_TO_CACHE.map(async (asset) => {
         try {
           await cache.add(asset);
-        } catch (e) {
-          console.error("Falha ao fazer cache de:", asset, e);
+        } catch (error) {
+          console.warn("[SW] Asset nao precacheado:", asset, error && error.message ? error.message : error);
         }
-      }
+      }));
     })
   );
 });
 
-// 2. Ativação: Limpa caches antigos
-self.addEventListener('activate', (event) => {
+self.addEventListener("activate", (event) => {
   event.waitUntil(
     Promise.all([
       clients.claim(),
-      caches.keys().then((cacheNames) => {
-        return Promise.all(
-          cacheNames.map((cache) => {
-            if (cache !== CACHE_NAME && cache !== DYNAMIC_CACHE) {
-              return caches.delete(cache);
-            }
-          })
-        );
-      })
+      caches.keys().then((cacheNames) => Promise.all(
+        cacheNames.map((cacheName) => {
+          const keep = cacheName === CACHE_NAME ||
+            cacheName === DYNAMIC_CACHE ||
+            cacheName === MAP_TILES_CACHE;
+          return keep ? Promise.resolve(false) : caches.delete(cacheName);
+        })
+      ))
     ])
   );
 });
 
-// 3. Estratégias de Fetch
-self.addEventListener('fetch', (event) => {
-  const url = event.request.url;
+self.addEventListener("message", (event) => {
+  const data = event.data || {};
 
-  // 1. ESTRATÉGIA DE CACHE PARA MAPAS (Leaflet/OSM)
-  if (url.includes('tile.openstreetmap.org')) {
-      event.respondWith(
-          caches.match(event.request).then(function(cachedResponse) {
-              // Se o mapa já está no cache, devolve instantaneamente (Offline)
-              if (cachedResponse) {
-                  return cachedResponse;
-              }
-              // Se não está, vai à internet, devolve ao mapa e guarda uma cópia no cache
-              return fetch(event.request).then(function(networkResponse) {
-                  return caches.open('maestro-map-tiles-v1').then(function(cache) {
-                      cache.put(event.request, networkResponse.clone());
-                      return networkResponse;
-                  });
-              }).catch(function() {
-                  // Ignora falhas se estiver totalmente offline na primeira tentativa
-                  console.warn('[SW] Falha ao carregar tile do mapa (Offline).');
-              });
-          })
-      );
-      return; // Impede que o resto da lógica do SW processe este pedido
-  }
-
-  if (url.includes('script.google.com') || url.includes('firestore') || (url.includes('googleapis') && !url.includes('fcm'))) {
+  if (data.type === "SKIP_WAITING") {
+    self.skipWaiting();
     return;
   }
 
-  if (url.includes('drive.google.com/thumbnail') || url.includes('drive.google.com/uc')) {
-    event.respondWith(
-      caches.open(DYNAMIC_CACHE).then((cache) => {
-        return cache.match(event.request).then((response) => {
-          const fetchPromise = fetch(event.request).then((networkResponse) => {
-            cache.put(event.request, networkResponse.clone());
-            return networkResponse;
-          }).catch(() => response); 
-          
-          return response || fetchPromise;
-        });
-      })
+  if (data.type === "CLEAR_RUNTIME_CACHE") {
+    event.waitUntil(caches.delete(DYNAMIC_CACHE));
+    return;
+  }
+
+  if (data.type === "PREFETCH_APP_SHELL") {
+    event.waitUntil(
+      caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE).catch(() => null))
     );
-    return;
   }
-
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).catch(() => {
-        if (event.request.mode === 'navigate') {
-          return caches.match('./index.html');
-        }
-      });
-    })
-  );
 });
 
-// 4. Receção de PUSH em BACKGROUND (Segurança Adicionada)
+self.addEventListener("fetch", (event) => {
+  const request = event.request;
+  if (!request || request.method !== "GET" || !isHttpRequest(request)) return;
+  if (request.cache === "only-if-cached" && request.mode !== "same-origin") return;
+
+  const requestUrl = new URL(request.url);
+  const url = request.url;
+
+  if (isApiRequest(url)) return;
+
+  if (url.includes("tile.openstreetmap.org")) {
+    event.respondWith(cacheFirst(request, MAP_TILES_CACHE));
+    return;
+  }
+
+  if (request.mode === "navigate") {
+    event.respondWith(networkFirst(request, CACHE_NAME, OFFLINE_FALLBACK_URL));
+    return;
+  }
+
+  if (isDriveAsset(url)) {
+    event.respondWith(staleWhileRevalidate(request, DYNAMIC_CACHE));
+    return;
+  }
+
+  if (isAppShellAsset(requestUrl)) {
+    event.respondWith(cacheFirst(request, CACHE_NAME));
+    return;
+  }
+
+  if (isRuntimeCacheHost(requestUrl.hostname)) {
+    event.respondWith(staleWhileRevalidate(request, DYNAMIC_CACHE));
+  }
+});
+
 try {
-  if (firebaseInicializado && firebase.messaging.isSupported()) {
+  if (firebaseInicializado && self.firebase && firebase.messaging && firebase.messaging.isSupported()) {
     const messaging = firebase.messaging();
 
     messaging.onBackgroundMessage((payload) => {
-      const notificationTitle = payload.notification.title || "Novo Aviso - Maestro";
+      const notification = payload.notification || {};
+      const data = payload.data || {};
+      const notificationTitle = notification.title || data.title || "Novo Aviso - Maestro";
       const notificationOptions = {
-        body: payload.notification.body,
-        icon: payload.notification.icon || './icone.png',
-        badge: payload.data ? payload.data.badge : './icone.png',
+        body: notification.body || data.body || "Voce tem uma nova mensagem.",
+        icon: notification.icon || data.icon || "./icone.png",
+        badge: data.badge || "./icone.png",
         vibrate: [200, 100, 200, 100, 200],
-        data: payload.data || { click_action: "/" }, 
-        requireInteraction: true 
+        data: data.click_action ? data : Object.assign({ click_action: "./" }, data),
+        requireInteraction: true
       };
 
-      // Guardar na IndexedDB (Caixa de Entrada / Inbox 7 dias)
       const salvarNotificacao = () => {
-         const dbReq = indexedDB.open('MaestroOfflineDB', 1);
-         dbReq.onupgradeneeded = (e) => {
-             const db = e.target.result;
-             if (!db.objectStoreNames.contains('notifications')) {
-                 db.createObjectStore('notifications', { keyPath: 'timestamp' });
-             }
-         };
-         dbReq.onsuccess = (e) => {
-             const db = e.target.result;
-             if (!db.objectStoreNames.contains('notifications')) return;
-             const tx = db.transaction('notifications', 'readwrite');
-             const store = tx.objectStore('notifications');
-             
-             // Limpeza (> 7 dias)
-             const limite = Date.now() - 604800000;
-             const range = IDBKeyRange.upperBound(limite);
-             store.openCursor(range).onsuccess = (ec) => {
-                 const cursor = ec.target.result;
-                 if (cursor) {
-                     store.delete(cursor.primaryKey);
-                     cursor.continue();
-                 }
-             };
+        const dbReq = indexedDB.open("MaestroOfflineDB", 1);
+        dbReq.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains("notifications")) {
+            db.createObjectStore("notifications", { keyPath: "timestamp" });
+          }
+        };
+        dbReq.onsuccess = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains("notifications")) return;
+          const tx = db.transaction("notifications", "readwrite");
+          const store = tx.objectStore("notifications");
 
-             // Inserir
-             store.add({
-                 title: notificationTitle,
-                 body: notificationOptions.body,
-                 timestamp: Date.now(),
-                 icon: notificationOptions.icon,
-                 link: notificationOptions.data.click_action,
-                 status: 'unread'
-             });
-         };
+          const limite = Date.now() - 604800000;
+          const range = IDBKeyRange.upperBound(limite);
+          store.openCursor(range).onsuccess = (ec) => {
+            const cursor = ec.target.result;
+            if (cursor) {
+              store.delete(cursor.primaryKey);
+              cursor.continue();
+            }
+          };
+
+          store.add({
+            title: notificationTitle,
+            body: notificationOptions.body,
+            timestamp: Date.now(),
+            icon: notificationOptions.icon,
+            link: notificationOptions.data.click_action,
+            status: "unread"
+          });
+        };
       };
-      
-      try { salvarNotificacao(); } catch(err) { console.error("Erro ao guardar Inbox", err); }
+
+      try {
+        salvarNotificacao();
+      } catch (error) {
+        console.error("[SW] Erro ao guardar Inbox:", error);
+      }
+
+      return self.registration.showNotification(notificationTitle, notificationOptions);
     });
   }
 } catch (error) {
-  console.log("Push em background ignorado:", error);
+  console.log("[SW] Push em background ignorado:", error && error.message ? error.message : error);
 }
 
-// 5. Ação ao CLICAR na Notificação
-self.addEventListener('notificationclick', (event) => {
+self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const action = event.action;
-  
-  if (action === 'close') return;
+  if (event.action === "close") return;
 
-  const urlToOpen = new URL(event.notification.data.click_action || "/", self.location.origin).href;
+  const data = event.notification.data || {};
+  const urlToOpen = new URL(data.click_action || "./", self.location.origin).href;
 
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      for (let i = 0; i < windowClients.length; i++) {
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
+      for (let i = 0; i < windowClients.length; i += 1) {
         const client = windowClients[i];
-        if (client.url === urlToOpen && 'focus' in client) {
-          return client.focus();
-        }
+        if (client.url === urlToOpen && "focus" in client) return client.focus();
       }
-      if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
-      }
+      if (clients.openWindow) return clients.openWindow(urlToOpen);
+      return null;
     })
   );
 });

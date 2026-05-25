@@ -6,7 +6,7 @@
   </div>
 
   <div id="menu-grupo-campo" class="grid-desktop">
-    <button class="menu-card dark-card" onclick="switchView('view-fiscal')">
+    <button class="menu-card dark-card" data-maestro-action="fiscalizar" onclick="switchView('view-fiscal')">
       <span class="icon">🛂</span>
       <div class="info">
         <strong>Modo Fiscalização</strong>
@@ -14,7 +14,7 @@
       </div>
     </button>
 
-    <button class="menu-card outline-card" style="border-color: var(--accent); background: rgba(245, 158, 11, 0.05);"
+    <button class="menu-card outline-card" data-maestro-action="encerrarRota" style="border-color: var(--accent); background: rgba(245, 158, 11, 0.05);"
       onclick="abrirModalEncerrarRota()">
       <span class="icon" style="background: none; filter: none;">🏁</span>
       <div class="info">
@@ -23,7 +23,7 @@
       </div>
     </button>
 
-    <button class="menu-card outline-card" style="border-color: var(--danger); background: rgba(239, 68, 68, 0.1);"
+    <button class="menu-card outline-card" data-maestro-action="reportarSos" style="border-color: var(--danger); background: rgba(239, 68, 68, 0.1);"
       onclick="abrirModalSOS()">
       <span class="icon" style="background: var(--danger);">🚨</span>
       <div class="info">
@@ -36,7 +36,7 @@
   <div id="menu-grupo-secretaria" class="hidden">
     <div class="divider-text" style="color: #666; margin-top: 25px;">SECRETARIA E LOGÍSTICA</div>
 
-    <button class="menu-card primary-card" onclick="abrirModalSelecaoRota()">
+    <button class="menu-card primary-card" data-maestro-action="gerirRotas" onclick="abrirModalSelecaoRota()">
       <span class="icon" style="background: none; filter: none;">🚌</span>
       <div class="info">
         <strong>Fluxo de Rotas (GPS)</strong>
@@ -44,7 +44,7 @@
       </div>
     </button>
 
-    <button class="menu-card outline-card" style="border-color: var(--primary);" onclick="abrirMesaAuditoria()">
+    <button class="menu-card outline-card" data-maestro-action="auditoria" style="border-color: var(--primary);" onclick="abrirMesaAuditoria()">
       <span class="icon" style="background: none; filter: none;">📂</span>
       <div class="info">
         <strong style="color: var(--primary);">Mesa de Auditoria</strong>
@@ -52,7 +52,7 @@
       </div>
     </button>
 
-    <button class="menu-card outline-card" style="border-color: #3b82f6; background: rgba(59, 130, 246, 0.05);"
+    <button class="menu-card outline-card" data-maestro-action="comunicacao" style="border-color: #3b82f6; background: rgba(59, 130, 246, 0.05);"
       onclick="abrirModalAvisosFiscal()">
       <span class="icon" style="background: none; filter: none;">📢</span>
       <div class="info">
@@ -61,7 +61,7 @@
       </div>
     </button>
 
-    <button class="menu-card outline-card" onclick="carregarDashboard()">
+    <button class="menu-card outline-card" data-maestro-action="dashboard" onclick="carregarDashboard()">
       <span class="icon" style="background: none; filter: none;">📊</span>
       <div class="info">
         <strong style="color: var(--text-main);">Painel Analítico</strong>
@@ -73,7 +73,7 @@
   <div id="menu-grupo-moderador" class="hidden">
     <div class="divider-text" style="color: #666; margin-top: 25px;">ADMINISTRAÇÃO DO SISTEMA</div>
 
-    <button class="menu-card dark-card" style="border-color: var(--accent);" onclick="abrirPainelModerador()">
+    <button class="menu-card dark-card" data-maestro-action="salaMaquinas" style="border-color: var(--accent);" onclick="abrirPainelModerador()">
       <span class="icon">⚙️</span>
       <div class="info">
         <strong style="color: var(--accent);">Sala das Máquinas</strong>
@@ -91,7 +91,7 @@
 
   <div class="grid-desktop">
 
-  <button class="menu-card primary-card" onclick="abrirModalSelecaoRota()">
+  <button class="menu-card primary-card" data-maestro-action="motoristaRotas gerirRotas" onclick="abrirModalSelecaoRota()">
     <div class="icon">🚌</div>
     <div class="info">
       <strong>Fluxo de Rotas</strong>
@@ -99,7 +99,7 @@
     </div>
   </button>
 
-  <button class="menu-card outline-card text-danger" onclick="abrirModalSOS()">
+  <button class="menu-card outline-card text-danger" data-maestro-action="reportarSos" onclick="abrirModalSOS()">
     <div class="icon">🚨</div>
     <div class="info">
       <strong class="text-danger">SOS Avaria</strong>
@@ -107,7 +107,7 @@
     </div>
   </button>
 
-  <button class="menu-card dark-card" onclick="abrirModoFiscalizacaoGlobal()">
+  <button class="menu-card dark-card" data-maestro-action="fiscalizar" onclick="abrirModoFiscalizacaoGlobal()">
     <div class="icon">📷</div>
     <div class="info">
       <strong>Modo Fiscalização</strong>

@@ -174,6 +174,31 @@
               <label class="insc-radio-label"><input type="radio" name="insc-estagio" value="Não" onchange="toggleCondField('cond-estagio', false)"> Não</label>
             </div>
             <div class="cond-field" id="cond-estagio">
+              <label class="input-label">TIPO DE VINCULO DO ESTAGIO</label>
+              <select id="insc-tipo-vinculo-estagio" class="input-field">
+                <option value="">Selecione...</option>
+                <option value="Estagio">Estagio</option>
+                <option value="Bolsa de estudos">Bolsa de estudos</option>
+                <option value="Jovem aprendiz">Jovem aprendiz</option>
+                <option value="Curso tecnico/profissionalizante">Curso tecnico/profissionalizante</option>
+                <option value="Projeto academico">Projeto academico</option>
+                <option value="Outro">Outro</option>
+              </select>
+
+              <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+                <div>
+                  <label class="input-label">INICIO DO VINCULO</label>
+                  <input type="date" id="insc-inicio-estagio" class="input-field">
+                </div>
+                <div>
+                  <label class="input-label">FIM DO VINCULO</label>
+                  <input type="date" id="insc-fim-estagio" class="input-field">
+                </div>
+              </div>
+
+              <label class="input-label">EMPRESA / INSTITUICAO</label>
+              <input type="text" id="insc-empresa-estagio" class="input-field" placeholder="Nome da empresa ou instituicao">
+
               <label class="input-label">PARADA DO ESTÁGIO</label>
               <input type="text" id="insc-parada-estagio" class="input-field" placeholder="Endereço ou ponto de referência">
               <label class="input-label">TURNO DO ESTÁGIO</label>
@@ -184,6 +209,13 @@
                 <option value="Noturno">Noturno</option>
                 <option value="Integral">Integral</option>
               </select>
+
+              <div class="custom-file-upload" style="margin-bottom: 15px;">
+                <label class="input-label">DECLARACAO DE VINCULO DO ESTAGIO (PDF ou Imagem) *</label>
+                <label for="insc-file-estagio" class="btn-file-custom" id="label-insc-estagio">Toque para selecionar o arquivo</label>
+                <input type="file" id="insc-file-estagio" accept="application/pdf, image/jpeg, image/png" onchange="processarArquivoInscricao(this, 'estagio')">
+                <span class="file-name-display" id="status-insc-estagio">Nenhum arquivo selecionado</span>
+              </div>
             </div>
 
             <!-- Q3: PCD -->
@@ -470,4 +502,3 @@
           </div>
         </div>
       </section>
-

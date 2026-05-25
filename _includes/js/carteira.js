@@ -5,7 +5,10 @@ let currentWalletId = "";
 let currentWalletSenha = "";
 let currentStudentName = "";
 let clockInterval = null;
+let walletVisualInterval = null;
 let timeoutSessaoEstudanteID = null;
+let walletStageUpdateFile = null;
+let walletStageUpdateSubmitting = false;
 
 function triggerVibration(ms) {
     if ("vibrate" in navigator) {
@@ -25,6 +28,7 @@ function restaurarSessaoEstudante() {
             currentWalletId = dados.idCarteira;
             currentWalletSenha = creds.senha;
             currentStudentName = dados.nome;
+            if (typeof sincronizarStudentIdentityMaestro === 'function') sincronizarStudentIdentityMaestro(dados, creds.id);
             armarRelogioSessaoEstudante();
             abrirTelaCofreOuEntrarDireto();
         } catch (e) {
@@ -38,7 +42,7 @@ function abrirTelaCofreOuEntrarDireto() {
         const cachedDataRaw = localStorage.getItem("MAESTRO_OFFLINE_WALLET") || localStorage.getItem("MAESTRO_WALLET_CACHE");
         if (cachedDataRaw) {
             const dados = JSON.parse(cachedDataRaw);
-            if (dados.themePrimary) {
+            if (dados.themePrimary || localStorage.getItem('MAESTRO_PREF_OFFLINE') === 'true' || (typeof navigator !== 'undefined' && navigator.onLine === false)) {
                 renderizarCarteiraOffline(dados);
             } else {
                 renderizarCarteira(dados);
@@ -114,6 +118,7 @@ async function loginCarteira() {
       if (res.token) localStorage.setItem("MAESTRO_EST_TOKEN", res.token);
       localStorage.setItem("MAESTRO_WALLET_CACHE", JSON.stringify(res));
       localStorage.setItem("MAESTRO_WALLET_CREDS", JSON.stringify({id: id, senha: senha}));
+      if (typeof sincronizarStudentIdentityMaestro === 'function') sincronizarStudentIdentityMaestro(res, id);
 
       renderizarCarteira(res);
       switchView('view-wallet');
@@ -146,9 +151,10 @@ async function loginCarteira() {
           currentWalletSenha = senha;
           const resCached = JSON.parse(cachedData);
           currentStudentName = resCached.nome;
+          if (typeof sincronizarStudentIdentityMaestro === 'function') sincronizarStudentIdentityMaestro(resCached, id);
           
           showToast("Modo Offline Ativado. Funções limitadas.", "warning");
-          renderizarCarteira(resCached);
+          renderizarCarteira(resCached, { offline: true });
           switchView('view-wallet');
           armarRelogioSessaoEstudante();
           return;
@@ -168,9 +174,283 @@ function armarRelogioSessaoEstudante() {
     }, 10800000);
 }
 
-function renderizarCarteira(dados) {
+function escapeWallet(valor) {
+    if (typeof escapeHTMLMaestro === 'function') return escapeHTMLMaestro(valor);
+    return String(valor ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function safeWalletUrl(valor) {
+    if (typeof safeUrlAttrMaestro === 'function') return safeUrlAttrMaestro(valor);
+    return escapeWallet(valor);
+}
+
+function obterTurnosCarteiraTexto(dados, visualState) {
+    const turnos = visualState && Array.isArray(visualState.declaredTurnos) ? visualState.declaredTurnos : [];
+    if (turnos.length) return turnos.map(t => t.charAt(0) + t.slice(1).toLowerCase()).join(" + ");
+    return dados.turno || dados.TURNO || dados.TURNOS_ALUNO || "Nao informado";
+}
+
+function obterStatusCarteiraVisual(dados, opcoes) {
+    const options = opcoes || {};
+    const adapter = window.MaestroData && window.MaestroData.adapters && window.MaestroData.adapters.walletVisualState;
+    if (adapter) return adapter(dados, new Date(), { offline: options.offline === true });
+
+    return {
+        activeTurnos: [],
+        declaredTurnos: [],
+        currentTurno: "",
+        isWithinDeclaredTurno: false,
+        isEstagioActive: false,
+        isOffline: options.offline === true,
+        isBlocked: false,
+        isPending: false,
+        canEmbark: options.offline !== true,
+        backgroundToken: options.offline ? "wallet.offline" : "wallet.neutral",
+        badgeLabel: options.offline ? "Modo offline" : "Carteira digital",
+        reason: options.offline ? "Carteira exibida a partir do cache local." : "Estado visual indisponivel.",
+        stateClass: options.offline ? "wallet-state-offline" : "wallet-state-neutral",
+        qrLabel: options.offline ? "ACESSO OFFLINE LIMITADO" : "VALIDO PARA EMBARQUE HOJE",
+        status: dados.statusAtividade || dados.STATUS_ATIVIDADE || "ATIVO"
+    };
+}
+
+function obterIdentidadeCarteiraMaestro(dados) {
+    const adapter = window.MaestroData && window.MaestroData.adapters && window.MaestroData.adapters.studentIdentity;
+    return adapter ? adapter(dados || {}) : { estagio: {} };
+}
+
+function obterControleAtualizacaoEstagioCarteira(dados) {
+    const identidade = obterIdentidadeCarteiraMaestro(dados);
+    const estagio = identidade.estagio || {};
+    const controle = estagio.alteracaoCiclo || dados.ALTERACAO_ESTAGIO_CICLO || dados.alteracaoEstagioCiclo || {};
+    const limite = Number(controle.limite || 1) || 1;
+    const usadas = Number(controle.usadas || 0) || 0;
+    const restantes = controle.restantes !== undefined ? Number(controle.restantes) : Math.max(limite - usadas, 0);
+
+    return {
+        limite: limite,
+        usadas: usadas,
+        restantes: Math.max(restantes || 0, 0),
+        ciclo: controle.ciclo || dados.semestreId || dados.SEMESTRE_ATUAL || "",
+        podeAtualizar: usadas < limite
+    };
+}
+
+function obterResumoAtualizacaoEstagioCarteira(dados, offline) {
+    if (offline) {
+        return {
+            podeAtualizar: false,
+            textoBotao: "Atualizacao indisponivel offline",
+            motivo: "Conecte-se a internet para enviar documentos de estagio."
+        };
+    }
+
+    const controle = obterControleAtualizacaoEstagioCarteira(dados || {});
+    if (!controle.podeAtualizar) {
+        return {
+            podeAtualizar: false,
+            textoBotao: "Limite de estagio atingido",
+            motivo: "Ja foi usada a alteracao permitida neste ciclo."
+        };
+    }
+
+    return {
+        podeAtualizar: true,
+        textoBotao: "Atualizar dados de estagio",
+        motivo: `Alteracoes restantes neste ciclo: ${controle.restantes}`,
+        controle: controle
+    };
+}
+
+function selecionarOpcaoCarteira(valor, esperado) {
+    return String(valor || "").trim().toLowerCase() === String(esperado || "").trim().toLowerCase() ? "selected" : "";
+}
+
+function normalizarDataCarteira(valor) {
+    const texto = String(valor || "").trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(texto)) return texto;
+    const data = new Date(texto);
+    if (Number.isNaN(data.getTime())) return "";
+    return data.toISOString().slice(0, 10);
+}
+
+function validarPeriodoEstagioCarteira(inicio, fim) {
+    if (!inicio || !fim) return { sucesso: false, erro: "Informe inicio e fim do vinculo." };
+    const dataInicio = new Date(`${inicio}T00:00:00`);
+    const dataFim = new Date(`${fim}T00:00:00`);
+    if (Number.isNaN(dataInicio.getTime()) || Number.isNaN(dataFim.getTime())) {
+        return { sucesso: false, erro: "Periodo de estagio invalido." };
+    }
+    if (dataFim < dataInicio) return { sucesso: false, erro: "A data final deve ser posterior ao inicio." };
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    if (dataFim < hoje) return { sucesso: false, erro: "A data final do estagio deve estar vigente." };
+    return { sucesso: true };
+}
+
+function carteiraEstaOffline(opcoes) {
+    const options = opcoes || {};
+    return options.offline === true ||
+        localStorage.getItem('MAESTRO_PREF_OFFLINE') === 'true' ||
+        (typeof navigator !== 'undefined' && navigator.onLine === false);
+}
+
+function obterFotoCarteiraHTML(dados, offline) {
+    const foto = offline
+        ? (dados.fotoBase64 || dados.fotoUrl || dados.fotoURL)
+        : (dados.fotoUrl || dados.fotoURL || dados.fotoBase64);
+    const fotoSegura = safeWalletUrl(foto);
+    return fotoSegura
+        ? `<img src="${fotoSegura}" class="wallet-photo" alt="Foto do estudante">`
+        : `<div class="wallet-photo wallet-photo-empty">Sem Foto</div>`;
+}
+
+function atualizarEstadoVisualCarteiraDinamica() {
+    const card = document.querySelector('.wallet-card.wallet-dynamic');
+    if (!card || !window.MaestroWalletAtual) return;
+
+    const dados = window.MaestroWalletAtual.dados || {};
+    const offline = window.MaestroWalletAtual.offline === true;
+    const visualState = obterStatusCarteiraVisual(dados, { offline: offline });
+    const classesEstado = [
+        "wallet-state-neutral",
+        "wallet-state-matutino",
+        "wallet-state-vespertino",
+        "wallet-state-noturno",
+        "wallet-state-multi",
+        "wallet-state-estagio",
+        "wallet-state-blocked",
+        "wallet-state-pending",
+        "wallet-state-offline"
+    ];
+
+    classesEstado.forEach(classe => card.classList.remove(classe));
+    card.classList.add(visualState.stateClass || "wallet-state-neutral");
+    card.dataset.walletState = visualState.backgroundToken || "wallet.neutral";
+
+    const badge = document.getElementById('wallet-state-badge');
+    if (badge) badge.textContent = visualState.badgeLabel || "Carteira digital";
+
+    const reason = document.getElementById('wallet-state-reason');
+    if (reason) reason.textContent = visualState.reason || "";
+
+    const qrLabel = document.getElementById('wallet-qr-label');
+    if (qrLabel) qrLabel.textContent = visualState.qrLabel || "VALIDO PARA EMBARQUE HOJE";
+}
+
+function renderizarCarteira(dados, opcoes = {}) {
     const container = document.getElementById('wallet-container');
     const actions = document.getElementById('wallet-actions');
+    if (!container || !dados) return;
+
+    const offline = carteiraEstaOffline(opcoes);
+    const visualState = obterStatusCarteiraVisual(dados, { offline: offline });
+    const nomeTratadoSeguro = escapeWallet(formatarNomeProprio(dados.nome || dados.nomeAluno || dados.NOME_ALUNO));
+    const cpfMascarado = escapeWallet(dados.cpfMascarado || dados.cpf_mask || dados.CPF_MASCARADO || "***.***.***-**");
+    const idCarteira = escapeWallet(dados.idCarteira || dados.id || dados.identificador || currentWalletId);
+    const instituicao = escapeWallet(dados.instituicao || dados.INSTITUICAO || dados.INSTITUICAO_ALUNO || "Nao informado");
+    const turnoTexto = escapeWallet(obterTurnosCarteiraTexto(dados, visualState));
+    const rota = escapeWallet(dados.rota || dados.ROTA || dados.ROTA_ALUNO || "Nao informada");
+    const cidade = escapeWallet(dados.cidade || dados.CIDADE_ALVO || "...");
+    const validade = escapeWallet(dados.validade || dados.VALIDADE || "...");
+    const statusTexto = escapeWallet(visualState.status || dados.statusAtividade || dados.STATUS_ATIVIDADE || "ATIVO");
+    const badgeLabel = escapeWallet(visualState.badgeLabel || "Carteira digital");
+    const reason = escapeWallet(visualState.reason || "");
+    const qrLabel = escapeWallet(visualState.qrLabel || "VALIDO PARA EMBARQUE HOJE");
+    const fotoDinamicaHTML = obterFotoCarteiraHTML(dados, offline);
+    const classEstado = escapeWallet(visualState.stateClass || "wallet-state-neutral");
+    const dataEstado = escapeWallet(visualState.backgroundToken || "wallet.neutral");
+    const offlineClass = offline ? " wallet-mode-offline" : "";
+    const documentoDisabled = offline ? "disabled" : "";
+    const documentoClasses = offline ? "btn-solid dark-bg wallet-disabled-action" : "btn-solid dark-bg";
+    const documentoLabel = offline ? "Documento indisponivel offline" : "Baixar Declaracao de Vinculo";
+    const resumoEstagio = obterResumoAtualizacaoEstagioCarteira(dados, offline);
+    const botaoEstagioClasses = resumoEstagio.podeAtualizar ? "btn-solid wallet-stage-update-button" : "btn-solid wallet-disabled-action";
+    const botaoEstagioDisabled = resumoEstagio.podeAtualizar ? "" : "disabled";
+
+    container.innerHTML = `
+  <div class="wallet-card wallet-dynamic ${classEstado}${offlineClass}" data-wallet-state="${dataEstado}">
+    <div class="wallet-header">IDENTIDADE UNIVERSITARIA</div>
+    <div class="wallet-state-strip">
+      <span id="wallet-state-badge" class="wallet-state-badge">${badgeLabel}</span>
+      <span class="wallet-status-pill">${statusTexto}</span>
+    </div>
+    <p id="wallet-state-reason" class="wallet-state-reason">${reason}</p>
+    <div class="wallet-body">
+      ${fotoDinamicaHTML}
+      <div class="wallet-info">
+        <div class="w-group"><span>Estudante</span><span class="highlight">${nomeTratadoSeguro}</span></div>
+        <div class="w-group"><span>CPF</span><span>${cpfMascarado}</span></div>
+        <div class="w-group"><span>ID da Carteira</span><span style="font-family:monospace; font-size:12px;">${idCarteira}</span></div>
+      </div>
+    </div>
+
+    <div class="text-center" style="margin: 15px 0; padding: 15px 0; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border);">
+      <div style="background: white; padding: 10px; border-radius: 8px; display: inline-block; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer;" onclick="toggleFullscreenQR('wallet-qrcode')">
+         <div id="wallet-qrcode"></div>
+      </div>
+      <div id="wallet-qr-label" class="wallet-qr-label">${qrLabel}</div>
+    </div>
+
+    <div class="wallet-footer">
+      <div class="w-row">
+        <div class="w-group"><span>Instituicao</span><span style="font-weight:700;">${instituicao}</span></div>
+        <div class="w-group" style="text-align:right;"><span>Turno</span><span>${turnoTexto}</span></div>
+      </div>
+      <div class="w-row"><div class="w-group"><span>Rota de Transporte</span><span>${rota}</span></div></div>
+      <div class="text-center" style="margin-top:10px; border-top:1px dashed var(--border); padding-top:10px;">
+         <span style="font-size:10px; color:var(--text-sub);">Valido em ${cidade} ate <strong>${validade}</strong></span>
+      </div>
+      <div class="anti-print-bar wallet-clock-dynamic" id="wallet-clock">Relogio Seguro...</div>
+    </div>
+  </div>
+
+  <div style="display:flex; margin-top:20px;">
+      <button id="btn-dw-declaracao" class="${documentoClasses}" style="width:100%; margin:0;" onclick="baixarDocumento('DECLARACAO')" ${documentoDisabled}>${documentoLabel}</button>
+  </div>`;
+
+    window.MaestroWalletAtual = { dados: dados, offline: offline };
+
+    if (actions) {
+        actions.innerHTML = offline ? `
+        <div class="wallet-offline-note">Funcoes online ficam bloqueadas ate a proxima sincronizacao.</div>
+        <div style="text-align:center;">
+           <button class="btn-text text-danger" style="font-weight: 700; font-size: 14px;" onclick="sairCarteira()">Fechar Cofre Digital</button>
+        </div>
+      ` : `
+        <div class="wallet-action-row">
+           <button class="btn-solid" style="flex:1; margin:0; background: var(--primary);" onclick="abrirRadarMasterView()">Abrir Radar de Viagens</button>
+           <button class="btn-solid dark-bg" style="flex:1; margin:0;" onclick="abrirMuralDaSemana()">Sugestoes / Forum</button>
+        </div>
+        <button id="btn-wallet-stage-update" class="${botaoEstagioClasses}" style="width:100%; margin:0 0 8px 0;" onclick="abrirFormularioAtualizacaoEstagioCarteira()" ${botaoEstagioDisabled}>${escapeWallet(resumoEstagio.textoBotao)}</button>
+        <div class="wallet-stage-limit-note">${escapeWallet(resumoEstagio.motivo)}</div>
+        <div id="wallet-stage-update-slot"></div>
+        <div style="text-align:center;">
+           <button class="btn-text text-danger" style="font-weight: 700; font-size: 14px;" onclick="sairCarteira()">Fechar Cofre Digital</button>
+        </div>
+      `;
+        actions.classList.remove('hidden');
+    }
+
+    iniciarRelogioAntiPrint('wallet-clock');
+    atualizarEstadoVisualCarteiraDinamica();
+    if (walletVisualInterval) clearInterval(walletVisualInterval);
+    walletVisualInterval = setInterval(atualizarEstadoVisualCarteiraDinamica, 60000);
+
+    const qrContainerDinamico = document.getElementById('wallet-qrcode');
+    if (qrContainerDinamico) {
+        qrContainerDinamico.innerHTML = "";
+        const semente = dados.sementeDia || new Date().toISOString().split('T')[0];
+        new QRCode(qrContainerDinamico, { text: `${dados.idCarteira || currentWalletId}|${semente}`, width: 160, height: 160, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
+    }
+
+    return;
+
     const nomeTratado = formatarNomeProprio(dados.nome);
     const fotoHTML = dados.fotoUrl ? `<img src="${dados.fotoUrl}" class="wallet-photo">` : `<div class="wallet-photo" style="display:flex;align-items:center;justify-content:center;color:#aaa;font-size:12px;text-align:center;">Sem Foto</div>`;
 
@@ -236,6 +516,9 @@ function renderizarCarteira(dados) {
 }
 
 function renderizarCarteiraOffline(dados) {
+    renderizarCarteira(dados, { offline: true });
+    return;
+
     const container = document.getElementById('wallet-container');
     const actions = document.getElementById('wallet-actions');
     const nomeTratado = formatarNomeProprio(dados.nome);
@@ -295,6 +578,239 @@ function renderizarCarteiraOffline(dados) {
         qrContainer.innerHTML = "";
         const semente = new Date().toISOString().split('T')[0];
         new QRCode(qrContainer, { text: `${dados.idCarteira}|${semente}`, width: 160, height: 160, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
+    }
+}
+
+function abrirFormularioAtualizacaoEstagioCarteira() {
+    const slot = document.getElementById('wallet-stage-update-slot');
+    const estado = window.MaestroWalletAtual || {};
+    const dados = estado.dados || {};
+    const resumo = obterResumoAtualizacaoEstagioCarteira(dados, estado.offline === true);
+    if (!slot) return;
+
+    if (!resumo.podeAtualizar) {
+        showToast(resumo.motivo || "Atualizacao indisponivel.", "warning");
+        return;
+    }
+
+    walletStageUpdateFile = null;
+    const identidade = obterIdentidadeCarteiraMaestro(dados);
+    const estagio = identidade.estagio || {};
+    const tipoAtual = estagio.tipoVinculo || dados.TIPO_VINCULO_ESTAGIO || "";
+    const turnoAtual = estagio.turno || dados.TURNO_ESTAGIO || dados.TURNO_ESTAGIO_ALUNO || "";
+    const inicioAtual = normalizarDataCarteira(estagio.inicio || dados.INICIO_ESTAGIO);
+    const fimAtual = normalizarDataCarteira(estagio.fim || dados.FIM_ESTAGIO);
+    const empresaAtual = escapeWallet(estagio.empresaInstituicao || dados.EMPRESA_INSTITUICAO_ESTAGIO || "");
+    const paradaAtual = escapeWallet(estagio.parada || dados.PARADA_ESTAGIO || dados.ROTA_ESTAGIO || "");
+
+    slot.innerHTML = `
+      <div class="wallet-stage-panel">
+        <div class="wallet-stage-panel-header">
+          <strong>Atualizacao de estagio</strong>
+          <button type="button" class="wallet-stage-close" onclick="fecharFormularioAtualizacaoEstagioCarteira()" aria-label="Fechar formulario">x</button>
+        </div>
+        <div class="wallet-stage-grid">
+          <label class="input-label">TIPO DE VINCULO</label>
+          <select id="wallet-stage-tipo" class="input-field">
+            <option value="">Selecione...</option>
+            <option value="Estagio" ${selecionarOpcaoCarteira(tipoAtual, "Estagio")}>Estagio</option>
+            <option value="Bolsa de estudos" ${selecionarOpcaoCarteira(tipoAtual, "Bolsa de estudos")}>Bolsa de estudos</option>
+            <option value="Jovem aprendiz" ${selecionarOpcaoCarteira(tipoAtual, "Jovem aprendiz")}>Jovem aprendiz</option>
+            <option value="Curso tecnico/profissionalizante" ${selecionarOpcaoCarteira(tipoAtual, "Curso tecnico/profissionalizante")}>Curso tecnico/profissionalizante</option>
+            <option value="Projeto academico" ${selecionarOpcaoCarteira(tipoAtual, "Projeto academico")}>Projeto academico</option>
+            <option value="Outro" ${selecionarOpcaoCarteira(tipoAtual, "Outro")}>Outro</option>
+          </select>
+
+          <div class="wallet-stage-two-cols">
+            <div>
+              <label class="input-label">INICIO</label>
+              <input type="date" id="wallet-stage-inicio" class="input-field" value="${escapeWallet(inicioAtual)}">
+            </div>
+            <div>
+              <label class="input-label">FIM</label>
+              <input type="date" id="wallet-stage-fim" class="input-field" value="${escapeWallet(fimAtual)}">
+            </div>
+          </div>
+
+          <label class="input-label">EMPRESA / INSTITUICAO</label>
+          <input type="text" id="wallet-stage-empresa" class="input-field" value="${empresaAtual}" placeholder="Nome da empresa ou instituicao">
+
+          <label class="input-label">PARADA DO ESTAGIO</label>
+          <input type="text" id="wallet-stage-parada" class="input-field" value="${paradaAtual}" placeholder="Endereco ou ponto de referencia">
+
+          <label class="input-label">TURNO DO ESTAGIO</label>
+          <select id="wallet-stage-turno" class="input-field">
+            <option value="">Selecione...</option>
+            <option value="Matutino" ${selecionarOpcaoCarteira(turnoAtual, "Matutino")}>Matutino</option>
+            <option value="Vespertino" ${selecionarOpcaoCarteira(turnoAtual, "Vespertino")}>Vespertino</option>
+            <option value="Noturno" ${selecionarOpcaoCarteira(turnoAtual, "Noturno")}>Noturno</option>
+            <option value="Integral" ${selecionarOpcaoCarteira(turnoAtual, "Integral")}>Integral</option>
+          </select>
+
+          <label class="input-label">DECLARACAO DE VINCULO</label>
+          <input type="file" id="wallet-stage-file" class="input-field" accept="application/pdf, image/jpeg, image/png" onchange="processarArquivoAtualizacaoEstagioCarteira(this)">
+          <span id="wallet-stage-file-status" class="wallet-stage-file-status">Nenhum arquivo selecionado</span>
+        </div>
+        <button id="btn-wallet-stage-submit" type="button" class="btn-solid wallet-stage-submit" onclick="enviarAtualizacaoEstagioCarteira()">Enviar atualizacao para auditoria</button>
+      </div>
+    `;
+}
+
+function fecharFormularioAtualizacaoEstagioCarteira() {
+    walletStageUpdateFile = null;
+    const slot = document.getElementById('wallet-stage-update-slot');
+    if (slot) slot.innerHTML = "";
+}
+
+function processarArquivoAtualizacaoEstagioCarteira(inputElement) {
+    const file = inputElement && inputElement.files ? inputElement.files[0] : null;
+    const status = document.getElementById('wallet-stage-file-status');
+    walletStageUpdateFile = null;
+
+    if (!file) {
+        if (status) {
+            status.textContent = "Nenhum arquivo selecionado";
+            status.style.color = "var(--text-sub)";
+        }
+        return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+        showToast("Arquivo muito grande. O limite e 5MB.", "error");
+        inputElement.value = "";
+        if (status) {
+            status.textContent = "Arquivo acima de 5MB.";
+            status.style.color = "var(--danger)";
+        }
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(evento) {
+        walletStageUpdateFile = {
+            tipo: "estagio",
+            nome: file.name,
+            base64: evento.target.result
+        };
+        if (status) {
+            status.textContent = "Arquivo anexado: " + file.name;
+            status.style.color = "var(--success)";
+        }
+    };
+    reader.onerror = function() {
+        walletStageUpdateFile = null;
+        inputElement.value = "";
+        if (status) {
+            status.textContent = "Falha ao ler o arquivo.";
+            status.style.color = "var(--danger)";
+        }
+        showToast("Falha na leitura do arquivo.", "error");
+    };
+    reader.readAsDataURL(file);
+}
+
+function obterValorCampoCarteira(id) {
+    const el = document.getElementById(id);
+    return el ? String(el.value || "").trim() : "";
+}
+
+async function enviarAtualizacaoEstagioCarteira() {
+    const estado = window.MaestroWalletAtual || {};
+    const dados = estado.dados || {};
+    const resumo = obterResumoAtualizacaoEstagioCarteira(dados, estado.offline === true);
+    const btn = document.getElementById('btn-wallet-stage-submit');
+
+    if (walletStageUpdateSubmitting) {
+        showToast("Atualizacao de estagio ja esta em envio.", "warning");
+        return;
+    }
+    if (!resumo.podeAtualizar) {
+        showToast(resumo.motivo || "Atualizacao indisponivel.", "warning");
+        return;
+    }
+
+    const tipoVinculoEstagio = obterValorCampoCarteira('wallet-stage-tipo');
+    const inicioEstagio = obterValorCampoCarteira('wallet-stage-inicio');
+    const fimEstagio = obterValorCampoCarteira('wallet-stage-fim');
+    const empresaInstituicaoEstagio = obterValorCampoCarteira('wallet-stage-empresa');
+    const paradaEstagio = obterValorCampoCarteira('wallet-stage-parada');
+    const turnoEstagio = obterValorCampoCarteira('wallet-stage-turno');
+    const periodo = validarPeriodoEstagioCarteira(inicioEstagio, fimEstagio);
+
+    if (!tipoVinculoEstagio || !inicioEstagio || !fimEstagio || !empresaInstituicaoEstagio || !paradaEstagio || !turnoEstagio) {
+        showToast("Preencha todos os campos de estagio.", "error");
+        return;
+    }
+    if (!periodo.sucesso) {
+        showToast(periodo.erro, "error");
+        return;
+    }
+    if (!walletStageUpdateFile || !walletStageUpdateFile.base64) {
+        showToast("Anexe a declaracao de vinculo do estagio.", "error");
+        return;
+    }
+
+    const basePayload = {
+        idCarteira: dados.idCarteira || dados.identificador || currentWalletId,
+        cpf: dados.cpf || dados.CPF_ALUNO || "",
+        semestreId: dados.semestreId || dados.SEMESTRE_ATUAL || "",
+        tipoVinculoEstagio,
+        inicioEstagio,
+        fimEstagio,
+        empresaInstituicaoEstagio,
+        transporteEstagio: "Sim",
+        paradaEstagio,
+        turnoEstagio,
+        declaracaoVinculoEstagio: {
+            nome: walletStageUpdateFile.nome,
+            tipo: walletStageUpdateFile.tipo,
+            anexada: true
+        }
+    };
+    const builder = window.MaestroData && window.MaestroData.payloadBuilders && window.MaestroData.payloadBuilders.atualizacaoEstagio;
+    const payload = Object.assign({}, builder ? builder(basePayload) : {}, basePayload, {
+        arquivos: {
+            estagio: walletStageUpdateFile
+        }
+    });
+
+    walletStageUpdateSubmitting = true;
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Enviando...";
+    }
+
+    try {
+        const res = await apiCall("atualizarEstagioCarteira", payload);
+        if (!res || !res.sucesso) {
+            showToast((res && res.erro) || "Nao foi possivel atualizar o estagio.", "error");
+            if (res && res.limiteAtingido && res.alteracaoEstagioCiclo) {
+                const atualizado = Object.assign({}, dados, { ALTERACAO_ESTAGIO_CICLO: res.alteracaoEstagioCiclo });
+                renderizarCarteira(atualizado);
+            }
+            return;
+        }
+
+        const tokenAtual = localStorage.getItem("MAESTRO_EST_TOKEN") || dados.token || "";
+        const carteiraAtualizada = Object.assign({}, dados, res.carteira || {}, {
+            token: (res.carteira && res.carteira.token) || tokenAtual,
+            ALTERACAO_ESTAGIO_CICLO: res.alteracaoEstagioCiclo || dados.ALTERACAO_ESTAGIO_CICLO,
+            declaracaoVinculoEstagio: res.declaracaoVinculoEstagio || dados.declaracaoVinculoEstagio
+        });
+        localStorage.setItem("MAESTRO_WALLET_CACHE", JSON.stringify(carteiraAtualizada));
+        if (typeof sincronizarStudentIdentityMaestro === 'function') sincronizarStudentIdentityMaestro(carteiraAtualizada, currentWalletId);
+        walletStageUpdateFile = null;
+        showToast(res.msg || "Atualizacao enviada para auditoria.", "success");
+        renderizarCarteira(carteiraAtualizada);
+    } catch (erro) {
+        console.error("Erro ao atualizar estagio pela carteira:", erro);
+        showToast("Falha de conexao ao atualizar estagio.", "error");
+    } finally {
+        walletStageUpdateSubmitting = false;
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = "Enviar atualizacao para auditoria";
+        }
     }
 }
 
@@ -392,9 +908,12 @@ async function sairCarteira(expiracaoSilenciosa = false) {
     try { await apiCall("invalidarTokenSessao"); } catch (e) { }
 
     localStorage.removeItem("MAESTRO_EST_TOKEN");
+    if (typeof limparContextsSessaoMaestro === 'function') limparContextsSessaoMaestro("student");
 
     if (clockInterval) clearInterval(clockInterval);
+    if (walletVisualInterval) clearInterval(walletVisualInterval);
     if (timeoutSessaoEstudanteID) clearInterval(timeoutSessaoEstudanteID);
+    walletVisualInterval = null;
 
     // --- Full map/GPS cleanup (layout-agnostic) ---
     if (typeof pararTransmissaoGpsE_Radar === 'function') {
@@ -415,6 +934,7 @@ async function sairCarteira(expiracaoSilenciosa = false) {
     currentWalletId = "";
     currentWalletSenha = "";
     currentStudentName = "";
+    window.MaestroWalletAtual = null;
 
     const painelMob = document.getElementById('view-mobilidade');
     if (painelMob) painelMob.style.display = 'none';

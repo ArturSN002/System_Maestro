@@ -1,16 +1,41 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-
 /* ========================================== */
 /* DESIGN SYSTEM — TOKENS & VARIABLES         */
 /* ========================================== */
 :root {
+  /* Maestro visual tokens: filled by spreadsheet config at runtime */
+  --maestro-font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --maestro-color-primary: #0A3D6B;
+  --maestro-color-secondary: #F8F9FA;
+  --maestro-color-accent: #F29900;
+  --maestro-color-primary-light: #0A3D6B;
+  --maestro-color-secondary-light: #F8F9FA;
+  --maestro-color-accent-light: #F29900;
+  --maestro-color-primary-dark: #8AB4F8;
+  --maestro-color-secondary-dark: #121212;
+  --maestro-color-accent-dark: #F29900;
+  --maestro-color-success: #10B981;
+  --maestro-color-warning: #F59E0B;
+  --maestro-color-danger: #EF4444;
+  --maestro-color-info: #2563EB;
+  --maestro-space-1: 4px;
+  --maestro-space-2: 8px;
+  --maestro-space-3: 12px;
+  --maestro-space-4: 16px;
+  --maestro-space-5: 24px;
+  --maestro-space-6: 32px;
+  --maestro-radius-sm: 6px;
+  --maestro-radius-md: 8px;
+  --maestro-radius-lg: 12px;
+  --maestro-radius-xl: 20px;
+  --maestro-shadow-soft: 0 10px 30px rgba(15, 23, 42, 0.10);
+
   /* Palette: Core */
-  --primary: #0A3D6B;
-  --secondary: #F8F9FA;
-  --accent: #F29900;
-  --success: #10B981;
-  --warning: #F59E0B;
-  --danger: #EF4444;
+  --primary: var(--maestro-color-primary);
+  --secondary: var(--maestro-color-secondary);
+  --accent: var(--maestro-color-accent);
+  --success: var(--maestro-color-success);
+  --warning: var(--maestro-color-warning);
+  --danger: var(--maestro-color-danger);
   --cor-voltar-alerta: #e74c3c;
 
   /* Palette: Text */
@@ -39,11 +64,11 @@
   --radius-xl: 20px;
 
   /* Typography */
-  --font-main: 'Poppins', sans-serif;
+  --font-main: var(--maestro-font-family);
 }
 
 body {
-  font-family: var(--font-main);
+  font-family: var(--maestro-font-family, var(--font-main));
   background-color: var(--bg-body);
   color: var(--text-main);
   margin: 0;
@@ -931,6 +956,218 @@ input:disabled+.slider {
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
   border: 1px solid var(--border);
   width: 100%;
+}
+
+.wallet-card.wallet-dynamic {
+  --wallet-state-color: var(--primary);
+  --wallet-state-soft: rgba(10, 61, 107, 0.08);
+  --wallet-state-ink: var(--text-main);
+  border-color: var(--wallet-state-color);
+  background: linear-gradient(180deg, var(--wallet-state-soft) 0%, var(--bg-surface) 42%);
+}
+
+.wallet-dynamic .wallet-header {
+  background: var(--wallet-state-color);
+}
+
+.wallet-state-matutino {
+  --wallet-state-color: #D97706;
+  --wallet-state-soft: #FEF3C7;
+}
+
+.wallet-state-vespertino {
+  --wallet-state-color: #0284C7;
+  --wallet-state-soft: #DBEAFE;
+}
+
+.wallet-state-noturno {
+  --wallet-state-color: #6D28D9;
+  --wallet-state-soft: #EDE9FE;
+}
+
+.wallet-state-multi {
+  --wallet-state-color: #0F766E;
+  --wallet-state-soft: #DCFCE7;
+}
+
+.wallet-state-multi .wallet-header {
+  background: linear-gradient(90deg, #D97706 0%, #0284C7 50%, #6D28D9 100%);
+}
+
+.wallet-state-estagio {
+  --wallet-state-color: #0D9488;
+  --wallet-state-soft: #CCFBF1;
+}
+
+.wallet-state-pending {
+  --wallet-state-color: #B45309;
+  --wallet-state-soft: #FEF3C7;
+}
+
+.wallet-state-blocked {
+  --wallet-state-color: #DC2626;
+  --wallet-state-soft: #FEE2E2;
+}
+
+.wallet-state-offline {
+  --wallet-state-color: #F97316;
+  --wallet-state-soft: #FFEDD5;
+}
+
+.wallet-state-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px 0;
+}
+
+.wallet-state-badge,
+.wallet-status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: var(--wallet-state-color);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.wallet-status-pill {
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--wallet-state-color);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+}
+
+.wallet-state-reason {
+  margin: 6px 14px 0;
+  color: var(--text-sub);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.wallet-qr-label {
+  color: var(--wallet-state-color);
+  font-size: 11px;
+  margin-top: 8px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.wallet-clock-dynamic {
+  background: var(--wallet-state-color);
+}
+
+.wallet-photo-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #777;
+  font-size: 12px;
+  text-align: center;
+}
+
+.wallet-disabled-action {
+  background: #cbd5e1 !important;
+  color: #475569 !important;
+  cursor: not-allowed !important;
+}
+
+.wallet-offline-note {
+  background: #fff7ed;
+  color: #9a3412;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.wallet-action-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.wallet-stage-update-button {
+  background: var(--accent);
+}
+
+.wallet-stage-limit-note {
+  color: var(--text-sub);
+  font-size: 11px;
+  font-weight: 600;
+  margin: -2px 0 10px;
+  text-align: center;
+}
+
+.wallet-stage-panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin: 10px 0 14px;
+  padding: 12px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.wallet-stage-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--text-main);
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.wallet-stage-close {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--text-main);
+  cursor: pointer;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.wallet-stage-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.wallet-stage-two-cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.wallet-stage-file-status {
+  color: var(--text-sub);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.wallet-stage-submit {
+  margin: 12px 0 0;
+  width: 100%;
+  background: var(--success);
+}
+
+@media (max-width: 520px) {
+  .wallet-action-row,
+  .wallet-stage-two-cols {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
 }
 
 .wallet-card.dark {
