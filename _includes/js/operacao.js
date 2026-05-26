@@ -212,7 +212,7 @@ function renderizarEstagioRaioX(aluno) {
     const estagio = aluno && aluno.estagio ? aluno.estagio : {};
     const temDados = estagio.ativo || estagio.tipoVinculo || estagio.inicio || estagio.fim || estagio.empresaInstituicao || estagio.declaracaoVinculo;
     if (!temDados) {
-        box.style.display = "none";
+        box.classList.add("hidden");
         resumo.textContent = "";
         detalhes.innerHTML = "";
         badge.textContent = "";
@@ -235,9 +235,9 @@ function renderizarEstagioRaioX(aluno) {
         <div><span>Turno</span><strong>${escapeHTMLAuditoria(primeiroValorAuditoria(estagio.turno, "Nao informado"))}</strong></div>
         <div><span>Parada</span><strong>${escapeHTMLAuditoria(primeiroValorAuditoria(estagio.parada, "Nao informado"))}</strong></div>
         <div><span>Declaracao</span><strong>${estagio.declaracaoVinculo ? "Anexada" : "Nao anexada"}</strong></div>
-        ${cicloTexto ? `<div style="grid-column: span 2;"><span>Ciclo</span><strong>${escapeHTMLAuditoria(cicloTexto)}</strong></div>` : ""}
+        ${cicloTexto ? `<div class="raio-x-span-2"><span>Ciclo</span><strong>${escapeHTMLAuditoria(cicloTexto)}</strong></div>` : ""}
     `;
-    box.style.display = "block";
+    box.classList.remove("hidden");
 }
 
 window.forcarResetSenhaEstudante = async function(cpf) {
@@ -531,7 +531,7 @@ async function abrirDocumentoSeguro(cpf, tipoDoc, semestreId = "") {
             const fullBase64 = `data:${mimeType};base64,${String(res.base64 || "")}`;
 
             if (mimeType.includes("image")) {
-                contentBox.innerHTML = `<img src="${fullBase64}" class="zoom-hover" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
+                contentBox.innerHTML = `<img src="${fullBase64}" class="zoom-hover doc-viewer-image" alt="Documento do estudante">`;
             } else if (mimeType.includes("pdf")) {
                 contentBox.innerHTML = `<embed src="${fullBase64}" width="100%" height="100%" type="application/pdf">`;
             } else {

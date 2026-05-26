@@ -3,7 +3,7 @@
 // ========================================================================
 
 let deferredPrompt;
-const MAESTRO_PWA_VERSION = "12.16.0";
+const MAESTRO_PWA_VERSION = "12.19.0";
 window.MAESTRO_PWA_VERSION = MAESTRO_PWA_VERSION;
 window.MAESTRO_MANIFEST_URL = null;
 
@@ -92,7 +92,6 @@ function atualizarManifestDinamicoMaestro(themeConfig) {
     short_name: shortName,
     description: "Portal Oficial de Mobilidade",
     start_url: appBaseUrl,
-    scope: appBaseUrl,
     display: "standalone",
     display_override: ["standalone", "minimal-ui"],
     orientation: "portrait",
@@ -106,6 +105,12 @@ function atualizarManifestDinamicoMaestro(themeConfig) {
         sizes: "512x512",
         type: "image/png",
         purpose: "any maskable"
+      },
+      {
+        src: icon,
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "any"
       }
     ]
   };
@@ -160,6 +165,8 @@ function restaurarPWAOfflineMaestro() {
   if (appleIcon) appleIcon.setAttribute("href", sanitizarUrlPWAMaestro(window.PWA_ICONE, "icone.png"));
   const favicon = document.querySelector('link[rel="icon"]');
   if (favicon) favicon.setAttribute("href", sanitizarUrlPWAMaestro(window.PWA_ICONE, "icone.png"));
+  const metaThemeColor = document.getElementById("meta-theme-color");
+  if (metaThemeColor) metaThemeColor.setAttribute("content", light.primary || "#0A3D6B");
 
   atualizarManifestDinamicoMaestro(themeConfig);
   if (typeof aplicarTemaAtual === 'function') aplicarTemaAtual();
@@ -276,13 +283,22 @@ async function bootSystem(options = {}) {
 
       const contatoConfig = res.contato || {};
       const elEnd = document.getElementById('ui-endereco');
-      if (elEnd && contatoConfig.ENDERECO) { elEnd.innerText = contatoConfig.ENDERECO; elEnd.classList.remove('hidden'); }
+      if (elEnd && (contatoConfig.ENDERECO || themeConfig.contact && themeConfig.contact.endereco)) {
+        elEnd.innerText = contatoConfig.ENDERECO || themeConfig.contact.endereco;
+        elEnd.classList.remove('hidden');
+      }
 
       const elEmail = document.getElementById('ui-email');
-      if (elEmail && contatoConfig.EMAIL) { elEmail.innerText = contatoConfig.EMAIL; elEmail.classList.remove('hidden'); }
+      if (elEmail && (contatoConfig.EMAIL || themeConfig.contact && themeConfig.contact.email)) {
+        elEmail.innerText = contatoConfig.EMAIL || themeConfig.contact.email;
+        elEmail.classList.remove('hidden');
+      }
 
       const elCnpj = document.getElementById('ui-cnpj');
-      if (elCnpj && contatoConfig.CNPJ) { elCnpj.innerText = "CNPJ: " + contatoConfig.CNPJ; elCnpj.classList.remove('hidden'); }
+      if (elCnpj && (contatoConfig.CNPJ || themeConfig.contact && themeConfig.contact.cnpj)) {
+        elCnpj.innerText = "CNPJ: " + (contatoConfig.CNPJ || themeConfig.contact.cnpj);
+        elCnpj.classList.remove('hidden');
+      }
 
       initPWA();
     } else {
@@ -698,6 +714,7 @@ function aplicarTemaAtual() {
 
   const metaThemeColor = document.getElementById('meta-theme-color');
   if (metaThemeColor) metaThemeColor.content = theme.primary;
+  document.documentElement.style.colorScheme = isDark ? "dark" : "light";
 
   const logoAtual = (tokens && tokens.assets && tokens.assets.logo) || (legacyTheme && legacyTheme.logo);
   const logoEl = document.getElementById('ui-logo');
@@ -732,9 +749,6 @@ function aplicarTemaAtual() {
           imgEl.parentNode.insertBefore(placeholder, imgEl.nextSibling);
         }
         placeholder.textContent = placeholderText;
-        placeholder.style.setProperty('background', `linear-gradient(135deg, ${theme.primary} 0%, ${theme.accent} 100%)`, 'important');
-        placeholder.style.setProperty('-webkit-background-clip', 'text', 'important');
-        placeholder.style.setProperty('-webkit-text-fill-color', 'transparent', 'important');
       }
     };
   };

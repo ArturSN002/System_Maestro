@@ -1,10 +1,10 @@
 {
-  "id": "./",
+  "id": "/System_Maestro/",
   "name": "Portal Maestro",
   "short_name": "Portal Maestro",
   "description": "Portal Oficial de Mobilidade",
-  "start_url": "./",
-  "scope": "./",
+  "start_url": "/System_Maestro/",
+  "scope": "/System_Maestro/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",

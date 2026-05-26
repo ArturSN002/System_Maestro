@@ -66,26 +66,25 @@ function mostrarSkeletonWallet() {
 
     container.innerHTML = `
     <div class="wallet-card">
-        <div class="wallet-header skeleton-box" style="color: transparent;">IDENTIDADE UNIVERSITÁRIA</div>
+        <div class="wallet-header skeleton-box wallet-skeleton-header">IDENTIDADE UNIVERSITARIA</div>
         <div class="wallet-body">
             <div class="wallet-photo skeleton-box"></div>
-            <div class="wallet-info" style="width: 100%;">
-                <div class="skeleton-box" style="height: 15px; width: 60%; margin-bottom: 5px; border-radius: 4px;"></div>
-                <div class="skeleton-box" style="height: 20px; width: 80%; margin-bottom: 15px; border-radius: 4px;"></div>
+            <div class="wallet-info wallet-info-full">
+                <div class="skeleton-box wallet-skeleton-line wallet-skeleton-w-60"></div>
+                <div class="skeleton-box wallet-skeleton-line-title"></div>
                 
-                <div class="skeleton-box" style="height: 15px; width: 40%; margin-bottom: 5px; border-radius: 4px;"></div>
-                <div class="skeleton-box" style="height: 15px; width: 70%; margin-bottom: 15px; border-radius: 4px;"></div>
+                <div class="skeleton-box wallet-skeleton-line wallet-skeleton-w-40"></div>
+                <div class="skeleton-box wallet-skeleton-line wallet-skeleton-w-70"></div>
                 
-                <div class="skeleton-box" style="height: 15px; width: 50%; margin-bottom: 5px; border-radius: 4px;"></div>
-                <div class="skeleton-box" style="height: 15px; width: 60%; border-radius: 4px;"></div>
+                <div class="skeleton-box wallet-skeleton-line wallet-skeleton-w-50"></div>
+                <div class="skeleton-box wallet-skeleton-line wallet-skeleton-w-60"></div>
             </div>
         </div>
-        <div class="text-center" style="margin: 15px 0; padding: 15px 0; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border);">
-            <div class="skeleton-box" style="width: 160px; height: 160px; margin: 0 auto; border-radius: 8px;"></div>
+        <div class="text-center wallet-qr-zone">
+            <div class="skeleton-box wallet-skeleton-qr"></div>
         </div>
     </div>`;
 }
-
 async function loginCarteira() {
   const id = document.getElementById('login-id').value.trim();
   const senha = document.getElementById('login-senha').value.trim();
@@ -386,12 +385,12 @@ function renderizarCarteira(dados, opcoes = {}) {
       <div class="wallet-info">
         <div class="w-group"><span>Estudante</span><span class="highlight">${nomeTratadoSeguro}</span></div>
         <div class="w-group"><span>CPF</span><span>${cpfMascarado}</span></div>
-        <div class="w-group"><span>ID da Carteira</span><span style="font-family:monospace; font-size:12px;">${idCarteira}</span></div>
+        <div class="w-group"><span>ID da Carteira</span><span class="wallet-mono-id">${idCarteira}</span></div>
       </div>
     </div>
 
-    <div class="text-center" style="margin: 15px 0; padding: 15px 0; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border);">
-      <div style="background: white; padding: 10px; border-radius: 8px; display: inline-block; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer;" onclick="toggleFullscreenQR('wallet-qrcode')">
+    <div class="text-center wallet-qr-zone">
+      <div class="wallet-qr-frame" onclick="toggleFullscreenQR('wallet-qrcode')">
          <div id="wallet-qrcode"></div>
       </div>
       <div id="wallet-qr-label" class="wallet-qr-label">${qrLabel}</div>
@@ -399,19 +398,19 @@ function renderizarCarteira(dados, opcoes = {}) {
 
     <div class="wallet-footer">
       <div class="w-row">
-        <div class="w-group"><span>Instituicao</span><span style="font-weight:700;">${instituicao}</span></div>
-        <div class="w-group" style="text-align:right;"><span>Turno</span><span>${turnoTexto}</span></div>
+        <div class="w-group"><span>Instituicao</span><span class="wallet-strong-value">${instituicao}</span></div>
+        <div class="w-group wallet-align-right"><span>Turno</span><span>${turnoTexto}</span></div>
       </div>
       <div class="w-row"><div class="w-group"><span>Rota de Transporte</span><span>${rota}</span></div></div>
-      <div class="text-center" style="margin-top:10px; border-top:1px dashed var(--border); padding-top:10px;">
-         <span style="font-size:10px; color:var(--text-sub);">Valido em ${cidade} ate <strong>${validade}</strong></span>
+      <div class="text-center wallet-validity-row">
+         <span class="wallet-validity-note">Valido em ${cidade} ate <strong>${validade}</strong></span>
       </div>
       <div class="anti-print-bar wallet-clock-dynamic" id="wallet-clock">Relogio Seguro...</div>
     </div>
   </div>
 
-  <div style="display:flex; margin-top:20px;">
-      <button id="btn-dw-declaracao" class="${documentoClasses}" style="width:100%; margin:0;" onclick="baixarDocumento('DECLARACAO')" ${documentoDisabled}>${documentoLabel}</button>
+  <div class="wallet-document-row">
+      <button id="btn-dw-declaracao" class="${documentoClasses} wallet-document-button" onclick="baixarDocumento('DECLARACAO')" ${documentoDisabled}>${documentoLabel}</button>
   </div>`;
 
     window.MaestroWalletAtual = { dados: dados, offline: offline };
@@ -419,19 +418,19 @@ function renderizarCarteira(dados, opcoes = {}) {
     if (actions) {
         actions.innerHTML = offline ? `
         <div class="wallet-offline-note">Funcoes online ficam bloqueadas ate a proxima sincronizacao.</div>
-        <div style="text-align:center;">
-           <button class="btn-text text-danger" style="font-weight: 700; font-size: 14px;" onclick="sairCarteira()">Fechar Cofre Digital</button>
+        <div class="wallet-action-close-row">
+           <button class="btn-text text-danger wallet-close-button" onclick="sairCarteira()">Fechar Cofre Digital</button>
         </div>
       ` : `
         <div class="wallet-action-row">
-           <button class="btn-solid" style="flex:1; margin:0; background: var(--primary);" onclick="abrirRadarMasterView()">Abrir Radar de Viagens</button>
-           <button class="btn-solid dark-bg" style="flex:1; margin:0;" onclick="abrirMuralDaSemana()">Sugestoes / Forum</button>
+           <button class="btn-solid wallet-action-button" onclick="abrirRadarMasterView()">Abrir Radar de Viagens</button>
+           <button class="btn-solid dark-bg wallet-action-button" onclick="abrirMuralDaSemana()">Sugestoes / Forum</button>
         </div>
-        <button id="btn-wallet-stage-update" class="${botaoEstagioClasses}" style="width:100%; margin:0 0 8px 0;" onclick="abrirFormularioAtualizacaoEstagioCarteira()" ${botaoEstagioDisabled}>${escapeWallet(resumoEstagio.textoBotao)}</button>
+        <button id="btn-wallet-stage-update" class="${botaoEstagioClasses}" onclick="abrirFormularioAtualizacaoEstagioCarteira()" ${botaoEstagioDisabled}>${escapeWallet(resumoEstagio.textoBotao)}</button>
         <div class="wallet-stage-limit-note">${escapeWallet(resumoEstagio.motivo)}</div>
         <div id="wallet-stage-update-slot"></div>
-        <div style="text-align:center;">
-           <button class="btn-text text-danger" style="font-weight: 700; font-size: 14px;" onclick="sairCarteira()">Fechar Cofre Digital</button>
+        <div class="wallet-action-close-row">
+           <button class="btn-text text-danger wallet-close-button" onclick="sairCarteira()">Fechar Cofre Digital</button>
         </div>
       `;
         actions.classList.remove('hidden');
@@ -450,135 +449,11 @@ function renderizarCarteira(dados, opcoes = {}) {
     }
 
     return;
-
-    const nomeTratado = formatarNomeProprio(dados.nome);
-    const fotoHTML = dados.fotoUrl ? `<img src="${dados.fotoUrl}" class="wallet-photo">` : `<div class="wallet-photo" style="display:flex;align-items:center;justify-content:center;color:#aaa;font-size:12px;text-align:center;">Sem Foto</div>`;
-
-    let html = `
-  <div class="wallet-card">
-    <div class="wallet-header">IDENTIDADE UNIVERSITÁRIA</div>
-    <div class="wallet-body">
-      ${fotoHTML}
-      <div class="wallet-info">
-        <div class="w-group"><span>Estudante</span><span class="highlight">${nomeTratado}</span></div>
-        <div class="w-group"><span>CPF</span><span>${dados.cpfMascarado}</span></div>
-        <div class="w-group"><span>ID da Carteira</span><span style="font-family:monospace; font-size:12px;">${dados.idCarteira}</span></div>
-      </div>
-    </div>
-    
-    <div class="text-center" style="margin: 15px 0; padding: 15px 0; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border);">
-      <div style="background: white; padding: 10px; border-radius: 8px; display: inline-block; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer;" onclick="toggleFullscreenQR('wallet-qrcode')">
-         <div id="wallet-qrcode"></div>
-      </div>
-      <div style="font-size: 11px; color: var(--primary); margin-top: 8px; font-weight: 700; letter-spacing: 1px;">VÁLIDO PARA EMBARQUE HOJE</div>
-    </div>
-
-    <div class="wallet-footer">
-      <div class="w-row">
-        <div class="w-group"><span>Instituição</span><span style="font-weight:700;">${dados.instituicao}</span></div>
-        <div class="w-group" style="text-align:right;"><span>Turno</span><span>${dados.turno}</span></div>
-      </div>
-      <div class="w-row"><div class="w-group"><span>Rota de Transporte</span><span>${dados.rota}</span></div></div>
-      <div class="text-center" style="margin-top:10px; border-top:1px dashed var(--border); padding-top:10px;">
-         <span style="font-size:10px; color:var(--text-sub);">Válido em ${dados.cidade} até <strong>${dados.validade}</strong></span>
-      </div>
-      <div class="anti-print-bar" id="wallet-clock">Relógio Seguro...</div>
-    </div>
-  </div>
-  
-  <div style="display:flex; margin-top:20px;">
-      <button id="btn-dw-declaracao" class="btn-solid dark-bg" style="width:100%; margin:0;" onclick="baixarDocumento('DECLARACAO')">📄 Baixar Declaração de Vínculo</button>
-  </div>`;
-
-    container.innerHTML = html;
-
-    if (actions) {
-        actions.innerHTML = `
-        <div style="display:flex; gap:10px; margin-bottom: 15px;">
-           <button class="btn-solid" style="flex:1; margin:0; background: var(--primary);" onclick="abrirRadarMasterView()">🚐 Abrir Radar de Viagens</button>
-           <button class="btn-solid dark-bg" style="flex:1; margin:0;" onclick="abrirMuralDaSemana()">🗣️ Sugestões / Fórum</button>
-        </div>
-        <div style="text-align:center;">
-           <button class="btn-text text-danger" style="font-weight: 700; font-size: 14px;" onclick="sairCarteira()">❌ Fechar Cofre Digital</button>
-        </div>
-      `;
-        actions.classList.remove('hidden');
-    }
-
-    iniciarRelogioAntiPrint('wallet-clock');
-
-    const qrContainer = document.getElementById('wallet-qrcode');
-    if (qrContainer) {
-        qrContainer.innerHTML = "";
-        const semente = dados.sementeDia || new Date().toISOString().split('T')[0];
-        new QRCode(qrContainer, { text: `${dados.idCarteira}|${semente}`, width: 160, height: 160, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
-    }
 }
 
 function renderizarCarteiraOffline(dados) {
     renderizarCarteira(dados, { offline: true });
     return;
-
-    const container = document.getElementById('wallet-container');
-    const actions = document.getElementById('wallet-actions');
-    const nomeTratado = formatarNomeProprio(dados.nome);
-    const fotoHTML = dados.fotoBase64 ? `<img src="${dados.fotoBase64}" class="wallet-photo">` : `<div class="wallet-photo" style="display:flex;align-items:center;justify-content:center;color:#aaa;font-size:12px;text-align:center;">Sem Foto</div>`;
-
-    let html = `
-  <div class="wallet-card" style="border: 2px solid #f59e0b;">
-    <div class="wallet-header" style="background: #f59e0b; color: #fff;">MODO OFFLINE</div>
-    <div class="wallet-body">
-      ${fotoHTML}
-      <div class="wallet-info">
-        <div class="w-group"><span>Estudante</span><span class="highlight" style="color: ${dados.themePrimary || 'var(--primary)'};">${nomeTratado}</span></div>
-        <div class="w-group"><span>CPF</span><span>${dados.cpfMascarado}</span></div>
-        <div class="w-group"><span>ID da Carteira</span><span style="font-family:monospace; font-size:12px;">${dados.idCarteira}</span></div>
-      </div>
-    </div>
-    
-    <div class="text-center" style="margin: 15px 0; padding: 15px 0; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border);">
-      <div style="background: white; padding: 10px; border-radius: 8px; display: inline-block; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer;" onclick="toggleFullscreenQR('wallet-qrcode-offline')">
-         <div id="wallet-qrcode-offline"></div>
-      </div>
-      <div style="font-size: 11px; color: #f59e0b; margin-top: 8px; font-weight: 700; letter-spacing: 1px;">ACESSO OFFLINE LIMITADO</div>
-    </div>
-
-    <div class="wallet-footer">
-      <div class="w-row">
-        <div class="w-group"><span>Instituição</span><span style="font-weight:700;">${dados.instituicao}</span></div>
-        <div class="w-group" style="text-align:right;"><span>Turno</span><span>${dados.turno}</span></div>
-      </div>
-      <div class="w-row"><div class="w-group"><span>Rota de Transporte</span><span>${dados.rota}</span></div></div>
-      <div class="text-center" style="margin-top:10px; border-top:1px dashed var(--border); padding-top:10px;">
-         <span style="font-size:10px; color:var(--text-sub);">Válido em ${dados.cidade || '...'} até <strong>${dados.validade || '...'}</strong></span>
-      </div>
-      <div class="anti-print-bar" id="wallet-clock" style="background: #f59e0b;">Modo Offline Ativado</div>
-    </div>
-  </div>
-  
-  <div style="display:flex; margin-top:20px;">
-      <button class="btn-solid dark-bg" style="width:100%; margin:0; background: #ccc; cursor: not-allowed;" disabled>📄 Baixar Declaração de Vínculo</button>
-  </div>`;
-
-    container.innerHTML = html;
-
-    if (actions) {
-        actions.innerHTML = `
-        <div style="text-align:center;">
-           <button class="btn-text text-danger" style="font-weight: 700; font-size: 14px;" onclick="sairCarteira()">❌ Fechar Cofre Digital</button>
-        </div>
-      `;
-        actions.classList.remove('hidden');
-    }
-
-    iniciarRelogioAntiPrint('wallet-clock');
-
-    const qrContainer = document.getElementById('wallet-qrcode-offline');
-    if (qrContainer) {
-        qrContainer.innerHTML = "";
-        const semente = new Date().toISOString().split('T')[0];
-        new QRCode(qrContainer, { text: `${dados.idCarteira}|${semente}`, width: 160, height: 160, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
-    }
 }
 
 function abrirFormularioAtualizacaoEstagioCarteira() {
@@ -670,7 +545,7 @@ function processarArquivoAtualizacaoEstagioCarteira(inputElement) {
     if (!file) {
         if (status) {
             status.textContent = "Nenhum arquivo selecionado";
-            status.style.color = "var(--text-sub)";
+            status.classList.remove("is-success", "is-error");
         }
         return;
     }
@@ -680,7 +555,8 @@ function processarArquivoAtualizacaoEstagioCarteira(inputElement) {
         inputElement.value = "";
         if (status) {
             status.textContent = "Arquivo acima de 5MB.";
-            status.style.color = "var(--danger)";
+            status.classList.remove("is-success");
+            status.classList.add("is-error");
         }
         return;
     }
@@ -694,7 +570,8 @@ function processarArquivoAtualizacaoEstagioCarteira(inputElement) {
         };
         if (status) {
             status.textContent = "Arquivo anexado: " + file.name;
-            status.style.color = "var(--success)";
+            status.classList.remove("is-error");
+            status.classList.add("is-success");
         }
     };
     reader.onerror = function() {
@@ -702,7 +579,8 @@ function processarArquivoAtualizacaoEstagioCarteira(inputElement) {
         inputElement.value = "";
         if (status) {
             status.textContent = "Falha ao ler o arquivo.";
-            status.style.color = "var(--danger)";
+            status.classList.remove("is-success");
+            status.classList.add("is-error");
         }
         showToast("Falha na leitura do arquivo.", "error");
     };
@@ -937,7 +815,7 @@ async function sairCarteira(expiracaoSilenciosa = false) {
     window.MaestroWalletAtual = null;
 
     const painelMob = document.getElementById('view-mobilidade');
-    if (painelMob) painelMob.style.display = 'none';
+    if (painelMob) painelMob.classList.add('hidden');
 
     switchView('view-aluno-menu');
     if (!expiracaoSilenciosa) showToast("Cofre bloqueado com segurança.", "info");

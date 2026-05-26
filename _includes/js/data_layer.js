@@ -8,7 +8,7 @@
 (function initMaestroDataLayer(window) {
   "use strict";
 
-  const DATA_LAYER_VERSION = "2.1.0";
+  const DATA_LAYER_VERSION = "2.2.0";
   const CACHE_SCHEMA_VERSION = "maestro-data-schema-v1";
   const STORAGE_KEYS = {
     tenantContext: "MAESTRO_TENANT_CONTEXT",
@@ -22,7 +22,7 @@
 
   const CACHE_DOMAINS = {
     theme: {
-      version: "theme-v1",
+      version: "theme-v2",
       derivedKeys: [STORAGE_KEYS.themeConfig, STORAGE_KEYS.tenantContext, STORAGE_KEYS.semesterContext]
     },
     wallet: {
@@ -42,7 +42,7 @@
   };
 
   const BUSINESS_RULES = {
-    muralWeeklyPostLimit: 4,
+    muralWeeklyPostLimit: 5,
     stageUpdateLimitPerCycle: 1,
     walletTurnWindows: {
       MATUTINO: { start: "05:00", end: "10:30" },
@@ -68,6 +68,45 @@
       warning: "#F59E0B",
       danger: "#EF4444",
       info: "#2563EB"
+    },
+    text: {
+      light: {
+        main: "#1F2937",
+        sub: "#4B5563",
+        muted: "#5E6A75",
+        inverse: "#FFFFFF"
+      },
+      dark: {
+        main: "#F3F4F6",
+        sub: "#94A3B8",
+        muted: "#A0AEC0",
+        inverse: "#FFFFFF"
+      }
+    },
+    surface: {
+      light: {
+        page: "#F8F9FA",
+        card: "#FFFFFF",
+        elevated: "rgba(255, 255, 255, 0.88)",
+        muted: "#F1F5F9",
+        hover: "rgba(10, 61, 107, 0.06)",
+        border: "#E5E7EB",
+        overlay: "rgba(15, 23, 42, 0.45)"
+      },
+      dark: {
+        page: "#121212",
+        card: "#1E1E1E",
+        elevated: "rgba(15, 23, 42, 0.88)",
+        muted: "#0F172A",
+        hover: "rgba(255, 255, 255, 0.08)",
+        border: "rgba(255, 255, 255, 0.08)",
+        overlay: "rgba(0, 0, 0, 0.65)"
+      }
+    },
+    shadow: {
+      soft: "0 10px 30px rgba(15, 23, 42, 0.10)",
+      raised: "0 20px 40px rgba(15, 23, 42, 0.16)",
+      focus: "0 0 0 3px rgba(10, 61, 107, 0.22)"
     }
   };
 
@@ -550,6 +589,17 @@
       accent: sanitizeCssColor(colors.dark && colors.dark.accent, light.accent || VISUAL_TOKEN_DEFAULTS.dark.accent)
     };
     const active = mode === "dark" ? dark : light;
+    const text = VISUAL_TOKEN_DEFAULTS.text[mode] || VISUAL_TOKEN_DEFAULTS.text.light;
+    const surfaceDefaults = VISUAL_TOKEN_DEFAULTS.surface[mode] || VISUAL_TOKEN_DEFAULTS.surface.light;
+    const surface = {
+      page: sanitizeCssColor(active.secondary, surfaceDefaults.page),
+      card: surfaceDefaults.card,
+      elevated: surfaceDefaults.elevated,
+      muted: surfaceDefaults.muted,
+      hover: surfaceDefaults.hover,
+      border: sanitizeCssColor(surfaceDefaults.border, mode === "dark" ? "rgba(255, 255, 255, 0.08)" : "#E5E7EB"),
+      overlay: surfaceDefaults.overlay
+    };
     const logo = safeUrl(mode === "dark"
       ? pickFirst(logos.dark, logos.light, logos.emblem, pwa.icon)
       : pickFirst(logos.light, logos.emblem, logos.dark, pwa.icon));
@@ -559,6 +609,8 @@
       active: active,
       colors: { light: light, dark: dark },
       brand: brand,
+      text: text,
+      surface: surface,
       assets: {
         logo: logo,
         logoLight: safeUrl(logos.light),
@@ -586,6 +638,21 @@
         "--maestro-color-warning": VISUAL_TOKEN_DEFAULTS.status.warning,
         "--maestro-color-danger": VISUAL_TOKEN_DEFAULTS.status.danger,
         "--maestro-color-info": VISUAL_TOKEN_DEFAULTS.status.info,
+        "--maestro-text-main": text.main,
+        "--maestro-text-sub": text.sub,
+        "--maestro-text-muted": text.muted,
+        "--maestro-text-inverse": text.inverse,
+        "--maestro-surface-page": surface.page,
+        "--maestro-surface-card": surface.card,
+        "--maestro-surface-elevated": surface.elevated,
+        "--maestro-surface-muted": surface.muted,
+        "--maestro-surface-hover": surface.hover,
+        "--maestro-surface-overlay": surface.overlay,
+        "--maestro-border-color": surface.border,
+        "--maestro-state-success": VISUAL_TOKEN_DEFAULTS.status.success,
+        "--maestro-state-warning": VISUAL_TOKEN_DEFAULTS.status.warning,
+        "--maestro-state-danger": VISUAL_TOKEN_DEFAULTS.status.danger,
+        "--maestro-state-info": VISUAL_TOKEN_DEFAULTS.status.info,
         "--maestro-space-1": "4px",
         "--maestro-space-2": "8px",
         "--maestro-space-3": "12px",
@@ -596,10 +663,28 @@
         "--maestro-radius-md": "8px",
         "--maestro-radius-lg": "12px",
         "--maestro-radius-xl": "20px",
-        "--maestro-shadow-soft": "0 10px 30px rgba(15, 23, 42, 0.10)",
+        "--maestro-shadow-soft": VISUAL_TOKEN_DEFAULTS.shadow.soft,
+        "--maestro-shadow-raised": VISUAL_TOKEN_DEFAULTS.shadow.raised,
+        "--maestro-focus-ring": VISUAL_TOKEN_DEFAULTS.shadow.focus,
         "--primary": active.primary,
         "--secondary": active.secondary,
-        "--accent": active.accent
+        "--accent": active.accent,
+        "--success": VISUAL_TOKEN_DEFAULTS.status.success,
+        "--warning": VISUAL_TOKEN_DEFAULTS.status.warning,
+        "--danger": VISUAL_TOKEN_DEFAULTS.status.danger,
+        "--info": VISUAL_TOKEN_DEFAULTS.status.info,
+        "--text-main": text.main,
+        "--text-sub": text.sub,
+        "--text-muted": text.muted,
+        "--text-light": text.inverse,
+        "--bg-body": surface.page,
+        "--bg-surface": surface.card,
+        "--bg-hover": surface.hover,
+        "--border": surface.border,
+        "--form-bg": surface.card,
+        "--bg-dark": VISUAL_TOKEN_DEFAULTS.surface.dark.page,
+        "--card-dark": VISUAL_TOKEN_DEFAULTS.surface.dark.card,
+        "--cor-voltar-alerta": VISUAL_TOKEN_DEFAULTS.status.danger
       }
     };
   }
@@ -618,11 +703,9 @@
     }
 
     if (doc.body && doc.body.style) {
-      doc.body.style.setProperty("--font-main", tokens.typography.fontFamily, "important");
-      doc.body.style.setProperty("--maestro-font-family", tokens.typography.fontFamily, "important");
-      doc.body.style.setProperty("--primary", tokens.active.primary, "important");
-      doc.body.style.setProperty("--secondary", tokens.active.secondary, "important");
-      doc.body.style.setProperty("--accent", tokens.active.accent, "important");
+      Object.keys(tokens.cssVars).forEach(name => {
+        doc.body.style.setProperty(name, tokens.cssVars[name], "important");
+      });
       doc.body.setAttribute("data-maestro-theme", tokens.mode);
       if (tokens.brand && tokens.brand.secretaria) {
         doc.body.setAttribute("data-maestro-secretaria", safeText(tokens.brand.secretaria).slice(0, 80));

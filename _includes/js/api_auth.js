@@ -45,6 +45,9 @@ function removerCachesLocaisDeBackendMaestro() {
     "MAESTRO_WALLET_CACHE",
     "MAESTRO_OFFLINE_WALLET",
     "MAESTRO_DASH_STATS",
+    "MAESTRO_THEME_CONFIG",
+    "MAESTRO_TENANT_CONTEXT",
+    "MAESTRO_SEMESTER_CONTEXT",
     "MAESTRO_THEME_CACHE",
     "MAESTRO_CACHE_META"
   ].forEach((key) => {

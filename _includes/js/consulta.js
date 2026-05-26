@@ -81,91 +81,96 @@ async function solicitarConsentimentoPushAnonimo(cpf) {
 
 function renderizarTimelineEstudante(dados, container) {
     const nomeLimpo = formatarNomeProprio(dados.nome).split(' ')[0];
-    let html = `<h3 style="margin:0 0 15px 0; color:var(--primary);">Olá, ${nomeLimpo}!</h3>`;
-    html += `<div class="timeline" style="box-sizing: border-box; width: 100%; max-width: 100%;">`;
+    let html = `<h3 class="timeline-greeting">Ola, ${nomeLimpo}!</h3>`;
+    html += `<div class="timeline timeline-result-container">`;
 
     html += `<div class="timeline-item active-blue">
-             <strong style="color: var(--primary);">1. Formulário Recebido</strong><br>
-             <span style="color:var(--text-sub); font-size:11px;">Os seus dados deram entrada no sistema.</span>
+             <strong class="timeline-title-primary">1. Formulario Recebido</strong><br>
+             <span class="timeline-small-text">Os seus dados deram entrada no sistema.</span>
            </div>`;
 
     const sOCR = String(dados.statusOCR || "").trim().toUpperCase();
     const sDocs = String(dados.statusDocs || "").trim().toUpperCase();
     const sAtiv = String(dados.statusAtividade || "").trim().toUpperCase();
 
-    const buildObsBox = (obs, colorBorder, colorBg, colorText) => {
+    const buildObsBox = (obs, variant) => {
         if (!obs || obs.trim() === "") return "";
         const obsSeguro = typeof safeLinesMaestro === 'function'
             ? safeLinesMaestro(obs)
             : String(obs).replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, '<br>');
+        const variantClass = {
+            danger: "timeline-note-danger",
+            warning: "timeline-note-warning",
+            orange: "timeline-note-orange"
+        }[variant] || "timeline-note-warning";
         return `
-      <div style="margin-top: 12px; padding: 12px; background: ${colorBg}; border-left: 4px solid ${colorBorder}; border-radius: 4px; color: ${colorText}; font-size: 12px; line-height: 1.5; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-        <strong style="display:block; margin-bottom:4px; font-size:11px; text-transform:uppercase; opacity:0.8; letter-spacing: 0.5px;">Mensagem do Setor:</strong>
+      <div class="timeline-note-box ${variantClass}">
+        <strong>Mensagem do Setor:</strong>
         ${obsSeguro}
       </div>
     `;
     };
 
     if (sAtiv === "CANCELADO") {
-        html += `<div class="timeline-item active-red"><strong style="color:var(--danger);">2. Emissão Interrompida</strong></div>`;
+        html += `<div class="timeline-item active-red"><strong class="timeline-title-danger">2. Emissao Interrompida</strong></div>`;
         html += `<div class="timeline-item active-red">
-               <strong style="color:var(--danger);">3. Inscrição Cancelada</strong><br>
-               <span style="color:var(--danger); font-size:11px; font-weight:600;">O acesso ao transporte foi cancelado.</span>
-               ${buildObsBox(dados.obs, "var(--danger)", "#FEF2F2", "#991B1B")}
+               <strong class="timeline-title-danger">3. Inscricao Cancelada</strong><br>
+               <span class="timeline-small-strong timeline-danger-text">O acesso ao transporte foi cancelado.</span>
+               ${buildObsBox(dados.obs, "danger")}
              </div>`;
 
     } else if (sAtiv === "SUSPENSO") {
-        html += `<div class="timeline-item active-orange"><strong style="color:#F97316;">2. Emissão Interrompida</strong></div>`;
+        html += `<div class="timeline-item active-orange"><strong class="timeline-title-orange">2. Emissao Interrompida</strong></div>`;
         html += `<div class="timeline-item active-orange">
-               <strong style="color:#F97316;">3. Inscrição Suspensa</strong><br>
-               <span style="color:#F97316; font-size:11px; font-weight:600;">O acesso foi desativado temporariamente.</span>
-               ${buildObsBox(dados.obs, "#F97316", "#FFF7ED", "#9A3412")}
+               <strong class="timeline-title-orange">3. Inscricao Suspensa</strong><br>
+               <span class="timeline-small-strong timeline-orange-text">O acesso foi desativado temporariamente.</span>
+               ${buildObsBox(dados.obs, "orange")}
                
-               <button class="btn-solid" style="margin-top:15px; background: #9A3412; font-size:12px;" onclick="abrirPortalResgate()">CORRIGIR DOCUMENTAÇÃO</button>
+               <button class="btn-solid timeline-action-button timeline-action-danger" onclick="abrirPortalResgate()">CORRIGIR DOCUMENTACAO</button>
              </div>`;
 
     } else {
         if (sOCR === "PENDENTE" || sOCR === "") {
-            html += `<div class="timeline-item"><strong>2. Em Auditoria</strong><br><span style="color:var(--text-sub); font-size:11px;">A aguardar análise documental.</span></div>`;
+            html += `<div class="timeline-item"><strong>2. Em Auditoria</strong><br><span class="timeline-small-text">A aguardar analise documental.</span></div>`;
             html += `<div class="timeline-item"><strong>3. Resultado</strong></div>`;
 
         } else if (sOCR === "ANALISE_HUMANA" || sOCR === "PENDENCIA") {
             html += `<div class="timeline-item active-yellow">
-                 <strong style="color:#FBBF24;">2. Pendência Documental</strong><br>
-                 <span style="color:#D97706; font-size:11px; font-weight:600;">Ação necessária para prosseguir.</span>
-                 ${buildObsBox(dados.obs, "#F59E0B", "#FFFBEB", "#92400E")}
+                 <strong class="timeline-title-warning">2. Pendencia Documental</strong><br>
+                 <span class="timeline-small-strong timeline-warning-text">Acao necessaria para prosseguir.</span>
+                 ${buildObsBox(dados.obs, "warning")}
                  
-                 <button class="btn-solid" style="margin-top:15px; background: var(--accent); font-size:12px;" onclick="abrirPortalResgate()">CORRIGIR DOCUMENTAÇÃO</button>
+                 <button class="btn-solid timeline-action-button" onclick="abrirPortalResgate()">CORRIGIR DOCUMENTACAO</button>
                </div>`;
             html += `<div class="timeline-item"><strong>3. Resultado</strong></div>`;
 
         } else {
-            html += `<div class="timeline-item active-green"><strong style="color:var(--success);">2. Documentos Validados</strong></div>`;
+            html += `<div class="timeline-item active-green"><strong class="timeline-title-success">2. Documentos Validados</strong></div>`;
 
             if (sDocs === "EMITIDO" || sDocs === "EMITIDO_NOTIFICADO" || sDocs === "GERADO") {
-                html += `<div class="timeline-item active-green"><strong style="color:var(--success);">3. Carteira Ativa!</strong><br><span style="color:var(--text-sub); font-size:11px;">A sua identidade estudantil já pode ser utilizada.</span></div>`;
+                html += `<div class="timeline-item active-green"><strong class="timeline-title-success">3. Carteira Ativa!</strong><br><span class="timeline-small-text">A sua identidade estudantil ja pode ser utilizada.</span></div>`;
 
                 if (dados.idAcesso) {
+                    const idSeguro = typeof escapeHTMLMaestro === 'function' ? escapeHTMLMaestro(dados.idAcesso) : String(dados.idAcesso || "");
                     html += `
-           <div style="margin-top: 20px; padding: 15px; background: #f0fdf4; border: 1px solid var(--success); border-radius: 8px; text-align: center; box-sizing: border-box; width: 100%; max-width: 100%;">
-             <span style="font-size: 11px; color: var(--success); display:block; margin-bottom:5px; text-transform: uppercase; font-weight:700;">O seu ID de Acesso é:</span>
-             <strong style="font-size: 22px; color: #065F46; letter-spacing: 2px; font-family: monospace;">${dados.idAcesso}</strong>
-             <p style="font-size: 11px; color: #065F46; margin: 8px 0 0 0;">Use este ID e os 4 últimos dígitos do seu CPF para abrir o cofre digital.</p>
-             <button class="btn-solid" style="margin-top:15px;" onclick="irParaCofreComId('${dados.idAcesso}')">IR PARA O COFRE</button>
+           <div class="timeline-id-card">
+             <span class="timeline-id-label">O seu ID de Acesso e:</span>
+             <strong class="timeline-access-id">${idSeguro}</strong>
+             <p class="timeline-id-help">Use este ID e os 4 ultimos digitos do seu CPF para abrir o cofre digital.</p>
+             <button class="btn-solid timeline-action-button" onclick="irParaCofreComId('${idSeguro}')">IR PARA O COFRE</button>
            </div>`;
                 }
             } else {
-                html += `<div class="timeline-item active-blue"><strong style="color: var(--primary);">3. A Aguardar Emissão</strong><br><span style="color:var(--text-sub); font-size:11px;">A sua carteira digital está em processamento.</span></div>`;
+                html += `<div class="timeline-item active-blue"><strong class="timeline-title-primary">3. A Aguardar Emissao</strong><br><span class="timeline-small-text">A sua carteira digital esta em processamento.</span></div>`;
             }
         }
     }
 
     html += `</div>`;
     container.innerHTML = html;
-    container.style.cssText = 'box-sizing: border-box; width: 100%; max-width: 100%; margin: 0 auto;';
+    container.classList.add('timeline-result-container');
     container.classList.remove('hidden');
 }
-
 function mostrarErroEstudante(titulo, mensagem) {
     const resBox = document.getElementById('res-estudante');
     const tituloSeguro = typeof escapeHTMLMaestro === 'function' ? escapeHTMLMaestro(titulo) : String(titulo || "");
@@ -180,6 +185,13 @@ function mostrarErroEstudante(titulo, mensagem) {
 
 let arquivosParaResgate = {};
 
+function atualizarStatusResgateMaestro(statusSpan, texto, estado) {
+    if (!statusSpan) return;
+    statusSpan.innerText = texto;
+    statusSpan.classList.remove("is-processing", "is-success", "is-error");
+    if (estado) statusSpan.classList.add(estado);
+}
+
 function abrirPortalResgate() {
     switchView('view-resgate');
     arquivosParaResgate = {};
@@ -187,8 +199,7 @@ function abrirPortalResgate() {
     document.querySelectorAll("div[id^='box-resgate-']").forEach(box => box.classList.add('hidden'));
     document.querySelectorAll("input[type='file'][id^='file-resgate-']").forEach(f => f.value = "");
     document.querySelectorAll("span[id^='status-resgate-']").forEach(st => {
-        st.innerText = "A aguardar seleção...";
-        st.style.color = "var(--text-sub)";
+        atualizarStatusResgateMaestro(st, "A aguardar selecao...", "");
     });
     verificarBotaoResgate();
 }
@@ -208,8 +219,7 @@ function toggleBoxResgate(tipoDoc) {
     } else {
         box.classList.add('hidden');
         fileInput.value = "";
-        statusSpan.innerText = "A aguardar seleção...";
-        statusSpan.style.color = "var(--text-sub)";
+        atualizarStatusResgateMaestro(statusSpan, "A aguardar selecao...", "");
         delete arquivosParaResgate[tipoDoc];
         verificarBotaoResgate();
     }
@@ -221,24 +231,21 @@ function processarArquivoResgate(inputElement, tipoDoc) {
 
     if (!file) {
         delete arquivosParaResgate[tipoDoc];
-        statusSpan.innerText = "A aguardar seleção...";
-        statusSpan.style.color = "var(--text-sub)";
+        atualizarStatusResgateMaestro(statusSpan, "A aguardar selecao...", "");
         verificarBotaoResgate();
         return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-        showToast("O arquivo é muito grande (Máximo 5MB).", "error");
+        showToast("O arquivo e muito grande (Maximo 5MB).", "error");
         inputElement.value = "";
         delete arquivosParaResgate[tipoDoc];
-        statusSpan.innerText = "Erro: Arquivo demasiado pesado.";
-        statusSpan.style.color = "var(--danger)";
+        atualizarStatusResgateMaestro(statusSpan, "Erro: Arquivo demasiado pesado.", "is-error");
         verificarBotaoResgate();
         return;
     }
 
-    statusSpan.innerText = "A processar... ⏳";
-    statusSpan.style.color = "var(--accent)";
+    atualizarStatusResgateMaestro(statusSpan, "A processar...", "is-processing");
 
     const reader = new FileReader();
     reader.onload = function (e) {
@@ -247,16 +254,14 @@ function processarArquivoResgate(inputElement, tipoDoc) {
             nome: file.name,
             base64: e.target.result
         };
-        statusSpan.innerText = "✅ Anexado e pronto a enviar!";
-        statusSpan.style.color = "var(--success)";
+        atualizarStatusResgateMaestro(statusSpan, "Anexado e pronto a enviar!", "is-success");
         verificarBotaoResgate();
     };
     reader.onerror = function () {
         showToast("Falha na leitura do arquivo.", "error");
         inputElement.value = "";
         delete arquivosParaResgate[tipoDoc];
-        statusSpan.innerText = "Erro na leitura.";
-        statusSpan.style.color = "var(--danger)";
+        atualizarStatusResgateMaestro(statusSpan, "Erro na leitura.", "is-error");
         verificarBotaoResgate();
     };
     reader.readAsDataURL(file);
@@ -266,13 +271,12 @@ function verificarBotaoResgate() {
     const btn = document.getElementById('btn-enviar-resgate');
     if (Object.keys(arquivosParaResgate).length > 0) {
         btn.disabled = false;
-        btn.style.opacity = "1";
+        btn.classList.remove("btn-soft-disabled");
     } else {
         btn.disabled = true;
-        btn.style.opacity = "0.5";
+        btn.classList.add("btn-soft-disabled");
     }
 }
-
 async function enviarArquivosResgate() {
     const cpf = document.getElementById('id-estudante').value.trim();
     if (!cpf) {

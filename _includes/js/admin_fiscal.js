@@ -3,6 +3,21 @@
 // ========================================================================
 let html5QrcodeScanner = null;
 
+function escapeFiscal(valor) {
+    if (typeof escapeHTMLMaestro === "function") return escapeHTMLMaestro(valor);
+    return String(valor ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function safeLinesFiscal(valor) {
+    if (typeof safeLinesMaestro === "function") return safeLinesMaestro(valor);
+    return escapeFiscal(valor).replace(/\r?\n/g, "<br>");
+}
+
 function iniciarScanner() {
     document.getElementById('leitor-qr-container').classList.remove('hidden');
     document.getElementById('btn-scanner').classList.add('hidden');
@@ -45,12 +60,12 @@ function aoLerQRCode(textoLido) {
 
     if (sementeFiscal && sementeLida !== sementeFiscal) {
         document.getElementById('res-fiscal').innerHTML = `
-        <div class="wallet-card dark" style="border-color: var(--danger);">
-           <div class="wallet-header" style="background: var(--danger);">❌ ALERTA DE SEGURANÇA</div>
-           <div class="wallet-body text-center" style="display:block; padding: 30px 20px;">
-              <span style="font-size: 40px; display:block; margin-bottom: 10px;">⚠️</span>
-              <strong style="color: var(--danger); font-size: 16px; display:block;">QR CODE EXPIRADO/INVÁLIDO</strong>
-              <p style="font-size: 12px; color: #ccc; margin-top: 10px;">O código lido não corresponde ao dia de hoje. Peça ao estudante para fechar a App, ligar a internet e abrir novamente a Carteira Digital.</p>
+        <div class="wallet-card dark fiscal-security-card">
+           <div class="wallet-header">ALERTA DE SEGURANCA</div>
+           <div class="wallet-body text-center fiscal-security-body">
+              <span class="fiscal-security-icon">⚠️</span>
+              <strong class="fiscal-security-title">QR CODE EXPIRADO/INVALIDO</strong>
+              <p class="fiscal-security-text">O codigo lido nao corresponde ao dia de hoje. Peca ao estudante para fechar a App, ligar a internet e abrir novamente a Carteira Digital.</p>
            </div>
         </div>`;
         return;
@@ -59,7 +74,6 @@ function aoLerQRCode(textoLido) {
     document.getElementById('id-fiscal').value = idLimpo;
     validarFiscal();
 }
-
 async function lerQRCodePorFoto(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -71,16 +85,15 @@ async function lerQRCodePorFoto(event) {
 
     try {
         const textoLido = await html5QrCode.scanFile(file, true);
-        document.getElementById('btn-scanner-nativo').innerHTML = `<span style="font-size: 20px;">📱</span> USAR CÂMARA NATIVA`;
+        document.getElementById('btn-scanner-nativo').innerHTML = `<span class="scanner-button-icon">📱</span> USAR CAMARA NATIVA`;
         aoLerQRCode(textoLido);
     } catch (err) {
         showToast("Erro ao processar imagem QR Code: " + err.message, "error");
-        document.getElementById('btn-scanner-nativo').innerHTML = `<span style="font-size: 20px;">📱</span> USAR CÂMARA NATIVA`;
+        document.getElementById('btn-scanner-nativo').innerHTML = `<span class="scanner-button-icon">📱</span> USAR CAMARA NATIVA`;
     }
 
     event.target.value = '';
 }
-
 function fecharModoFiscalizacao() {
     fecharScanner();
 
@@ -134,7 +147,7 @@ async function validarFiscal() {
     if (alunoBase) {
         resBox.innerHTML = gerarHtmlFiscal(alunoBase.nome, "A carregar...", "...", "...", `<div class="wallet-photo skeleton-box"></div>`, alunoBase.status, "");
     } else {
-        resBox.innerHTML = `<div class="text-center text-light" style="margin-top: 20px;">A pesquisar na base de dados online... ⏳</div>`;
+        resBox.innerHTML = `<div class="text-center text-light fiscal-loading-text">A pesquisar na base de dados online... ⏳</div>`;
     }
 
     try {
@@ -142,7 +155,7 @@ async function validarFiscal() {
 
         if (!res.encontrado) {
             tocarBeep('error');
-            resBox.innerHTML = `<div class="error-box">❌ ID INVÁLIDO OU NÃO ENCONTRADO</div>`;
+            resBox.innerHTML = `<div class="error-box">ID INVALIDO OU NAO ENCONTRADO</div>`;
         } else {
             if (res.statusAtividade === 'ATIVO') tocarBeep('success');
             else tocarBeep('error');
@@ -150,7 +163,8 @@ async function validarFiscal() {
 
             try {
                 const resFoto = await apiCall("getFotoEstudanteBase64", { idEstudante: idCarteira });
-                const imgHtml = resFoto.fotoBase64 ? `<img src="${resFoto.fotoBase64}" class="wallet-photo">` : `<div class="wallet-photo" style="display:flex;align-items:center;justify-content:center;color:#666; background:#222; border-color:#333;">Sem Foto</div>`;
+                const fotoSegura = typeof safeUrlAttrMaestro === 'function' ? safeUrlAttrMaestro(resFoto.fotoBase64) : escapeFiscal(resFoto.fotoBase64 || "");
+                const imgHtml = fotoSegura ? `<img src="${fotoSegura}" class="wallet-photo" alt="Foto do estudante">` : `<div class="wallet-photo wallet-photo-empty fiscal-photo-empty">Sem Foto</div>`;
                 resBox.innerHTML = gerarHtmlFiscal(res.nome, res.instituicao, res.rota, res.turno, imgHtml, res.statusAtividade, res.obsCompleta);
                 if (res.statusAtividade === "ATIVO" && typeof iniciarRelogioAntiPrint === "function") {
                     iniciarRelogioAntiPrint('fiscal-clock');
@@ -161,13 +175,12 @@ async function validarFiscal() {
         }
 
     } catch (err) {
-        showToast("Erro de conexão com o servidor: " + err.message, "error");
+        showToast("Erro de conexao com o servidor: " + err.message, "error");
     } finally {
         btn.innerText = "VERIFICAR ESTUDANTE";
         btn.disabled = false;
     }
 }
-
 function tocarBeep(tipo) {
     try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -206,54 +219,55 @@ function gerarHtmlFiscal(nome, inst, rota, turno, fotoComponente, statusReal, ob
     let statusBadge = "";
     let relogioAntiPrint = "";
     let caixaMotivo = "";
-    
+    const statusNormalizado = String(statusReal || "").trim().toUpperCase();
     const nomeTratado = typeof formatarNomeProprio === 'function' ? formatarNomeProprio(nome) : nome;
+    const nomeSeguro = escapeFiscal(nomeTratado);
+    const instSeguro = escapeFiscal(inst || "...");
+    const rotaSeguro = escapeFiscal(rota || "...");
+    const turnoSeguro = escapeFiscal(turno || "...");
 
-    if (statusReal !== "ATIVO" && obsCompleta) {
+    if (statusNormalizado !== "ATIVO" && obsCompleta) {
         let motivoFiscal = extrairTextoDaTag(obsCompleta, "textofiscal");
 
         if (!motivoFiscal) {
-            let linhas = obsCompleta.trim().split('\n');
-            motivoFiscal = linhas.length > 0 ? linhas[linhas.length - 1] : "Motivo não especificado. Consulte o sistema central.";
+            let linhas = String(obsCompleta || "").trim().split('\n');
+            motivoFiscal = linhas.length > 0 ? linhas[linhas.length - 1] : "Motivo nao especificado. Consulte o sistema central.";
         }
 
-        let corFundo = statusReal === "SUSPENSO" || statusReal === "CANCELADO" ? "#451a1a" : "#452a0a";
-        let corBorda = statusReal === "SUSPENSO" || statusReal === "CANCELADO" ? "#ef4444" : "#f59e0b";
-
+        const classeCritica = statusNormalizado === "SUSPENSO" || statusNormalizado === "CANCELADO" ? " is-critical" : "";
         caixaMotivo = `
-        <div style="background: ${corFundo}; border-left: 4px solid ${corBorda}; padding: 12px; margin-top: 15px; border-radius: 4px;">
-            <strong style="color: ${corBorda}; font-size: 11px; display: block; margin-bottom: 5px; text-transform: uppercase;">ℹ️ Nota para o Fiscal:</strong>
-            <p style="color: #eee; font-size: 12px; line-height: 1.4; margin: 0;">${motivoFiscal.replace(/\n/g, '<br>')}</p>
+        <div class="fiscal-note-box${classeCritica}">
+            <strong class="fiscal-note-title">Nota para o Fiscal:</strong>
+            <p class="fiscal-note-text">${safeLinesFiscal(motivoFiscal)}</p>
         </div>`;
     }
 
-    if (statusReal === "ATIVO") {
-        statusBadge = `<div style="background:var(--success); color:white; padding:10px; border-radius:6px; text-align:center; font-weight:700; letter-spacing:1px; margin-bottom:10px;">✅ LIBERADO</div>`;
-        relogioAntiPrint = `<div class="anti-print-bar" id="fiscal-clock" style="margin-top:0;"></div>`;
-    } else if (statusReal === "CANCELADO") {
-        statusBadge = `<div style="background:var(--danger); color:white; padding:10px; border-radius:6px; text-align:center; font-weight:700; letter-spacing:1px;">❌ CANCELADO</div>`;
-    } else if (statusReal === "SUSPENSO") {
-        statusBadge = `<div style="background:#F97316; color:white; padding:10px; border-radius:6px; text-align:center; font-weight:700; letter-spacing:1px;">⚠️ SUSPENSO</div>`;
+    if (statusNormalizado === "ATIVO") {
+        statusBadge = `<div class="fiscal-status-badge is-active">LIBERADO</div>`;
+        relogioAntiPrint = `<div class="anti-print-bar fiscal-clock" id="fiscal-clock"></div>`;
+    } else if (statusNormalizado === "CANCELADO") {
+        statusBadge = `<div class="fiscal-status-badge is-cancelled">CANCELADO</div>`;
+    } else if (statusNormalizado === "SUSPENSO") {
+        statusBadge = `<div class="fiscal-status-badge is-suspended">SUSPENSO</div>`;
     } else {
-        statusBadge = `<div style="background:#FBBF24; color:#333; padding:10px; border-radius:6px; text-align:center; font-weight:700; letter-spacing:1px;">⏳ PENDENTE</div>`;
+        statusBadge = `<div class="fiscal-status-badge is-pending">PENDENTE</div>`;
     }
 
     return `
     <div class="wallet-card dark">
-      <div class="wallet-header">FISCALIZAÇÃO DE IDENTIDADE</div>
+      <div class="wallet-header">FISCALIZACAO DE IDENTIDADE</div>
       <div class="wallet-body">
         ${fotoComponente}
         <div class="wallet-info">
-          <div class="w-group"><span>Estudante</span><span class="highlight">${nomeTratado}</span></div>
-          <div class="w-group"><span>Instituição</span><span>${inst}</span></div>
-          <div class="w-group"><span>Rota / Turno</span><span style="color:var(--accent); font-weight:700;">${rota} • ${turno}</span></div>
+          <div class="w-group"><span>Estudante</span><span class="highlight">${nomeSeguro}</span></div>
+          <div class="w-group"><span>Instituicao</span><span>${instSeguro}</span></div>
+          <div class="w-group"><span>Rota / Turno</span><span class="fiscal-route-highlight">${rotaSeguro} - ${turnoSeguro}</span></div>
         </div>
       </div>
       ${caixaMotivo}
-      <div class="wallet-footer" style="margin-top: 15px;">${statusBadge}${relogioAntiPrint}</div>
+      <div class="wallet-footer fiscal-footer">${statusBadge}${relogioAntiPrint}</div>
     </div>`;
 }
-
 // Export functions to global scope
 window.iniciarScanner = iniciarScanner;
 window.fecharScanner = fecharScanner;
