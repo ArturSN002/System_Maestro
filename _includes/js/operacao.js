@@ -27,6 +27,21 @@ function safeJsStringAttrAuditoria(valor) {
     return escapeHTMLAuditoria(JSON.stringify(String(valor ?? "")));
 }
 
+function safeUrlAttrOperacao(valor, fallback = "") {
+    const bruto = String(valor || "").trim();
+    if (!bruto) return escapeHTMLAuditoria(fallback);
+    if (typeof safeUrlAttrMaestro === 'function') return safeUrlAttrMaestro(bruto);
+    try {
+        const url = new URL(bruto, window.location.href);
+        if (["http:", "https:", "mailto:"].includes(url.protocol) || bruto.startsWith("./") || bruto.startsWith("/") || bruto.startsWith("#")) {
+            return escapeHTMLAuditoria(bruto);
+        }
+    } catch (e) {
+        if (bruto.startsWith("./") || bruto.startsWith("/") || bruto.startsWith("#")) return escapeHTMLAuditoria(bruto);
+    }
+    return escapeHTMLAuditoria(fallback);
+}
+
 function cpfSeguroAuditoria(valor) {
     return String(valor || "").replace(/\D/g, "");
 }
@@ -971,16 +986,16 @@ async function abrirMuralDaSemana() {
     let btnNovoPostHTML = '';
     if (currentWalletId && localStorage.getItem("MAESTRO_EST_TOKEN")) {
         btnNovoPostHTML = `
-        <div style="text-align: center; margin-bottom: 20px;">
-           <button class="btn-solid" style="background: var(--primary); display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: auto; padding: 10px 20px;" onclick="abrirModalMural()">
-              <span style="font-size: 16px;">📝</span> Criar Nova Publicação
+        <div class="mural-create-row">
+           <button class="btn-solid mural-create-button" onclick="abrirModalMural()">
+              <span class="mural-create-icon">📝</span> Criar Nova Publicação
            </button>
         </div>`;
     } else {
-        btnNovoPostHTML = `<div style="text-align: center; margin-bottom: 20px; font-size: 11px; color: var(--text-sub);">Apenas estudantes logados na Carteira Digital podem publicar ou votar.</div>`;
+        btnNovoPostHTML = `<div class="mural-login-hint">Apenas estudantes logados na Carteira Digital podem publicar ou votar.</div>`;
     }
 
-    container.innerHTML = `${btnNovoPostHTML}<div class="loader" style="margin: 0 auto;"></div><p style="text-align: center; font-size: 12px; margin-top: 10px;">A carregar a voz da comunidade...</p>`;
+    container.innerHTML = `${btnNovoPostHTML}<div class="loader loader-center"></div><p class="mural-loading-text mural-loading-spaced">A carregar a voz da comunidade...</p>`;
 
     try {
         const res = await apiCall("getMuralDaSemana");
@@ -990,16 +1005,16 @@ async function abrirMuralDaSemana() {
         const limiteSemanal = limitePostagensMuralMaestro(muralNormalizado);
         if (!muralNormalizado.sucesso) { container.innerHTML = `${btnNovoPostHTML}<div class="error-box">${escapeHTMLAuditoria(muralNormalizado.erro)}</div>`; return; }
         if (!mensagensMural.length) {
-            container.innerHTML = `${btnNovoPostHTML}<div class="text-center" style="padding: 30px 10px; color: var(--text-sub); border: 1px dashed var(--border); border-radius: 8px;">Ainda não há contribuições nos últimos 7 dias.<br><br><b>Seja o primeiro a partilhar uma ideia!</b></div>`;
+            container.innerHTML = `${btnNovoPostHTML}<div class="mural-empty-state">Ainda não há contribuições nos últimos 7 dias.<br><br><b>Seja o primeiro a partilhar uma ideia!</b></div>`;
             return;
         }
 
-        let html = btnNovoPostHTML + `<div style="text-align: center; margin: -8px 0 16px; font-size: 11px; color: var(--text-sub);">Limite: ${limiteSemanal} publicacoes por estudante a cada semana.</div>`;
+        let html = btnNovoPostHTML + `<div class="mural-limit-note">Limite: ${limiteSemanal} publicacoes por estudante a cada semana.</div>`;
         mensagensMural.forEach((msg, index) => {
             const upsInfo = Array.isArray(msg.arrayUpsInfo) ? msg.arrayUpsInfo : [];
             const downsInfo = Array.isArray(msg.arrayDownsInfo) ? msg.arrayDownsInfo : [];
-            const upAtivo = currentWalletId && (msg.meuVoto === "up" || upsInfo.includes(currentWalletId)) ? 'color: var(--primary); font-weight: bold;' : 'color: #999;';
-            const downAtivo = currentWalletId && (msg.meuVoto === "down" || downsInfo.includes(currentWalletId)) ? 'color: var(--danger); font-weight: bold;' : 'color: #999;';
+            const upAtivo = currentWalletId && (msg.meuVoto === "up" || upsInfo.includes(currentWalletId)) ? ' is-active-up' : '';
+            const downAtivo = currentWalletId && (msg.meuVoto === "down" || downsInfo.includes(currentWalletId)) ? ' is-active-down' : '';
             const coroa = index === 0 && msg.pontuacao > 0 ? '👑 Top Semanal' : '';
             const tsMural = msg.tsMensagem || msg.criadoEm || (msg.raw && (msg.raw.tsMensagem || msg.raw.timestamp_epoch || msg.raw.criado_em));
             const tempoCorrigido = calcularTempoRelativo(tsMural);
@@ -1027,20 +1042,20 @@ async function abrirMuralDaSemana() {
             msg.votosDown = votosDownSeguro;
 
             html += `
-            <div class="form-card" style="padding: 15px; margin-bottom: 15px; border-left: 4px solid var(--primary); border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: left;">
-               <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-                  <div>
-                     <span style="font-size: 10px; background: #f3f4f6; padding: 2px 6px; border-radius: 4px; color: var(--text-sub);">${iconCat} ${msg.categoria}</span>
-                     ${coroa ? `<span style="font-size: 10px; background: #fef08a; padding: 2px 6px; border-radius: 4px; color: #854d0e; font-weight: bold; margin-left: 5px;">${coroa}</span>` : ''}
+            <div class="form-card mural-post-card">
+               <div class="mural-post-header">
+                  <div class="mural-post-tags">
+                     <span class="mural-tag">${iconCat} ${msg.categoria}</span>
+                     ${coroa ? `<span class="mural-tag mural-tag-top">${coroa}</span>` : ''}
                   </div>
-                  <span style="font-size: 10px; color: var(--text-sub);">${tempoCorrigido}</span>
+                  <span class="mural-post-time">${tempoCorrigido}</span>
                </div>
-               <p style="font-size: 13px; color: #333; line-height: 1.5; margin-bottom: 12px; word-wrap: break-word;">"${msg.mensagem}"</p>
-               <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 10px;">
-                  <span style="font-size: 11px; color: var(--text-sub); font-weight: 500;">👤 Por: ${msg.autor}</span>
-                  <div style="display: flex; gap: 15px; align-items: center;">
-                     <button onclick="votarNoMural('${msg.id}', 'UP')" style="background: none; border: none; font-size: 16px; cursor: pointer; ${upAtivo} transition: transform 0.1s;">👍 <span id="count-up-${msg.id}" style="font-size: 12px;">${msg.votosUp}</span></button>
-                     <button onclick="votarNoMural('${msg.id}', 'DOWN')" style="background: none; border: none; font-size: 16px; cursor: pointer; ${downAtivo} transition: transform 0.1s;">👎 <span id="count-down-${msg.id}" style="font-size: 12px;">${msg.votosDown}</span></button>
+               <p class="mural-message">"${msg.mensagem}"</p>
+               <div class="mural-post-footer">
+                  <span class="mural-author">👤 Por: ${msg.autor}</span>
+                  <div class="mural-vote-group">
+                     <button class="mural-vote-button${upAtivo}" onclick="votarNoMural('${msg.id}', 'UP')">👍 <span id="count-up-${msg.id}" class="mural-vote-count">${msg.votosUp}</span></button>
+                     <button class="mural-vote-button${downAtivo}" onclick="votarNoMural('${msg.id}', 'DOWN')">👎 <span id="count-down-${msg.id}" class="mural-vote-count">${msg.votosDown}</span></button>
                   </div>
                </div>
             </div>`;
@@ -1064,8 +1079,8 @@ async function votarNoMural(idMensagem, tipoVoto) {
     const btnUp = contadorUp ? contadorUp.parentNode : null;
     const btnDown = contadorDown ? contadorDown.parentNode : null;
 
-    if (btnUp) { btnUp.style.pointerEvents = 'none'; btnUp.style.opacity = '0.5'; }
-    if (btnDown) { btnDown.style.pointerEvents = 'none'; btnDown.style.opacity = '0.5'; }
+    if (btnUp) btnUp.classList.add('is-disabled');
+    if (btnDown) btnDown.classList.add('is-disabled');
 
     try {
         const builderVoto = payloadComunicacaoMaestro("muralVote");
@@ -1080,13 +1095,13 @@ async function votarNoMural(idMensagem, tipoVoto) {
             setTimeout(abrirMuralDaSemana, 1000);
         } else {
             showToast(res.erro || "O seu voto não pôde ser contabilizado.", "error");
-            if (btnUp) { btnUp.style.pointerEvents = 'auto'; btnUp.style.opacity = '1'; }
-            if (btnDown) { btnDown.style.pointerEvents = 'auto'; btnDown.style.opacity = '1'; }
+            if (btnUp) btnUp.classList.remove('is-disabled');
+            if (btnDown) btnDown.classList.remove('is-disabled');
         }
     } catch (e) {
         showToast("Erro ao processar o voto: " + e.message, "error");
-        if (btnUp) { btnUp.style.pointerEvents = 'auto'; btnUp.style.opacity = '1'; }
-        if (btnDown) { btnDown.style.pointerEvents = 'auto'; btnDown.style.opacity = '1'; }
+        if (btnUp) btnUp.classList.remove('is-disabled');
+        if (btnDown) btnDown.classList.remove('is-disabled');
     }
 }
 
@@ -1104,7 +1119,7 @@ function abrirInbox() {
 function renderizarNotificacoes() {
     const containers = document.querySelectorAll('.inbox-container');
     containers.forEach(container => {
-        container.innerHTML = '<div class="loader" style="margin: 0 auto;"></div>';
+        container.innerHTML = '<div class="loader loader-center"></div>';
     });
 
     const dbRequest = indexedDB.open('MaestroDB', 1);
@@ -1112,7 +1127,7 @@ function renderizarNotificacoes() {
         const db = e.target.result;
         if (!db.objectStoreNames.contains('notificacoes')) {
             containers.forEach(container => {
-                container.innerHTML = '<div style="text-align: center; padding: 30px; background: #fff; border: 1px dashed #ccc; border-radius: 8px;"><p style="font-size: 12px; color: #666;">Caixa de entrada vazia.</p></div>';
+                container.innerHTML = '<div class="inbox-empty-state"><p class="inbox-empty-text">Caixa de entrada vazia.</p></div>';
             });
             return;
         }
@@ -1124,7 +1139,7 @@ function renderizarNotificacoes() {
             const notificacoes = request.result.sort((a, b) => b.timestamp - a.timestamp);
             if (notificacoes.length === 0) {
                 containers.forEach(container => {
-                    container.innerHTML = '<div style="text-align: center; padding: 30px; background: #fff; border: 1px dashed #ccc; border-radius: 8px;"><p style="font-size: 12px; color: #666;">Caixa de entrada vazia.</p></div>';
+                    container.innerHTML = '<div class="inbox-empty-state"><p class="inbox-empty-text">Caixa de entrada vazia.</p></div>';
                 });
                 return;
             }
@@ -1132,16 +1147,21 @@ function renderizarNotificacoes() {
             let html = '';
             notificacoes.forEach(n => {
                 const tempo = calcularTempoRelativo(n.timestamp);
+                const iconeSeguro = safeUrlAttrOperacao(n.icon, './icone.png');
+                const tituloSeguro = escapeHTMLAuditoria(n.title || "Notificacao");
+                const corpoSeguro = escapeHTMLAuditoria(n.body || "");
+                const linkSeguro = safeUrlAttrOperacao(n.link, "");
+                const linkHtml = linkSeguro && linkSeguro !== "/" ? `<a href="${linkSeguro}" target="_blank" rel="noopener noreferrer" class="inbox-link">Ver detalhes</a>` : '';
                 html += `
-                <div class="form-card" style="padding: 15px; margin-bottom: 10px; border-left: 4px solid var(--primary); display: flex; gap: 10px; align-items: flex-start; text-align: left;">
-                    <img src="${n.icon || './icone.png'}" style="width: 40px; height: 40px; border-radius: 8px;">
-                    <div style="flex: 1;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                            <strong style="font-size: 13px; color: var(--primary);">${n.title}</strong>
-                            <span style="font-size: 10px; color: var(--text-sub);">${tempo}</span>
+                <div class="form-card inbox-card">
+                    <img src="${iconeSeguro}" class="inbox-icon" alt="">
+                    <div class="inbox-content">
+                        <div class="inbox-header">
+                            <strong class="inbox-title">${tituloSeguro}</strong>
+                            <span class="inbox-time">${tempo}</span>
                         </div>
-                        <p style="font-size: 12px; margin: 0; color: #333; line-height: 1.4;">${n.body}</p>
-                        ${(n.link && n.link !== '/') ? `<a href="${n.link}" target="_blank" style="font-size: 11px; display: inline-block; margin-top: 5px; color: var(--accent); font-weight: bold;">Ver Detalhes ➡</a>` : ''}
+                        <p class="inbox-body">${corpoSeguro}</p>
+                        ${linkHtml}
                     </div>
                 </div>`;
             });
@@ -1152,7 +1172,7 @@ function renderizarNotificacoes() {
             // Remove o red dot após abrir a inbox
             document.querySelectorAll('.badge-notificacao').forEach(badge => {
                 badge.textContent = '';
-                badge.style.display = 'none';
+                badge.classList.remove('is-visible');
             });
         };
     };
@@ -1177,7 +1197,7 @@ function limparInbox() {
             renderizarNotificacoes();
             document.querySelectorAll('.badge-notificacao').forEach(badge => {
                 badge.textContent = '';
-                badge.style.display = 'none';
+                badge.classList.remove('is-visible');
             });
             showToast("Caixa de entrada limpa com sucesso.", "success");
         }
@@ -1206,7 +1226,7 @@ setInterval(() => {
                     if (countReq.result > 0 && !viewAdminAtiva && !sidebarRightAtiva) {
                         document.querySelectorAll('.badge-notificacao').forEach(badge => {
                             badge.textContent = countReq.result > 99 ? '99+' : String(countReq.result);
-                            badge.style.display = 'inline-flex';
+                            badge.classList.add('is-visible');
                         });
                     }
                 }
@@ -1244,8 +1264,13 @@ async function uiIniciarRota() {
     document.getElementById("viagem-placa-display").innerText = placa;
 
     // 3. Esconde o painel normal e mostra o ecrã gigante do modo viagem
-    document.getElementById("view-painel-motorista").style.display = "none";
-    document.getElementById("painel-viagem-ativa").style.display = "flex";
+    const painelMotorista = document.getElementById("view-painel-motorista");
+    const painelViagem = document.getElementById("painel-viagem-ativa");
+    if (painelMotorista) painelMotorista.classList.add("hidden");
+    if (painelViagem) {
+        painelViagem.classList.remove("hidden");
+        painelViagem.classList.add("driver-trip-panel-active");
+    }
 }
 
 async function uiFinalizarRota() {
@@ -1255,8 +1280,13 @@ async function uiFinalizarRota() {
         await btnFinalizarRotaMotorista(veiculoConducaoAtual);
 
         // 2. Restaura a UI normal
-        document.getElementById("painel-viagem-ativa").style.display = "none";
-        document.getElementById("view-painel-motorista").style.display = "block";
+        const painelViagem = document.getElementById("painel-viagem-ativa");
+        const painelMotorista = document.getElementById("view-painel-motorista");
+        if (painelViagem) {
+            painelViagem.classList.add("hidden");
+            painelViagem.classList.remove("driver-trip-panel-active");
+        }
+        if (painelMotorista) painelMotorista.classList.remove("hidden");
 
         // Limpa a placa e reseta o select
         veiculoConducaoAtual = "";

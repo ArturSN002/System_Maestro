@@ -689,23 +689,51 @@
     };
   }
 
+  function safeCssVarName(name) {
+    return /^--[A-Za-z0-9_-]+$/.test(String(name || ""));
+  }
+
+  function safeCssVarValue(value) {
+    return String(value || "")
+      .replace(/[{}<>;]/g, "")
+      .trim();
+  }
+
+  function renderDynamicThemeCss(cssVars) {
+    return Object.keys(cssVars || {})
+      .filter(safeCssVarName)
+      .map(name => `${name}: ${safeCssVarValue(cssVars[name])};`)
+      .join("\n");
+  }
+
+  function ensureThemeStyleElement(doc) {
+    let styleEl = doc.getElementById("maestro-dynamic-theme-vars");
+    if (!styleEl) {
+      styleEl = doc.createElement("style");
+      styleEl.id = "maestro-dynamic-theme-vars";
+      styleEl.setAttribute("data-owner", "MaestroTheme");
+      doc.head.appendChild(styleEl);
+    }
+    return styleEl;
+  }
+
   function applyVisualTokens(themeConfig, options) {
     const tokens = buildVisualTokens(themeConfig, options || {});
     const doc = window.document;
     if (!doc) return tokens;
 
     const root = doc.documentElement;
-    if (root && root.style) {
-      Object.keys(tokens.cssVars).forEach(name => {
-        root.style.setProperty(name, tokens.cssVars[name]);
-      });
+    const cssVars = renderDynamicThemeCss(tokens.cssVars);
+    if (cssVars) {
+      const styleEl = ensureThemeStyleElement(doc);
+      styleEl.textContent = `:root, body {\n${cssVars}\n}`;
+    }
+
+    if (root) {
       root.setAttribute("data-maestro-theme", tokens.mode);
     }
 
-    if (doc.body && doc.body.style) {
-      Object.keys(tokens.cssVars).forEach(name => {
-        doc.body.style.setProperty(name, tokens.cssVars[name], "important");
-      });
+    if (doc.body) {
       doc.body.setAttribute("data-maestro-theme", tokens.mode);
       if (tokens.brand && tokens.brand.secretaria) {
         doc.body.setAttribute("data-maestro-secretaria", safeText(tokens.brand.secretaria).slice(0, 80));

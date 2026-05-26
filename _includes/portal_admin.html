@@ -171,11 +171,11 @@
           </div>
           
           <button class="btn-solid dark-bg btn-scanner-action mb-10" id="btn-scanner" onclick="iniciarScanner()">
-            <span style="font-size: 20px;">📷</span> LER VÍDEO CONTÍNUO
+            <span class="scanner-button-icon">📷</span> LER VÍDEO CONTÍNUO
           </button>
           
-          <button class="btn-solid accent-bg btn-scanner-action mb-15" id="btn-scanner-nativo" onclick="document.getElementById('input-qr-file').click()" style="border: 2px solid #fff !important;">
-            <span style="font-size: 20px;">📱</span> USAR CÂMARA NATIVA
+          <button class="btn-solid accent-bg btn-scanner-action btn-scanner-native mb-15" id="btn-scanner-nativo" onclick="document.getElementById('input-qr-file').click()">
+            <span class="scanner-button-icon">📱</span> USAR CÂMARA NATIVA
           </button>
           <input type="file" id="input-qr-file" accept="image/*" capture="environment" class="hidden" onchange="lerQRCodePorFoto(event)">
 
@@ -219,7 +219,7 @@
               <span class="text-light">Motor Gemini IA (Gasto/Limite OCR)</span>
               <strong id="kpi-ia-text" class="text-accent">- / -</strong>
             </div>
-            <div class="progress-track"><div id="bar-ia-usage" class="progress-fill" style="width: 0%;"></div></div>
+            <div class="progress-track"><div id="bar-ia-usage" class="progress-fill"></div></div>
           </div>
 
           <div class="dash-tabs mb-10">

@@ -13,6 +13,26 @@ let inscricaoArquivos = {};
 let inscricaoFotoBase64 = null;
 let cameraStream = null;
 
+function atualizarFeedbackCPFInscricao(estado, mensagem) {
+    const feedbackBox = document.getElementById('cpf-feedback-box');
+    if (!feedbackBox) return false;
+    feedbackBox.classList.remove('feedback-error', 'feedback-success', 'feedback-info', 'hidden');
+    feedbackBox.classList.add(`feedback-${estado}`);
+    if (typeof escapeHTMLMaestro === 'function') {
+        feedbackBox.textContent = mensagem;
+    } else {
+        feedbackBox.innerHTML = mensagem;
+    }
+    return true;
+}
+
+function atualizarStatusArquivoInscricao(statusSpan, texto, estado = "idle") {
+    if (!statusSpan) return;
+    statusSpan.innerText = texto;
+    statusSpan.classList.remove('is-success', 'is-error', 'is-idle');
+    statusSpan.classList.add(`is-${estado}`);
+}
+
 // ----- Wrapper de Inicialização -----
 function abrirNovaInscricao() {
     switchView('view-inscricao');
@@ -258,8 +278,8 @@ async function verificarCPFInscricao() {
             const mensagemDuplicidade = resDuplicidade.mensagem || "Ja existe uma inscricao ativa para este CPF neste semestre.";
             const feedbackBox = document.getElementById('cpf-feedback-box');
             if (feedbackBox) {
-                feedbackBox.style.background = '#fef2f2';
-                feedbackBox.style.color = '#991b1b';
+                feedbackBox.classList.remove('feedback-success', 'feedback-info');
+                feedbackBox.classList.add('feedback-error');
                 if (typeof escapeHTMLMaestro === 'function') {
                     feedbackBox.textContent = "⚠️ " + mensagemDuplicidade;
                 } else
@@ -330,8 +350,8 @@ async function verificarCPFInscricao() {
 
             const feedbackBox = document.getElementById('cpf-feedback-box');
             if (feedbackBox) {
-                feedbackBox.style.background = '#ecfdf5';
-                feedbackBox.style.color = '#166534';
+                feedbackBox.classList.remove('feedback-error', 'feedback-info');
+                feedbackBox.classList.add('feedback-success');
                 feedbackBox.innerHTML = "✅ Inscrição anterior encontrada! Os seus dados foram importados. Verifique-os na próxima etapa.";
                 feedbackBox.classList.remove('hidden');
             }
@@ -340,8 +360,8 @@ async function verificarCPFInscricao() {
         } else {
             const feedbackBox = document.getElementById('cpf-feedback-box');
             if (feedbackBox) {
-                feedbackBox.style.background = '#e0f2fe';
-                feedbackBox.style.color = '#0369a1';
+                feedbackBox.classList.remove('feedback-error', 'feedback-success');
+                feedbackBox.classList.add('feedback-info');
                 feedbackBox.innerHTML = "✨ Novo Cadastro! Prossiga para preencher os seus dados.";
                 feedbackBox.classList.remove('hidden');
             }
@@ -414,8 +434,7 @@ function limparArquivoInscricao(tipoDoc) {
 
     if (inputArquivo) inputArquivo.value = "";
     if (statusSpan) {
-        statusSpan.innerText = "Nenhum arquivo selecionado";
-        statusSpan.style.color = "var(--text-sub)";
+        atualizarStatusArquivoInscricao(statusSpan, "Nenhum arquivo selecionado", "idle");
     }
     if (labelUpload) {
         labelUpload.classList.remove('file-attached');
@@ -437,8 +456,7 @@ function processarArquivoInscricao(inputElement, tipoDoc) {
         showToast("Arquivo muito grande (Máximo 5MB).", "error");
         limparArquivoInscricao(tipoDoc);
         if (statusSpan) {
-            statusSpan.innerText = "Erro: Arquivo demasiado pesado.";
-            statusSpan.style.color = "var(--danger)";
+            atualizarStatusArquivoInscricao(statusSpan, "Erro: Arquivo demasiado pesado.", "error");
         }
         return;
     }
@@ -452,7 +470,8 @@ function processarArquivoInscricao(inputElement, tipoDoc) {
         };
         if (statusSpan) {
             statusSpan.innerText = `✅ ${file.name}`;
-            statusSpan.style.color = "var(--success)";
+            statusSpan.classList.remove('is-error', 'is-idle');
+            statusSpan.classList.add('is-success');
         }
         if (labelUpload) {
             labelUpload.classList.add('file-attached');
@@ -463,8 +482,7 @@ function processarArquivoInscricao(inputElement, tipoDoc) {
         showToast("Falha na leitura do arquivo.", "error");
         limparArquivoInscricao(tipoDoc);
         if (statusSpan) {
-            statusSpan.innerText = "Erro na leitura.";
-            statusSpan.style.color = "var(--danger)";
+            atualizarStatusArquivoInscricao(statusSpan, "Erro na leitura.", "error");
         }
     };
     reader.readAsDataURL(file);
@@ -864,7 +882,7 @@ function _resetarFormularioInscricao() {
     const statusIds = ['status-insc-documento', 'status-insc-residencia', 'status-insc-vinculo', 'status-insc-foto3x4', 'status-insc-menorIdade', 'status-insc-estagio'];
     statusIds.forEach(id => {
         const el = document.getElementById(id);
-        if (el) { el.innerText = 'Nenhum arquivo selecionado'; el.style.color = 'var(--text-sub)'; }
+        if (el) atualizarStatusArquivoInscricao(el, 'Nenhum arquivo selecionado', 'idle');
     });
 
     ['documento', 'residencia', 'vinculo', 'foto3x4', 'menorIdade', 'estagio'].forEach(limparArquivoInscricao);
@@ -881,7 +899,7 @@ function _resetarFormularioInscricao() {
     const viewInscricao = document.getElementById('view-inscricao');
     const inscricaoVisivel = viewInscricao && (
         viewInscricao.classList.contains('active-view') ||
-        viewInscricao.style.display === 'block'
+        viewInscricao.classList.contains('active-view')
     );
 
     // Redefine o modo de foto com base na política de privacidade.

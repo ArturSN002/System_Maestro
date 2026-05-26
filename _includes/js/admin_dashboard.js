@@ -46,6 +46,18 @@ function dashboardStatsValido(stats) {
     return !!(stats && stats.sucesso !== false && stats.graficos && typeof stats.graficos === "object");
 }
 
+function aplicarBarraIADashboardMaestro(percentual) {
+    const pctSeguro = Math.max(0, Math.min(100, Number(percentual) || 0));
+    let styleEl = document.getElementById("maestro-dashboard-dynamic-css");
+    if (!styleEl) {
+        styleEl = document.createElement("style");
+        styleEl.id = "maestro-dashboard-dynamic-css";
+        styleEl.setAttribute("data-owner", "MaestroDashboard");
+        document.head.appendChild(styleEl);
+    }
+    styleEl.textContent = `#bar-ia-usage { width: ${pctSeguro}%; }`;
+}
+
 function obterCacheDashboardMaestro() {
     const cachedStatsRaw = localStorage.getItem(CACHE_STATS_KEY);
     if (!cachedStatsRaw) return null;
@@ -184,8 +196,8 @@ function renderizarDashboardUI(payload) {
     const barraIA = document.getElementById('bar-ia-usage');
     if (document.getElementById('kpi-ia-text') && barraIA) {
         document.getElementById('kpi-ia-text').innerText = `${ocrUsado} / ${ocrLimite}`;
-        barraIA.style.width = Math.min(pctIA, 100) + "%";
-        barraIA.style.background = pctIA > 80 ? "var(--danger)" : "var(--accent)";
+        aplicarBarraIADashboardMaestro(pctIA);
+        barraIA.classList.toggle("is-danger", pctIA > 80);
     }
 
     // 2. Prevenção de Memory Leaks: Destrói qualquer gráfico existente

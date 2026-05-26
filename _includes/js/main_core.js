@@ -3,7 +3,7 @@
 // ========================================================================
 
 let deferredPrompt;
-const MAESTRO_PWA_VERSION = "12.19.0";
+const MAESTRO_PWA_VERSION = "12.22.0";
 window.MAESTRO_PWA_VERSION = MAESTRO_PWA_VERSION;
 window.MAESTRO_MANIFEST_URL = null;
 
@@ -324,8 +324,8 @@ async function bootSystem(options = {}) {
 function ocultarSplashScreen() {
   const splash = document.getElementById('splash-screen');
   if (splash) {
-    splash.style.opacity = '0';
-    setTimeout(() => { splash.style.display = 'none'; }, 500);
+    splash.classList.add('is-exiting');
+    setTimeout(() => { splash.classList.add('hidden'); }, 500);
   }
 }
 
@@ -463,15 +463,13 @@ function switchView(viewId) {
   views.forEach(v => {
     v.classList.remove('active-view');
     v.classList.remove('slide-in-right');
-    v.style.display = 'none';
   });
 
   if (target) {
-    target.style.display = 'block';
-    setTimeout(() => {
+    window.requestAnimationFrame(() => {
       target.classList.add('active-view');
       target.classList.add('slide-in-right');
-    }, 10);
+    });
     sessionStorage.setItem('MAESTRO_LAST_VIEW', viewId);
   }
 
@@ -485,9 +483,9 @@ function switchView(viewId) {
 
     // Se for ecrã de município ou login, oculta. Se não, força a exibição absoluta!
     if (viewId === 'view-gateway' || viewId === 'view-login-fiscal' || viewId === 'view-login') {
-      btnConfig.style.setProperty('display', 'none', 'important');
+      btnConfig.classList.add('view-action-hidden');
     } else {
-      btnConfig.style.setProperty('display', 'flex', 'important');
+      btnConfig.classList.remove('view-action-hidden');
     }
   }
 
@@ -566,12 +564,15 @@ let toastTimeout;
 function showToast(msg, type = 'info') {
   const toast = document.getElementById('toast');
   if (!toast) return;
+  const tiposToast = ['toast-success', 'toast-error', 'toast-warning', 'toast-loading', 'toast-info'];
+  const tipoSeguro = ['success', 'error', 'warning', 'loading', 'info'].includes(type) ? type : 'info';
+
   toast.innerText = typeof safeMessageMaestro === 'function' ? safeMessageMaestro(msg, "") : msg;
-  toast.style.background = type === 'error' ? 'var(--danger)' : type === 'success' ? 'var(--success)' : type === 'warning' ? '#f59e0b' : '#333';
-  toast.style.display = 'block';
+  toast.classList.remove(...tiposToast);
+  toast.classList.add(`toast-${tipoSeguro}`, 'is-visible');
 
   if (toastTimeout) clearTimeout(toastTimeout);
-  toastTimeout = setTimeout(() => { toast.style.display = 'none'; }, 3500);
+  toastTimeout = setTimeout(() => { toast.classList.remove('is-visible'); }, 3500);
 }
 
 async function inicializarPushNotifications() {
@@ -686,6 +687,35 @@ function toggleDarkMode() {
   if (typeof aplicarTemaAtual === 'function') aplicarTemaAtual();
 }
 
+function safeCssThemeValueMaestro(value, fallback) {
+  const text = String(value || fallback || "").trim();
+  if (/^#[0-9A-Fa-f]{3,8}$/.test(text)) return text;
+  if (/^rgba?\([\d\s.,%]+\)$/.test(text)) return text;
+  if (/^var\(--[A-Za-z0-9_-]+\)$/.test(text)) return text;
+  return fallback;
+}
+
+function aplicarTemaLegacyCssMaestro(theme) {
+  if (!theme || !document.head) return;
+  let styleEl = document.getElementById('maestro-legacy-theme-vars');
+  if (!styleEl) {
+    styleEl = document.createElement('style');
+    styleEl.id = 'maestro-legacy-theme-vars';
+    styleEl.setAttribute('data-owner', 'MaestroThemeLegacy');
+    document.head.appendChild(styleEl);
+  }
+
+  const primary = safeCssThemeValueMaestro(theme.primary, '#0A3D6B');
+  const secondary = safeCssThemeValueMaestro(theme.secondary, '#F8F9FA');
+  const accent = safeCssThemeValueMaestro(theme.accent, '#0D9488');
+  styleEl.textContent = `:root, body {
+--primary: ${primary};
+--secondary: ${secondary};
+--accent: ${accent};
+--font-main: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}`;
+}
+
 function aplicarTemaAtual() {
   const isDark = document.body.classList.contains('dark-theme');
   const legacyTheme = window.THEME_LIGHT && window.THEME_DARK
@@ -704,17 +734,15 @@ function aplicarTemaAtual() {
 
   if (!theme) return;
 
-  document.body.style.setProperty('--primary', theme.primary, 'important');
-  document.body.style.setProperty('--secondary', theme.secondary, 'important');
-  document.body.style.setProperty('--accent', theme.accent, 'important');
-  document.body.style.setProperty('--font-main', "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 'important');
+  if (!tokens) aplicarTemaLegacyCssMaestro(theme);
+  document.documentElement.setAttribute("data-maestro-theme", isDark ? "dark" : "light");
+  document.body.setAttribute("data-maestro-theme", isDark ? "dark" : "light");
 
   window.THEME_COLOR = theme.primary;
   window.BG_COLOR = theme.secondary;
 
   const metaThemeColor = document.getElementById('meta-theme-color');
   if (metaThemeColor) metaThemeColor.content = theme.primary;
-  document.documentElement.style.colorScheme = isDark ? "dark" : "light";
 
   const logoAtual = (tokens && tokens.assets && tokens.assets.logo) || (legacyTheme && legacyTheme.logo);
   const logoEl = document.getElementById('ui-logo');
@@ -1031,7 +1059,7 @@ async function ativarModoViagemPWA(idOnibus, emailMotorista) {
           ultimaTransmissaoMestre = agora;
 
           const indicador = document.getElementById('indicador-gps-mestre');
-          if (indicador) indicador.style.opacity = (indicador.style.opacity == '1' ? '0.5' : '1');
+          if (indicador) indicador.classList.toggle('is-muted');
         }
       },
       (err) => console.error("Erro no GPS do Mestre:", err),
@@ -1148,12 +1176,12 @@ async function lidarComMudancaVisibilidade() {
       document.querySelectorAll('.badge-notificacao').forEach(badge => {
         if (totalNaoLidas > 0) {
           badge.textContent = totalNaoLidas > 99 ? '99+' : String(totalNaoLidas);
-          badge.style.display = 'inline-flex';
+          badge.classList.add('is-visible');
           badge.setAttribute('aria-label', `${totalNaoLidas} notificações não lidas`);
           badge.title = `${totalNaoLidas} notificações não lidas`;
         } else {
           badge.textContent = '';
-          badge.style.display = 'none';
+          badge.classList.remove('is-visible');
           badge.removeAttribute('aria-label');
           badge.removeAttribute('title');
         }
@@ -1170,7 +1198,7 @@ async function lidarComMudancaVisibilidade() {
     if (containers.length === 0) return;
 
     containers.forEach(container => {
-      container.innerHTML = '<div class="loader" style="margin: 0 auto;"></div>';
+      container.innerHTML = '<div class="loader loader-center"></div>';
     });
 
     try {
@@ -1183,7 +1211,7 @@ async function lidarComMudancaVisibilidade() {
 
       if (notificacoes.length === 0) {
         containers.forEach(container => {
-          container.innerHTML = '<div style="text-align: center; padding: 30px; background: #fff; border: 1px dashed #ccc; border-radius: 8px;"><p style="font-size: 12px; color: #666;">Nenhuma notificação recente.</p></div>';
+          container.innerHTML = '<div class="inbox-empty-state"><p class="inbox-empty-text">Nenhuma notificacao recente.</p></div>';
         });
         db.close();
         await atualizarContadorNotificacoes();
@@ -1196,20 +1224,20 @@ async function lidarComMudancaVisibilidade() {
         const dataFormatada = formatarDataNotificacao(item.timestamp);
         const naoLida = item.status === 'unread';
         const timestampSeguro = escaparHTML(item.timestamp);
-        const corBorda = naoLida ? '#2563eb' : 'var(--primary)';
-        const marcadorNaoLida = naoLida ? '<span style="width: 8px; height: 8px; background: #2563eb; border-radius: 50%; flex: 0 0 auto; margin-top: 4px;" title="Não lida"></span>' : '';
-        const botaoMarcarLida = naoLida ? `<button type="button" class="btn-text" data-marcar-lida="${timestampSeguro}" style="margin-top: 8px; padding: 0; font-size: 10px; font-weight: 700; color: #2563eb;">Marcar como lida</button>` : '';
+        const classeNaoLida = naoLida ? ' is-unread' : '';
+        const marcadorNaoLida = naoLida ? '<span class="inbox-unread-dot" title="Nao lida"></span>' : '';
+        const botaoMarcarLida = naoLida ? `<button type="button" class="btn-text inbox-mark-read" data-marcar-lida="${timestampSeguro}">Marcar como lida</button>` : '';
 
         return `
-          <div class="form-card" style="padding: 15px; margin-bottom: 10px; border-left: 4px solid ${corBorda}; text-align: left;">
-            <div style="display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: 6px;">
-              <div style="display: flex; align-items: flex-start; gap: 8px;">
+          <div class="form-card inbox-card inbox-card-local${classeNaoLida}">
+            <div class="inbox-header">
+              <div class="inbox-title-row">
                 ${marcadorNaoLida}
-                <strong style="font-size: 13px; color: var(--primary);">${titulo}</strong>
+                <strong class="inbox-title">${titulo}</strong>
               </div>
-              <span style="font-size: 10px; color: var(--text-sub); white-space: nowrap;">${dataFormatada}</span>
+              <span class="inbox-time">${dataFormatada}</span>
             </div>
-            <p style="font-size: 12px; margin: 0; color: #333; line-height: 1.4;">${corpo}</p>
+            <p class="inbox-body">${corpo}</p>
             ${botaoMarcarLida}
           </div>`;
       }).join('');

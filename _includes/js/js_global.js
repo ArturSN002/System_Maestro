@@ -14,21 +14,18 @@ function showToast(msg, type = 'info') {
   if (!toast) return;
 
   toast.innerText = msg;
-  toast.style.display = 'block';
+  const tiposToast = ['toast-success', 'toast-error', 'toast-warning', 'toast-loading', 'toast-info'];
+  const tipoSeguro = ['success', 'error', 'warning', 'loading', 'info'].includes(type) ? type : 'info';
+  toast.classList.remove(...tiposToast);
+  toast.classList.add(`toast-${tipoSeguro}`, 'is-visible');
   
   // Cores dinâmicas baseadas no tipo
-  const colors = {
-    'success': '#188038',
-    'error': '#D93025',
-    'loading': '#0A3D6B',
-    'info': '#333'
-  };
   
-  toast.style.background = colors[type] || colors.info;
+  if (window.__maestroToastTimer) clearTimeout(window.__maestroToastTimer);
 
-  if (type !== 'loading') {
-    setTimeout(() => {
-      toast.style.display = 'none';
+  if (tipoSeguro !== 'loading') {
+    window.__maestroToastTimer = setTimeout(() => {
+      toast.classList.remove('is-visible');
     }, 4000);
   }
 }

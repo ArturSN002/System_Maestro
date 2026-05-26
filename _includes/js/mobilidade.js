@@ -14,7 +14,7 @@ let wakeLockAtivo = null;
 let busMarker = null;
 const busIcon = L.divIcon({
     className: 'custom-bus-marker',
-    html: '<div style="background-color: var(--accent); width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 8px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; font-size: 12px;">🚌</div>',
+    html: '<div class="bus-marker-dot">🚌</div>',
     iconSize: [30, 30],
     iconAnchor: [15, 15]
 });
@@ -22,6 +22,22 @@ const busIcon = L.divIcon({
 // Default city coordinates (Ceará-Mirim)
 const CIDADE_DEFAULT_LAT = -5.6322;
 const CIDADE_DEFAULT_LNG = -35.4267;
+
+function setRadarStatusMobilidade(estado, texto) {
+    const statusBar = document.getElementById('radar-status-bar');
+    const statusText = document.getElementById('radar-status-text');
+    if (!statusBar || !statusText) return;
+    statusBar.classList.remove('is-standby', 'is-preparing', 'is-live', 'is-offline');
+    statusBar.classList.add(`is-${estado}`);
+    statusText.textContent = texto;
+}
+
+function classeLotacaoMobilidade(percentual) {
+    const pctSeguro = Math.max(0, Math.min(100, Number(percentual) || 0));
+    const bucket = Math.round(pctSeguro / 10) * 10;
+    const nivel = pctSeguro > 90 ? "is-high" : (pctSeguro > 50 ? "is-medium" : "is-low");
+    return `${nivel} occupancy-w-${bucket}`;
+}
 
 function normalizarArrayMobilidade(obj) {
     if (Array.isArray(obj)) return obj;
@@ -106,7 +122,7 @@ function abrirRadarMasterView() {
 function _inicializarMapaDesktopStandby() {
     const container = document.getElementById('mapa-paradas-container');
     if (!container) return;
-    container.style.display = 'block';
+    container.classList.remove('hidden');
 
     // If a map already exists, just recalculate size
     if (mapInstance !== null) {
@@ -125,8 +141,8 @@ function _inicializarMapaDesktopStandby() {
     const statusBar = document.getElementById('radar-status-bar');
     const statusText = document.getElementById('radar-status-text');
     if (statusBar && statusText) {
-        statusBar.style.background = '#6B7280';
-        statusBar.style.color = 'white';
+        statusBar.classList.remove('is-preparing', 'is-live', 'is-offline');
+        statusBar.classList.add('is-standby');
         statusText.textContent = '🗺️ Selecione uma viagem na lista';
     }
 
@@ -208,11 +224,11 @@ async function carregarViagensDisponiveisEstudante() {
     const containerLista = document.getElementById('lista-viagens-cards');
     const painelSucesso = document.getElementById('painel-viagem-ativa');
 
-    if (painelMob) painelMob.style.display = 'block';
+    if (painelMob) painelMob.classList.remove('hidden');
     if (painelSucesso) painelSucesso.innerHTML = '';
 
     if (containerLista) {
-        containerLista.innerHTML = `<div class="loader" style="margin: 0 auto 10px auto; width: 25px; height: 25px; border-width: 3px;"></div><p style="font-size: 11px; color: var(--text-sub);">A procurar autocarros...</p>`;
+        containerLista.innerHTML = `<div class="loader radar-list-loader"></div><p class="radar-list-loading-text">A procurar autocarros...</p>`;
         containerLista.classList.remove('hidden');
     }
 
@@ -224,7 +240,7 @@ async function carregarViagensDisponiveisEstudante() {
         console.dir(res);
 
         if (!res.sucesso) {
-            if (containerLista) containerLista.innerHTML = `<p style="font-size: 11px; color: var(--danger);">Erro: ${res.erro}</p>`;
+            if (containerLista) containerLista.innerHTML = `<p class="mobility-error-text">Erro: ${res.erro}</p>`;
             return;
         }
 
@@ -253,11 +269,11 @@ async function carregarViagensDisponiveisEstudante() {
             } else if (res.statusOperacao === "DOCUMENTOS_PENDENTES") {
                 msgEmpty = "A sua documentação ainda não permite embarque neste semestre.";
             }
-            if (containerLista) containerLista.innerHTML = `<div style="background: #fef3c7; border: 1px solid #f59e0b; padding: 15px; border-radius: 8px; color: #92400e; font-size: 12px; line-height: 1.4; text-align:left;">${msgEmpty}</div>`;
+            if (containerLista) containerLista.innerHTML = `<div class="mobility-empty-warning">${msgEmpty}</div>`;
             return;
         }
 
-        let html = `<p style="font-size: 11px; color: var(--text-sub); margin-bottom: 10px;">Selecione o seu autocarro para garantir lugar:</p>`;
+        let html = `<p class="mobility-list-hint">Selecione o seu autocarro para garantir lugar:</p>`;
 
         // Armazenar na window para acesso no check-in
         window.lastViagens = viagens;
@@ -267,27 +283,27 @@ async function carregarViagensDisponiveisEstudante() {
             let statusVagas = "";
 
             if (v.estadoRadar === "EM_OPERACAO") {
-                const labelLota = v.vagasRestantes > 0 ? `<span style="color:var(--success); font-weight:bold;">${v.vagasRestantes} vagas livres</span>` : `<span style="color:var(--danger); font-weight:bold;">LOTADO</span>`;
+                const labelLota = v.vagasRestantes > 0 ? `<span class="mobility-seats is-available">${v.vagasRestantes} vagas livres</span>` : `<span class="mobility-seats is-full">LOTADO</span>`;
                 const btnDisable = v.vagasRestantes <= 0 ? "disabled" : "";
-                const btnBg = v.vagasRestantes <= 0 ? "#ccc" : "var(--primary)";
+                const btnState = v.vagasRestantes <= 0 ? " is-disabled" : "";
                 statusVagas = labelLota;
-                checkinArea = `<button class="hide-on-desktop" ${btnDisable} onclick="confirmarEmbarque('${v.id}')" style="flex: 1; background: ${btnBg}; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer;">FAZER CHECK-IN</button>`;
+                checkinArea = `<button class="hide-on-desktop mobility-checkin-button${btnState}" ${btnDisable} onclick="confirmarEmbarque('${v.id}')">FAZER CHECK-IN</button>`;
             } else {
-                statusVagas = `<span style="color:#6B7280; font-weight:bold;">Embarque fechado (Capacidade: ${v.vagasRestantes})</span>`;
-                checkinArea = `<button class="hide-on-desktop" disabled style="flex: 1; background: #e5e7eb; color: #9ca3af; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: not-allowed;">AGUARDE...</button>`;
+                statusVagas = `<span class="mobility-seats is-closed">Embarque fechado (Capacidade: ${v.vagasRestantes})</span>`;
+                checkinArea = `<button class="hide-on-desktop mobility-checkin-button is-disabled" disabled>AGUARDE...</button>`;
             }
 
-            const borderHighlight = index === 0 ? "border: 2px solid var(--primary);" : "border: 1px solid var(--border); opacity: 0.8;";
+            const cardState = index === 0 ? " is-primary" : " is-secondary";
 
             html += `
-<div style="background: var(--secondary); padding: 12px; border-radius: 8px; margin-bottom: 10px; text-align: left; ${borderHighlight}">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-     <strong style="font-size: 13px;">🚌 ${v.rota}</strong>
-     <span style="font-size: 11px; background: #e0e7ff; padding: 2px 6px; border-radius: 4px; color: #3730a3;">${v.horario}</span>
+<div class="mobility-trip-card${cardState}">
+  <div class="mobility-trip-header">
+     <strong class="mobility-trip-title">🚌 ${v.rota}</strong>
+     <span class="mobility-trip-time">${v.horario}</span>
   </div>
-  <div style="font-size: 11px; margin-bottom: 10px;">${statusVagas}</div>
-  <div style="display: flex; justify-content: space-between; gap: 8px;">
-     <button class="btn-solid" onclick="abrirMapaDaViagem('${v.id}')" style="background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; flex: 1;">VER MAPA 🗺️</button>
+  <div class="mobility-trip-status">${statusVagas}</div>
+  <div class="mobility-trip-actions">
+     <button class="btn-solid mobility-map-button" onclick="abrirMapaDaViagem('${v.id}')">VER MAPA 🗺️</button>
      ${checkinArea}
   </div>
 </div>`;
@@ -296,7 +312,7 @@ async function carregarViagensDisponiveisEstudante() {
         if (containerLista) containerLista.innerHTML = html;
 
     } catch (e) {
-        if (containerLista) containerLista.innerHTML = `<p style="font-size: 11px; color: var(--danger);">Não foi possível atualizar a logística.</p>`;
+        if (containerLista) containerLista.innerHTML = `<p class="mobility-error-text">Não foi possível atualizar a logística.</p>`;
     }
 }
 
@@ -398,12 +414,12 @@ function abrirPainelViagem() {
     if (!painelSucesso) return;
 
     painelSucesso.innerHTML = `
-      <div style="background: var(--secondary); padding: 20px; border-radius: 8px; border: 1px solid var(--border);">
-         <h3 style="color: var(--success); margin: 0 0 10px 0; font-size: 18px;">✅ Check-in Confirmado</h3>
-         <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 20px;">O seu lugar está garantido. Acompanhe a viagem no radar abaixo.</p>
-         <div id="radar-dinamico-conteudo" style="background: white; border-radius: 8px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-            <div class="loader" style="margin: 0 auto; width: 20px; height: 20px; border-width: 2px;"></div>
-            <p style="font-size: 11px; text-align: center; margin-top: 10px; color: #666;">A sincronizar radar...</p>
+      <div class="radar-trip-confirmed">
+         <h3 class="radar-trip-title">✅ Check-in Confirmado</h3>
+         <p class="radar-trip-text">O seu lugar está garantido. Acompanhe a viagem no radar abaixo.</p>
+         <div id="radar-dinamico-conteudo" class="radar-dynamic-box">
+            <div class="loader radar-inline-loader"></div>
+            <p class="radar-inline-loading-text">A sincronizar radar...</p>
          </div>
       </div>
     `;
@@ -428,22 +444,15 @@ async function atualizarRadarDinamico() {
         }
 
         // --- Injetar CSS de animação ---
-        if (!document.getElementById('radar-pulse-css')) {
-            const style = document.createElement('style');
-            style.id = 'radar-pulse-css';
-            style.innerHTML = `@keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.7; } 100% { transform: scale(1); opacity: 1; } }`;
-            document.head.appendChild(style);
-        }
-
         // --- UI do Guia (Transmissor Ativo) ---
         if (res.isGuia) {
             boxRadar.innerHTML = `
-                <div style="text-align:center;">
-                   <div style="font-size: 40px; margin-bottom: 10px; animation: pulse 2s infinite;">📡</div>
-                   <h4 style="color: var(--success); margin: 0 0 5px 0;">Transmissão Ativa</h4>
-                   <p style="font-size: 11px; color: #666; margin-bottom: 5px;">O seu GPS está a guiar os seus colegas.</p>
-                   <span style="font-size: 10px; color: var(--primary); font-weight: 600;">${res.totalGuias || 1} guia(s) conectado(s)</span>
-                   <button onclick="abdicarSerGuia()" class="btn-solid" style="background: #ef4444; margin: 15px 0 0 0; padding: 8px; font-size: 12px;">Ajudando a comunidade (Parar)</button>
+                <div class="radar-guide-card">
+                   <div class="radar-guide-icon">📡</div>
+                   <h4 class="radar-guide-title">Transmissão Ativa</h4>
+                   <p class="radar-guide-text">O seu GPS está a guiar os seus colegas.</p>
+                   <span class="radar-guide-count">${res.totalGuias || 1} guia(s) conectado(s)</span>
+                   <button onclick="abdicarSerGuia()" class="btn-solid radar-stop-guide-button">Ajudando a comunidade (Parar)</button>
                 </div>
             `;
         }
@@ -452,15 +461,15 @@ async function atualizarRadarDinamico() {
             // Recruitment: Require explicit consent, auto-volunteer removed.
 
             boxRadar.innerHTML = `
-                <div style="text-align: left;">
-                   <div style="display:flex; justify-content: space-between; align-items:center; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 8px;">
-                      <strong style="color: var(--primary);"><span style="font-size: 14px;">📍</span> Radar ao Vivo</strong>
-                      <span style="font-size: 10px; background: #ecfdf5; color: #065f46; padding: 3px 6px; border-radius: 4px;">${res.totalGuias || 1} guia(s)</span>
+                <div class="radar-live-card">
+                   <div class="radar-live-header">
+                      <strong class="radar-live-title"><span class="radar-live-pin">📍</span> Radar ao Vivo</strong>
+                      <span class="radar-guide-badge">${res.totalGuias || 1} guia(s)</span>
                    </div>
-                   <div id="radar-eta-slot" style="min-height: 60px; display: flex; align-items: center; justify-content: center;">
-                      <div><div class="loader" style="margin: 0 auto; width: 15px; height: 15px; border-width: 2px;"></div><p style="font-size: 10px; text-align: center; margin-top: 5px; color: #666;">A calcular ETA...</p></div>
+                   <div id="radar-eta-slot" class="radar-eta-slot">
+                      <div><div class="loader radar-eta-loader"></div><p class="radar-eta-loading-text">A calcular ETA...</p></div>
                    </div>
-                   <button onclick="atualizarRadarDinamico()" class="btn-text" style="width: 100%; text-align: center; padding: 8px 0 0 0; margin-top: 5px; font-size: 11px;">🔄 Atualizar Agora</button>
+                   <button onclick="atualizarRadarDinamico()" class="btn-text radar-refresh-button">🔄 Atualizar Agora</button>
                 </div>
             `;
 
@@ -472,11 +481,11 @@ async function atualizarRadarDinamico() {
             // Recruitment: Require explicit consent, auto-volunteer removed.
 
             boxRadar.innerHTML = `
-                <div style="text-align: center;">
-                   <div style="font-size: 30px; margin-bottom: 10px; filter: grayscale(100%); opacity: 0.5;">📡</div>
-                   <h4 style="color: #666; margin: 0 0 5px 0;">Radar Inativo</h4>
-                   <p style="font-size: 11px; color: #999; margin-bottom: 15px;">A tentar ligar ao radar comunitário...</p>
-                   <button onclick="solicitarSerGuia()" class="btn-solid" style="background: var(--primary); margin: 0; padding: 8px; font-size: 12px;">Seja o Guia (Ligar GPS)</button>
+                <div class="radar-inactive-card">
+                   <div class="radar-inactive-icon">📡</div>
+                   <h4 class="radar-inactive-title">Radar Inativo</h4>
+                   <p class="radar-inactive-text">A tentar ligar ao radar comunitário...</p>
+                   <button onclick="solicitarSerGuia()" class="btn-solid radar-start-guide-button">Seja o Guia (Ligar GPS)</button>
                 </div>
             `;
         }
@@ -538,26 +547,26 @@ function _renderizarETANoSlot(slot, distKm, etaTexto, metodo, tsBus) {
     const tempoAtras = calcularTempoRelativo(tsBus);
     let badgeHTML = '';
     if (metodo === 'MAPS_API' || metodo === 'MAPS_CACHE') {
-        badgeHTML = '<span style="font-size: 9px; background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 4px; font-weight: 600;">⚡ Tempo Real (Google)</span>';
+        badgeHTML = '<span class="eta-method-badge is-google">⚡ Tempo Real (Google)</span>';
     } else {
-        badgeHTML = '<span style="font-size: 9px; background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px; font-weight: 600;">📍 Estimativa Matemática</span>';
+        badgeHTML = '<span class="eta-method-badge is-math">📍 Estimativa Matemática</span>';
     }
 
     const distFormatada = typeof distKm === 'number' ? distKm.toFixed(1) : distKm;
 
     slot.innerHTML = `
-        <div style="width: 100%;">
-           <div style="display:flex; justify-content: space-between; margin-bottom: 5px;">
-              <span style="font-size: 12px; color: #666;">Distância:</span>
-              <strong style="font-size: 12px;">${distFormatada} km</strong>
+        <div class="eta-box">
+           <div class="eta-row eta-row-spaced">
+              <span class="eta-label">Distância:</span>
+              <strong class="eta-value">${distFormatada} km</strong>
            </div>
-           <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <span style="font-size: 12px; color: #666;">Chega em:</span>
-              <strong style="font-size: 14px; color: var(--accent);">${etaTexto}</strong>
+           <div class="eta-row eta-row-main">
+              <span class="eta-label">Chega em:</span>
+              <strong class="eta-value eta-value-accent">${etaTexto}</strong>
            </div>
-           <div style="display:flex; justify-content: space-between; align-items: center;">
+           <div class="eta-row">
               ${badgeHTML}
-              <span style="font-size: 10px; color: #999;">Atualizado: ${tempoAtras}</span>
+              <span class="eta-updated">Atualizado: ${tempoAtras}</span>
            </div>
         </div>
     `;
@@ -571,10 +580,10 @@ function _renderizarETAFallbackSemGPS(slot, coordenadasBus) {
     if (!coordsBus) return;
     const tempoAtras = calcularTempoRelativo(coordsBus.ts);
     slot.innerHTML = `
-        <div style="text-align: center; width: 100%;">
-           <h4 style="color: var(--primary); margin: 0 0 5px 0; font-size: 13px;">📍 Autocarro em Movimento</h4>
-           <p style="font-size: 11px; color: #666; margin-bottom: 8px;">Ative a localização para ver distância e ETA.</p>
-           <span style="font-size: 10px; color: #999;">Último sinal: ${tempoAtras}</span>
+        <div class="eta-fallback">
+           <h4 class="eta-fallback-title">📍 Autocarro em Movimento</h4>
+           <p class="eta-fallback-text">Ative a localização para ver distância e ETA.</p>
+           <span class="eta-updated">Último sinal: ${tempoAtras}</span>
         </div>
     `;
 }
@@ -591,7 +600,7 @@ async function solicitarSerGuia() {
 
     showToast("A solicitar permissão ao servidor...", "loading");
     const boxRadar = document.getElementById('radar-dinamico-conteudo');
-    if (boxRadar) boxRadar.innerHTML = `<div class="loader" style="margin: 0 auto;"></div>`;
+    if (boxRadar) boxRadar.innerHTML = `<div class="loader loader-center"></div>`;
 
     try {
         const res = await apiCall("solicitarCargoGuia", { idOnibus: onibusSelecionadoGPS, idEstudante: currentWalletId });
@@ -700,7 +709,7 @@ async function inicializarMapaMobilidade(dadosViagem) {
     dadosViagem = dadosViagem || {};
     const paradasViagem = normalizarArrayMobilidade(dadosViagem.paradas);
 
-    container.style.display = 'block';
+    container.classList.remove('hidden');
 
     if (mapInstance !== null) {
         mapInstance.off();
@@ -730,20 +739,20 @@ async function inicializarMapaMobilidade(dadosViagem) {
 
     if (statusBar && statusText) {
         if (estado === "AGUARDANDO") {
-            statusBar.style.background = "#6B7280";
-            statusBar.style.color = "white";
+            statusBar.classList.remove('is-preparing', 'is-live', 'is-offline');
+            statusBar.classList.add('is-standby');
             statusText.textContent = "🕒 Fase de Planeamento";
         } else if (estado === "PREPARANDO") {
-            statusBar.style.background = "#F59E0B";
-            statusBar.style.color = "white";
+            statusBar.classList.remove('is-standby', 'is-live', 'is-offline');
+            statusBar.classList.add('is-preparing');
             statusText.textContent = "⚙️ Autocarros em Preparação";
         } else if (estado === "EM_OPERACAO") {
-            statusBar.style.background = "#10B981";
-            statusBar.style.color = "white";
+            statusBar.classList.remove('is-standby', 'is-preparing', 'is-offline');
+            statusBar.classList.add('is-live');
             statusText.textContent = "🚌 Operação em Tempo Real";
         } else {
-            statusBar.style.background = "#fca5a5";
-            statusBar.style.color = "#991b1b";
+            statusBar.classList.remove('is-standby', 'is-preparing', 'is-live');
+            statusBar.classList.add('is-offline');
             statusText.textContent = "Fora de Serviço";
         }
     }
@@ -780,25 +789,25 @@ async function inicializarMapaMobilidade(dadosViagem) {
     if (paradasViagem.length > 0) {
         paradasViagem.forEach(parada => {
             const tipoStr = String(parada.TIPO_PARADA || "Secundaria").toUpperCase().trim();
-            let popupContent = `<b>${parada.NOME_PARADA}</b><br><span style="font-size:10px; color:gray;">${tipoStr}</span>`;
+            let popupContent = `<b>${parada.NOME_PARADA}</b><br><span class="map-popup-type">${tipoStr}</span>`;
 
             if (estado === "EM_OPERACAO") {
                 const maxCapacidade = 50; // Approximated default if unknown
                 const lotacaoReal = (maxCapacidade - dadosViagem.vagasRestantes) > 0 ? (maxCapacidade - dadosViagem.vagasRestantes) : 0;
                 const ocupacaoPct = Math.min(100, Math.round((lotacaoReal / maxCapacidade) * 100));
-                const corLota = ocupacaoPct > 90 ? 'red' : (ocupacaoPct > 50 ? 'orange' : 'green');
+                const classeLotacao = classeLotacaoMobilidade(ocupacaoPct);
 
                 popupContent += `
                     <br>Autocarro: ${dadosViagem.placa || ''}
-                    <br><span style="font-size: 11px;">ETA: (Calculando ao vivo)</span>
-                    <div style="margin-top: 5px; width: 150px;">
-                        <span style="font-size: 10px; display:block; margin-bottom: 2px;">Lotação: ${ocupacaoPct}%</span>
-                        <div style="width: 100%; background: #ddd; border-radius: 4px; height: 8px;">
-                            <div style="width: ${ocupacaoPct}%; background: ${corLota}; height: 100%; border-radius: 4px; transition: width 0.3s ease;"></div>
+                    <br><span class="map-popup-eta">ETA: (Calculando ao vivo)</span>
+                    <div class="map-popup-occupancy">
+                        <span class="map-popup-occupancy-label">Lotação: ${ocupacaoPct}%</span>
+                        <div class="map-popup-occupancy-track">
+                            <div class="map-popup-occupancy-fill ${classeLotacao}"></div>
                         </div>
                     </div>`;
             } else {
-                popupContent += `<br><br><span style="color:#F59E0B; font-weight:bold; font-size:11px;">Embarque ainda fechado.</span>`;
+                popupContent += `<br><br><span class="map-popup-closed">Embarque ainda fechado.</span>`;
             }
 
             if (tipoStr === "PRINCIPAL") {
@@ -808,7 +817,7 @@ async function inicializarMapaMobilidade(dadosViagem) {
             } else {
                 const secondaryIcon = L.divIcon({
                     className: 'custom-sec-marker',
-                    html: `<svg viewBox="0 0 24 24" width="20" height="20" fill="#fef08a" stroke="#ea580c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.4));">
+                    html: `<svg viewBox="0 0 24 24" width="20" height="20" fill="#fef08a" stroke="#ea580c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="secondary-stop-icon">
                              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                              <circle cx="12" cy="10" r="3" fill="#ea580c"></circle>
                            </svg>`,
@@ -874,7 +883,7 @@ function centralizarMapaEmMim() {
                 if (userLocationMarker === null) {
                     const userIcon = L.divIcon({
                         className: 'user-location-marker',
-                        html: '<div style="background-color: #3b82f6; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(59, 130, 246, 0.8); animation: pulse 2s infinite;"></div>',
+                        html: '<div class="user-location-dot"></div>',
                         iconSize: [22, 22],
                         iconAnchor: [11, 11]
                     });
