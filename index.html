@@ -10,6 +10,91 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
   <title>Portal Maestro</title>
+  <script>
+    (function () {
+      var MAESTRO_FRONTEND_VERSION = "12.16.0";
+      var MAESTRO_DEFAULT_CLIENT_URL = "https://script.google.com/macros/s/AKfycbzCd37kAa5r-6hjAHOXvwSPRXdHUWiQzfHygKdS_HdUW60FOUZzr5KkR2x57nTJeBJ0PA/exec";
+      var VERSION_KEY = "MAESTRO_FRONTEND_VERSION";
+      var RESET_KEY = "MAESTRO_FRONTEND_RESETTING";
+      var previousVersion = "";
+      var savedClientUrl = "";
+
+      try {
+        previousVersion = localStorage.getItem(VERSION_KEY) || "";
+        savedClientUrl = localStorage.getItem("MAESTRO_CLIENT_URL") || "";
+      } catch (error) {
+        return;
+      }
+
+      var versionChanged = previousVersion && previousVersion !== MAESTRO_FRONTEND_VERSION;
+      var backendChanged = savedClientUrl && savedClientUrl !== MAESTRO_DEFAULT_CLIENT_URL;
+      if (!versionChanged && !backendChanged) {
+        localStorage.setItem(VERSION_KEY, MAESTRO_FRONTEND_VERSION);
+        sessionStorage.removeItem(RESET_KEY);
+        return;
+      }
+
+      if (sessionStorage.getItem(RESET_KEY) === MAESTRO_FRONTEND_VERSION) {
+        localStorage.setItem(VERSION_KEY, MAESTRO_FRONTEND_VERSION);
+        if (backendChanged) {
+          localStorage.setItem("MAESTRO_CLIENT_URL_PREVIOUS", savedClientUrl);
+          localStorage.setItem("MAESTRO_CLIENT_URL", MAESTRO_DEFAULT_CLIENT_URL);
+        }
+        return;
+      }
+
+      sessionStorage.setItem(RESET_KEY, MAESTRO_FRONTEND_VERSION);
+      localStorage.setItem(VERSION_KEY, MAESTRO_FRONTEND_VERSION);
+      if (backendChanged) {
+        localStorage.setItem("MAESTRO_CLIENT_URL_PREVIOUS", savedClientUrl);
+        localStorage.setItem("MAESTRO_CLIENT_URL", MAESTRO_DEFAULT_CLIENT_URL);
+      }
+
+      if (backendChanged) {
+        [
+          "MAESTRO_TOKEN",
+          "MAESTRO_EST_TOKEN",
+          "MAESTRO_OPERADOR_NOME",
+          "MAESTRO_OPERADOR_EMAIL",
+          "MAESTRO_OPERADOR_NIVEL",
+          "MAESTRO_WALLET_CACHE",
+          "MAESTRO_OFFLINE_WALLET",
+          "MAESTRO_DASH_STATS",
+          "MAESTRO_THEME_CACHE",
+          "MAESTRO_CACHE_META"
+        ].forEach(function (key) {
+          try { localStorage.removeItem(key); } catch (error) { }
+        });
+      }
+
+      Promise.resolve()
+        .then(function () {
+          if (typeof caches === "undefined") return null;
+          return caches.keys().then(function (names) {
+            return Promise.all(names.map(function (name) {
+              return /^maestro-/i.test(name) ? caches.delete(name) : Promise.resolve(false);
+            }));
+          });
+        })
+        .then(function () {
+          if (!navigator.serviceWorker || !navigator.serviceWorker.getRegistrations) return null;
+          return navigator.serviceWorker.getRegistrations().then(function (registrations) {
+            return Promise.all(registrations.map(function (registration) {
+              return registration.scope && registration.scope.indexOf("/System_Maestro/") !== -1
+                ? registration.unregister()
+                : Promise.resolve(false);
+            }));
+          });
+        })
+        .catch(function () { })
+        .then(function () {
+          var url = new URL(window.location.href);
+          url.searchParams.set("maestroCacheReset", String(Date.now()));
+          url.searchParams.set("v", MAESTRO_FRONTEND_VERSION);
+          window.location.replace(url.toString());
+        });
+    })();
+  </script>
   <meta id="meta-theme-color" name="theme-color" content="#0A3D6B">
 
   <meta name="mobile-web-app-capable" content="yes">
@@ -25,7 +110,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
-  <link rel="stylesheet" href="style.css?v=12.15">
+  <link rel="stylesheet" href="style.css?v=12.16">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet.marker.slideto@0.2.0/Leaflet.Marker.SlideTo.js"></script>
@@ -131,7 +216,7 @@
 
   <div id="toast"></div>
 
-  <script src="app.js?v=12.15" defer></script>
+  <script src="app.js?v=12.16" defer></script>
 
   <div id="ui-overlay" class="ui-overlay" onclick="closeAllSidebars()"></div>
 

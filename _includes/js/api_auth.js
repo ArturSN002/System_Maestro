@@ -16,8 +16,105 @@ const CLIENT_DIRECTORY = {
   "Ceará-Mirim": "https://script.google.com/macros/s/AKfycbzCd37kAa5r-6hjAHOXvwSPRXdHUWiQzfHygKdS_HdUW60FOUZzr5KkR2x57nTJeBJ0PA/exec",
 };
 
+const MAESTRO_CLIENT_DIRECTORY_VERSION = "2026-05-26-cache-reset";
+const MAESTRO_CLIENT_URL_VERSION_KEY = "MAESTRO_CLIENT_URL_VERSION";
+
+function obterUrlPadraoClienteMaestro() {
+  const urls = Object.values(CLIENT_DIRECTORY).filter(Boolean);
+  return urls.length === 1 ? urls[0] : "";
+}
+
+function urlPertenceAoDiretorioMaestro(url) {
+  return Object.values(CLIENT_DIRECTORY).indexOf(String(url || "")) !== -1;
+}
+
+function resolverUrlClienteSalvaMaestro(savedUrl) {
+  const atual = String(savedUrl || "").trim();
+  if (!atual) return "";
+  if (urlPertenceAoDiretorioMaestro(atual)) return atual;
+  return obterUrlPadraoClienteMaestro() || atual;
+}
+
+function removerCachesLocaisDeBackendMaestro() {
+  [
+    "MAESTRO_TOKEN",
+    "MAESTRO_EST_TOKEN",
+    "MAESTRO_OPERADOR_NOME",
+    "MAESTRO_OPERADOR_EMAIL",
+    "MAESTRO_OPERADOR_NIVEL",
+    "MAESTRO_WALLET_CACHE",
+    "MAESTRO_OFFLINE_WALLET",
+    "MAESTRO_DASH_STATS",
+    "MAESTRO_THEME_CACHE",
+    "MAESTRO_CACHE_META"
+  ].forEach((key) => {
+    try { localStorage.removeItem(key); } catch (error) { }
+  });
+}
+
+async function limparCachesNavegadorMaestro() {
+  if (typeof caches !== "undefined") {
+    const cacheNames = await caches.keys();
+    await Promise.all(cacheNames.map((cacheName) => {
+      return /^maestro-/i.test(cacheName) ? caches.delete(cacheName) : Promise.resolve(false);
+    }));
+  }
+
+  if ("serviceWorker" in navigator && navigator.serviceWorker.getRegistrations) {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(registrations.map((registration) => {
+      if (registration.active) {
+        try { registration.active.postMessage({ type: "CLEAR_ALL_MAESTRO_CACHES" }); } catch (error) { }
+      }
+      return registration.scope && registration.scope.indexOf("/System_Maestro/") !== -1
+        ? registration.unregister()
+        : Promise.resolve(false);
+    }));
+  }
+}
+
+async function aplicarTrocaBackendMaestro(previousUrl, nextUrl, options = {}) {
+  const anterior = String(previousUrl || "").trim();
+  const proxima = String(nextUrl || "").trim();
+  if (!proxima || anterior === proxima) {
+    localStorage.setItem(MAESTRO_CLIENT_URL_VERSION_KEY, MAESTRO_CLIENT_DIRECTORY_VERSION);
+    return false;
+  }
+
+  localStorage.setItem("MAESTRO_CLIENT_URL_PREVIOUS", anterior);
+  localStorage.setItem("MAESTRO_CLIENT_URL", proxima);
+  localStorage.setItem(MAESTRO_CLIENT_URL_VERSION_KEY, MAESTRO_CLIENT_DIRECTORY_VERSION);
+  removerCachesLocaisDeBackendMaestro();
+
+  try {
+    await limparCachesNavegadorMaestro();
+  } catch (error) {
+    console.warn("Nao foi possivel limpar todos os caches antigos do Maestro:", error);
+  }
+
+  if (options.reload === false) return false;
+
+  const reloadKey = "MAESTRO_BACKEND_RESET_" + btoa(proxima).replace(/[^A-Za-z0-9]/g, "").slice(0, 16);
+  if (sessionStorage.getItem(reloadKey) === "done") return false;
+  sessionStorage.setItem(reloadKey, "done");
+
+  const url = new URL(window.location.href);
+  url.searchParams.set("maestroBackendReset", String(Date.now()));
+  window.location.replace(url.toString());
+  return true;
+}
+
 async function checkClientGateway() {
-  const savedUrl = localStorage.getItem("MAESTRO_CLIENT_URL");
+  let savedUrl = localStorage.getItem("MAESTRO_CLIENT_URL");
+  const resolvedSavedUrl = resolverUrlClienteSalvaMaestro(savedUrl);
+  if (savedUrl && resolvedSavedUrl && resolvedSavedUrl !== savedUrl) {
+    const recarregando = await aplicarTrocaBackendMaestro(savedUrl, resolvedSavedUrl);
+    if (recarregando) return true;
+    savedUrl = resolvedSavedUrl;
+  } else if (savedUrl) {
+    localStorage.setItem(MAESTRO_CLIENT_URL_VERSION_KEY, MAESTRO_CLIENT_DIRECTORY_VERSION);
+  }
+
   const splash = document.getElementById("splash-screen");
   const gateway = document.getElementById("view-gateway");
 
@@ -70,7 +167,14 @@ async function salvarCliente() {
   const selectedUrl = select.value;
   if (!selectedUrl) return;
 
+  const previousUrl = localStorage.getItem("MAESTRO_CLIENT_URL") || "";
+  if (previousUrl && previousUrl !== selectedUrl) {
+    const recarregando = await aplicarTrocaBackendMaestro(previousUrl, selectedUrl);
+    if (recarregando) return;
+  }
+
   localStorage.setItem("MAESTRO_CLIENT_URL", selectedUrl);
+  localStorage.setItem(MAESTRO_CLIENT_URL_VERSION_KEY, MAESTRO_CLIENT_DIRECTORY_VERSION);
   GAS_URL = selectedUrl;
 
   const gateway = document.getElementById("view-gateway");

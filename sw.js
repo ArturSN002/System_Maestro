@@ -5,7 +5,7 @@
  * ============================================================================
  */
 
-const MAESTRO_SW_VERSION = "12.15.0-data-layer";
+const MAESTRO_SW_VERSION = "12.16.0-cache-reset";
 const CACHE_NAME = "maestro-shell-" + MAESTRO_SW_VERSION;
 const DYNAMIC_CACHE = "maestro-runtime-" + MAESTRO_SW_VERSION;
 const MAP_TILES_CACHE = "maestro-map-tiles-v1";
@@ -16,9 +16,9 @@ const ASSETS_TO_CACHE = [
   "./index.html",
   "./404.html",
   "./style.css",
-  "./style.css?v=12.15",
+  "./style.css?v=12.16",
   "./app.js",
-  "./app.js?v=12.15",
+  "./app.js?v=12.16",
   "./icone.png",
   "./MGA.png",
   "./manifest.json",
@@ -125,6 +125,17 @@ async function cacheFirst(request, cacheName) {
   return cacheResponse(cacheName, request, networkResponse);
 }
 
+async function networkFirstFreshAsset(request, cacheName) {
+  try {
+    const networkResponse = await fetch(request, { cache: "no-store" });
+    return cacheResponse(cacheName, request, networkResponse);
+  } catch (error) {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+    return matchCached(request);
+  }
+}
+
 async function staleWhileRevalidate(request, cacheName) {
   const cached = await matchCached(request);
   const fetchPromise = fetch(request)
@@ -178,6 +189,15 @@ self.addEventListener("message", (event) => {
     return;
   }
 
+  if (data.type === "CLEAR_ALL_MAESTRO_CACHES") {
+    event.waitUntil(
+      caches.keys().then((cacheNames) => Promise.all(
+        cacheNames.map((cacheName) => /^maestro-/i.test(cacheName) ? caches.delete(cacheName) : Promise.resolve(false))
+      ))
+    );
+    return;
+  }
+
   if (data.type === "PREFETCH_APP_SHELL") {
     event.waitUntil(
       caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE).catch(() => null))
@@ -211,6 +231,10 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (isAppShellAsset(requestUrl)) {
+    if (/\.(?:html|css|js|json)$/i.test(requestUrl.pathname)) {
+      event.respondWith(networkFirstFreshAsset(request, CACHE_NAME));
+      return;
+    }
     event.respondWith(cacheFirst(request, CACHE_NAME));
     return;
   }
