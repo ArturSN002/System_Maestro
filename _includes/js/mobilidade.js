@@ -61,6 +61,105 @@ function normalizarArrayMobilidade(obj) {
     return [];
 }
 
+function renderEstadoMobilidadeMaestro(tipo, mensagem, classeExtra) {
+    if (typeof renderAsyncStateMaestro === "function") {
+        return renderAsyncStateMaestro(tipo, {
+            message: mensagem,
+            className: classeExtra || "mobility-state"
+        });
+    }
+    const classe = tipo === "error" ? "mobility-error-text" : tipo === "empty" ? "mobility-empty-warning" : "radar-list-loading-text";
+    const loader = tipo === "loading" ? '<div class="loader radar-list-loader"></div>' : "";
+    const mensagemSegura = typeof escapeHTMLMaestro === "function"
+        ? escapeHTMLMaestro(mensagem)
+        : String(mensagem ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    return `${loader}<p class="${classe}">${mensagemSegura}</p>`;
+}
+
+function chaveCacheViagensMobilidade(idEstudante) {
+    return "MAESTRO_MOBILITY_CACHE_VIAGENS_" + encodeURIComponent(String(idEstudante || "anonimo"));
+}
+
+function obterTtlMobilidadeMaestro() {
+    const storage = window.MaestroData && window.MaestroData.storage ? window.MaestroData.storage : null;
+    return storage && typeof storage.getDomainTtlMs === "function"
+        ? storage.getDomainTtlMs("mobility")
+        : 1000 * 30;
+}
+
+function obterCacheViagensMobilidade(idEstudante, permitirExpirado) {
+    const storage = window.MaestroData && window.MaestroData.storage ? window.MaestroData.storage : null;
+    if (!storage || typeof storage.getDomainCache !== "function") return null;
+    const cache = storage.getDomainCache("mobility", {
+        key: chaveCacheViagensMobilidade(idEstudante),
+        allowExpired: permitirExpirado === true
+    });
+    return cache && cache.hit && cache.data ? cache : null;
+}
+
+function salvarCacheViagensMobilidade(idEstudante, resposta) {
+    const storage = window.MaestroData && window.MaestroData.storage ? window.MaestroData.storage : null;
+    if (!storage || typeof storage.setDomainCache !== "function" || !resposta || resposta.sucesso === false || resposta.emViagem) return;
+    storage.setDomainCache("mobility", resposta, {
+        key: chaveCacheViagensMobilidade(idEstudante),
+        source: "getViagensDisponiveisPortal",
+        ttlMs: obterTtlMobilidadeMaestro()
+    });
+}
+
+function renderizarViagensCacheMobilidade(res, containerLista, opcoes) {
+    if (!res || !containerLista) return false;
+    const viagens = normalizarArrayMobilidade(res.viagens);
+    if (!viagens.length) return false;
+
+    let html = "";
+    if (opcoes && opcoes.cache === true && typeof renderAsyncStateMaestro === "function") {
+        html += renderAsyncStateMaestro(opcoes.expired ? "offline" : "stale", {
+            message: opcoes.expired ? "Viagens exibidas do cache local." : "Viagens atualizadas em segundo plano.",
+            className: "mobility-cache-state"
+        });
+    }
+    html += `<p class="mobility-list-hint">Selecione o seu autocarro para garantir lugar:</p>`;
+
+    window.lastViagens = viagens;
+    viagens.forEach((v, index) => {
+        let checkinArea = "";
+        let statusVagas = "";
+        if (v.estadoRadar === "EM_OPERACAO") {
+            const labelLota = v.vagasRestantes > 0 ? `<span class="mobility-seats is-available">${v.vagasRestantes} vagas livres</span>` : `<span class="mobility-seats is-full">LOTADO</span>`;
+            const btnDisable = v.vagasRestantes <= 0 ? "disabled" : "";
+            const btnState = v.vagasRestantes <= 0 ? " is-disabled" : "";
+            statusVagas = labelLota;
+            checkinArea = `<button class="hide-on-desktop mobility-checkin-button${btnState}" ${btnDisable} onclick="confirmarEmbarque('${v.id}')">FAZER CHECK-IN</button>`;
+        } else {
+            statusVagas = `<span class="mobility-seats is-closed">Embarque fechado (Capacidade: ${v.vagasRestantes})</span>`;
+            checkinArea = `<button class="hide-on-desktop mobility-checkin-button is-disabled" disabled>AGUARDE...</button>`;
+        }
+
+        const cardState = index === 0 ? " is-primary" : " is-secondary";
+        html += `
+<div class="mobility-trip-card${cardState}">
+  <div class="mobility-trip-header">
+     <strong class="mobility-trip-title">${v.rota}</strong>
+     <span class="mobility-trip-time">${v.horario}</span>
+  </div>
+  <div class="mobility-trip-status">${statusVagas}</div>
+  <div class="mobility-trip-actions">
+     <button class="btn-solid mobility-map-button" onclick="abrirMapaDaViagem('${v.id}')">VER MAPA</button>
+     ${checkinArea}
+  </div>
+</div>`;
+    });
+    containerLista.innerHTML = html;
+    containerLista.classList.remove('hidden');
+    return true;
+}
+
 function normalizarCoordenadasRadar(obj) {
     if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return null;
 
@@ -228,7 +327,13 @@ async function carregarViagensDisponiveisEstudante() {
     if (painelSucesso) painelSucesso.innerHTML = '';
 
     if (containerLista) {
-        containerLista.innerHTML = `<div class="loader radar-list-loader"></div><p class="radar-list-loading-text">A procurar autocarros...</p>`;
+        const cacheViagens = obterCacheViagensMobilidade(currentWalletId, typeof navigator !== "undefined" && navigator.onLine === false);
+        if (cacheViagens) {
+            renderizarViagensCacheMobilidade(cacheViagens.data, containerLista, { cache: cacheViagens.stale || cacheViagens.expired, expired: cacheViagens.expired });
+            if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+        } else {
+            containerLista.innerHTML = renderEstadoMobilidadeMaestro("loading", "A procurar autocarros...", "radar-list-loading-state");
+        }
         containerLista.classList.remove('hidden');
     }
 
@@ -236,11 +341,10 @@ async function carregarViagensDisponiveisEstudante() {
         if (painelMob) painelMob.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
         const res = await apiCall("getViagensDisponiveisPortal", { idEstudante: currentWalletId });
-        console.warn("🔍 [DEBUG PWA] Raw response from getViagensDisponiveisPortal:");
-        console.dir(res);
-
         if (!res.sucesso) {
-            if (containerLista) containerLista.innerHTML = `<p class="mobility-error-text">Erro: ${res.erro}</p>`;
+            const cacheFallback = obterCacheViagensMobilidade(currentWalletId, true);
+            if (cacheFallback && renderizarViagensCacheMobilidade(cacheFallback.data, containerLista, { cache: true, expired: true })) return;
+            if (containerLista) containerLista.innerHTML = renderEstadoMobilidadeMaestro("error", `Erro: ${res.erro || "Nao foi possivel carregar viagens."}`, "mobility-error-state");
             return;
         }
 
@@ -251,6 +355,7 @@ async function carregarViagensDisponiveisEstudante() {
             return;
         }
 
+        salvarCacheViagensMobilidade(currentWalletId, res);
         const viagens = normalizarArrayMobilidade(res.viagens);
 
         if (viagens.length === 0) {
@@ -269,7 +374,7 @@ async function carregarViagensDisponiveisEstudante() {
             } else if (res.statusOperacao === "DOCUMENTOS_PENDENTES") {
                 msgEmpty = "A sua documentação ainda não permite embarque neste semestre.";
             }
-            if (containerLista) containerLista.innerHTML = `<div class="mobility-empty-warning">${msgEmpty}</div>`;
+            if (containerLista) containerLista.innerHTML = renderEstadoMobilidadeMaestro("empty", msgEmpty.replace(/<[^>]+>/g, " "), "mobility-empty-warning");
             return;
         }
 
@@ -312,6 +417,12 @@ async function carregarViagensDisponiveisEstudante() {
         if (containerLista) containerLista.innerHTML = html;
 
     } catch (e) {
+        const cacheFallback = obterCacheViagensMobilidade(currentWalletId, true);
+        if (cacheFallback && renderizarViagensCacheMobilidade(cacheFallback.data, containerLista, { cache: true, expired: true })) return;
+        if (containerLista) {
+            containerLista.innerHTML = renderEstadoMobilidadeMaestro("error", "Nao foi possivel atualizar a logistica.", "mobility-error-state");
+            return;
+        }
         if (containerLista) containerLista.innerHTML = `<p class="mobility-error-text">Não foi possível atualizar a logística.</p>`;
     }
 }
@@ -625,7 +736,7 @@ async function iniciarTransmissaoGpsComoGuia() {
     // GUARD: On desktop with operator/admin profiles, bypass continuous
     // GPS telemetry to avoid console errors on hardware without GPS chips.
     if (isDesktop() && typeof currentPerfilOperador !== 'undefined' && currentPerfilOperador) {
-        console.info('[Maestro] Desktop operator detected — GPS guide transmission bypassed.');
+        if (localStorage.getItem("MAESTRO_DEBUG") === "true" && typeof logMaestroSafe === "function") logMaestroSafe("debug", "[Maestro] Desktop operator detected; GPS guide transmission bypassed.");
         showToast('GPS guia não disponível em modo desktop.', 'info');
         return;
     }
@@ -646,7 +757,10 @@ async function iniciarTransmissaoGpsComoGuia() {
                 idIntervaloGPS = setInterval(() => {
                     navigator.geolocation.getCurrentPosition(
                         p => enviarCoordenadaSegura(p.coords.latitude, p.coords.longitude),
-                        e => console.warn("GPS falhou a leitura.")
+                        e => {
+                            if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "GPS falhou a leitura.", e);
+                            else console.warn("GPS falhou a leitura.");
+                        }
                     );
                 }, 120000);
 
@@ -674,7 +788,8 @@ function enviarCoordenadaSegura(lat, lng) {
         lng: lng
     }).then(res => {
         if (res && !res.sucesso) {
-            console.warn("Servidor rejeitou o GPS (Timeout ou Roubo): " + res.erro);
+            if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "Servidor rejeitou atualizacao de GPS.", res && res.erro ? res.erro : "");
+            else console.warn("Servidor rejeitou atualizacao de GPS.");
             pararTransmissaoGpsE_Radar();
             atualizarRadarDinamico();
         }
@@ -767,7 +882,8 @@ async function inicializarMapaMobilidade(dadosViagem) {
                     filter: function (feature) {
                         // Prevent Leaflet crash if export tool generated a null geometry
                         if (!feature.geometry || normalizarArrayMobilidade(feature.geometry.coordinates).length === 0) {
-                            console.warn("🛡️ [PWA] Invalid GeoJSON feature ignored:", feature);
+                            if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "[PWA] Invalid GeoJSON feature ignored.", feature);
+                            else console.warn("[PWA] Invalid GeoJSON feature ignored.");
                             return false; // Skip this feature
                         }
                         // HOT FIX: Only allow LineString or MultiLineString, skip Points
@@ -782,7 +898,8 @@ async function inicializarMapaMobilidade(dadosViagem) {
                 mapInstance.fitBounds(routeLayer.getBounds());
             }
         } catch (error) {
-            console.error("Erro ao carregar GeoJSON da rota:", error);
+            if (typeof logMaestroSafe === "function") logMaestroSafe("error", "Erro ao carregar GeoJSON da rota.", error);
+            else console.error("Erro ao carregar GeoJSON da rota.");
         }
     }
 

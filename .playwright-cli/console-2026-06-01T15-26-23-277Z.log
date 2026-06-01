@@ -1,0 +1,21 @@
+[    3071ms] [LOG] 🚀 [Jekyll] Maestro Bundle carregado com sucesso! @ https://artursn002.github.io/System_Maestro/app.js?v=12.19:10193
+[    3082ms] [VERBOSE] [DOM] Password forms should have (optionally hidden) username fields for accessibility: (More info: https://goo.gl/9p2vKq) %o @ https://artursn002.github.io/System_Maestro/:0
+[  110728ms] [LOG] Firebase inicializado com sucesso no bootSystem. @ https://artursn002.github.io/System_Maestro/app.js?v=12.19:308
+[  111298ms] [LOG] SW registado com sucesso com chaves dinâmicas! https://artursn002.github.io/System_Maestro/ @ https://artursn002.github.io/System_Maestro/app.js?v=12.19:443
+[  302588ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap:0
+[  302784ms] [LOG] 🚀 [Jekyll] Maestro Bundle carregado com sucesso! @ https://artursn002.github.io/System_Maestro/app.js?v=12.19:10193
+[  302791ms] [VERBOSE] [DOM] Password forms should have (optionally hidden) username fields for accessibility: (More info: https://goo.gl/9p2vKq) %o @ https://artursn002.github.io/System_Maestro/:0
+[  302800ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://script.google.com/macros/s/AKfycbzCd37kAa5r-6hjAHOXvwSPRXdHUWiQzfHygKdS_HdUW60FOUZzr5KkR2x57nTJeBJ0PA/exec:0
+[  302800ms] [ERROR] Erro na chamada API: TypeError: Failed to fetch
+    at apiCall (https://artursn002.github.io/System_Maestro/app.js?v=12.19:1869:28)
+    at bootSystem (https://artursn002.github.io/System_Maestro/app.js?v=12.19:264:23)
+    at checkClientGateway (https://artursn002.github.io/System_Maestro/app.js?v=12.19:1654:49)
+    at window.onload (https://artursn002.github.io/System_Maestro/app.js?v=12.19:846:55) @ https://artursn002.github.io/System_Maestro/app.js?v=12.19:1902
+[  302828ms] [ERROR] Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://script.google.com/macros/s/AKfycbzCd37kAa5r-6hjAHOXvwSPRXdHUWiQzfHygKdS_HdUW60FOUZzr5KkR2x57nTJeBJ0PA/exec:0
+[  302829ms] [ERROR] Erro na chamada API: TypeError: Failed to fetch
+    at apiCall (https://artursn002.github.io/System_Maestro/app.js?v=12.19:1869:28)
+    at carregarAvisosSMEB (https://artursn002.github.io/System_Maestro/app.js?v=12.19:575:23)
+    at bootSystem (https://artursn002.github.io/System_Maestro/app.js?v=12.19:379:3)
+    at async checkClientGateway (https://artursn002.github.io/System_Maestro/app.js?v=12.19:1654:43)
+    at async window.onload (https://artursn002.github.io/System_Maestro/app.js?v=12.19:846:49) @ https://artursn002.github.io/System_Maestro/app.js?v=12.19:1902
+[  303152ms] [LOG] SW registado em modo apenas-offline. @ https://artursn002.github.io/System_Maestro/app.js?v=12.19:453

@@ -1,12 +1,12 @@
 <!-- COMPONENTE: MENUS OPERACIONAIS (ADMIN E MOTORISTA) -->
-<section id="view-admin-hub" class="view-section">
-  <div class="welcome-text welcome-row">
+<section id="view-admin-hub" class="view-section admin-view admin-hub-view">
+  <div class="welcome-text welcome-row admin-welcome-row">
     <span>Bem-vindo, <span id="nome-operador-logado"
         class="welcome-operator-name">Operador</span></span>
   </div>
 
-  <div id="menu-grupo-campo" class="grid-desktop">
-    <button class="menu-card dark-card" data-maestro-action="fiscalizar" onclick="switchView('view-fiscal')">
+  <div id="menu-grupo-campo" class="grid-desktop admin-action-grid admin-field-grid">
+    <button class="menu-card dark-card admin-action-card admin-action-card-field" data-maestro-action="fiscalizar" onclick="switchView('view-fiscal')">
       <span class="icon">🛂</span>
       <div class="info">
         <strong>Modo Fiscalização</strong>
@@ -14,7 +14,7 @@
       </div>
     </button>
 
-    <button class="menu-card outline-card menu-card-accent" data-maestro-action="encerrarRota"
+    <button class="menu-card outline-card menu-card-accent admin-action-card admin-action-card-route" data-maestro-action="encerrarRota"
       onclick="abrirModalEncerrarRota()">
       <span class="icon menu-card-icon-no-bg">🏁</span>
       <div class="info">
@@ -23,7 +23,7 @@
       </div>
     </button>
 
-    <button class="menu-card outline-card menu-card-danger" data-maestro-action="reportarSos"
+    <button class="menu-card outline-card menu-card-danger admin-action-card admin-action-card-danger" data-maestro-action="reportarSos"
       onclick="abrirModalSOS()">
       <span class="icon menu-card-icon-danger-bg">🚨</span>
       <div class="info">
@@ -33,10 +33,10 @@
     </button>
   </div>
 
-  <div id="menu-grupo-secretaria" class="hidden">
+  <div id="menu-grupo-secretaria" class="hidden admin-menu-group admin-secretaria-group">
     <div class="divider-text mt-25">SECRETARIA E LOGÍSTICA</div>
 
-    <button class="menu-card primary-card" data-maestro-action="gerirRotas" onclick="abrirModalSelecaoRota()">
+    <button class="menu-card primary-card admin-action-card admin-action-card-route" data-maestro-action="gerirRotas" onclick="abrirModalSelecaoRota()">
       <span class="icon menu-card-icon-no-bg">🚌</span>
       <div class="info">
         <strong>Fluxo de Rotas (GPS)</strong>
@@ -44,7 +44,7 @@
       </div>
     </button>
 
-    <button class="menu-card outline-card menu-card-primary" data-maestro-action="auditoria" onclick="abrirMesaAuditoria()">
+    <button class="menu-card outline-card menu-card-primary admin-action-card admin-action-card-audit" data-maestro-action="auditoria" onclick="abrirMesaAuditoria()">
       <span class="icon menu-card-icon-no-bg">📂</span>
       <div class="info">
         <strong>Mesa de Auditoria</strong>
@@ -52,7 +52,7 @@
       </div>
     </button>
 
-    <button class="menu-card outline-card menu-card-info" data-maestro-action="comunicacao"
+    <button class="menu-card outline-card menu-card-info admin-action-card admin-action-card-comms" data-maestro-action="comunicacao"
       onclick="abrirModalAvisosFiscal()">
       <span class="icon menu-card-icon-no-bg">📢</span>
       <div class="info">
@@ -61,14 +61,14 @@
       </div>
     </button>
 
-    <button class="menu-card outline-card" data-maestro-action="dashboard" onclick="carregarDashboard()">
+    <button class="menu-card outline-card admin-action-card admin-action-card-dashboard" data-maestro-action="dashboard" onclick="carregarDashboard()">
       <span class="icon menu-card-icon-no-bg">📊</span>
       <div class="info">
         <strong>Painel Analítico</strong>
         <span>Estatísticas de uso e BI</span>
       </div>
     </button>
-    <button class="menu-card outline-card menu-card-secondary" data-maestro-action="semestres" onclick="abrirGestaoSemestres()">
+    <button class="menu-card outline-card menu-card-secondary admin-action-card admin-action-card-semester" data-maestro-action="semestres" onclick="abrirGestaoSemestres()">
       <span class="icon menu-card-icon-no-bg">SEM</span>
       <div class="info">
         <strong>Gestao de Semestres</strong>
@@ -77,10 +77,10 @@
     </button>
   </div>
 
-  <div id="menu-grupo-moderador" class="hidden">
+  <div id="menu-grupo-moderador" class="hidden admin-menu-group admin-moderador-group">
     <div class="divider-text mt-25">ADMINISTRAÇÃO DO SISTEMA</div>
 
-    <button class="menu-card dark-card menu-card-dark" data-maestro-action="salaMaquinas" onclick="abrirPainelModerador()">
+    <button class="menu-card dark-card menu-card-dark admin-action-card admin-action-card-machine" data-maestro-action="salaMaquinas" onclick="abrirPainelModerador()">
       <span class="icon">⚙️</span>
       <div class="info">
         <strong>Sala das Máquinas</strong>
@@ -93,12 +93,12 @@
     onclick="encerrarSessaoOperador()">Sair do Sistema</button>
 </section>
 
-<div id="view-painel-motorista" class="view-section hidden">
+<div id="view-painel-motorista" class="view-section operational-view driver-view hidden">
   <div class="welcome-text">Central Logística do Motorista</div>
 
-  <div class="grid-desktop">
+  <div class="grid-desktop driver-action-grid">
 
-  <button class="menu-card primary-card" data-maestro-action="motoristaRotas gerirRotas" onclick="abrirModalSelecaoRota()">
+  <button class="menu-card primary-card driver-action-card driver-action-route" data-maestro-action="motoristaRotas gerirRotas" onclick="abrirModalSelecaoRota()">
     <div class="icon">🚌</div>
     <div class="info">
       <strong>Fluxo de Rotas</strong>
@@ -106,7 +106,7 @@
     </div>
   </button>
 
-  <button class="menu-card outline-card text-danger" data-maestro-action="reportarSos" onclick="abrirModalSOS()">
+  <button class="menu-card outline-card text-danger driver-action-card driver-action-sos" data-maestro-action="reportarSos" onclick="abrirModalSOS()">
     <div class="icon">🚨</div>
     <div class="info">
       <strong class="text-danger">SOS Avaria</strong>
@@ -114,7 +114,7 @@
     </div>
   </button>
 
-  <button class="menu-card dark-card" data-maestro-action="fiscalizar" onclick="abrirModoFiscalizacaoGlobal()">
+  <button class="menu-card dark-card driver-action-card driver-action-fiscal" data-maestro-action="fiscalizar" onclick="abrirModoFiscalizacaoGlobal()">
     <div class="icon">📷</div>
     <div class="info">
       <strong>Modo Fiscalização</strong>
@@ -123,7 +123,7 @@
   </button>
   </div>
 
-  <div class="text-center mt-20 mb-20">
+  <div class="text-center mt-20 mb-20 driver-logout-row">
     <a href="#" onclick="encerrarSessaoOperador()" class="btn-text text-danger">Sair do Sistema</a>
   </div>
 </div>

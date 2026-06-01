@@ -5,20 +5,26 @@
  * ============================================================================
  */
 
-const MAESTRO_SW_VERSION = "12.22.0-flow-inline-reduction";
+const MAESTRO_SW_VERSION = "12.37.0-security-a11y";
 const CACHE_NAME = "maestro-shell-" + MAESTRO_SW_VERSION;
 const DYNAMIC_CACHE = "maestro-runtime-" + MAESTRO_SW_VERSION;
 const MAP_TILES_CACHE = "maestro-map-tiles-v1";
 const OFFLINE_FALLBACK_URL = "./index.html";
+const OFFLINE_DB_NAME = "MaestroOfflineDB";
+const OFFLINE_DB_VERSION = 2;
+const OFFLINE_STORES = {
+  inbox: "notifications",
+  cache: "cacheEntries"
+};
 
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",
   "./404.html",
   "./style.css",
-  "./style.css?v=12.22",
+  "./style.css?v=12.37",
   "./app.js",
-  "./app.js?v=12.22",
+  "./app.js?v=12.37",
   "./icone.png",
   "./MGA.png",
   "./manifest.json",
@@ -34,6 +40,22 @@ const RUNTIME_CACHE_HOSTS = [
   "fonts.googleapis.com",
   "fonts.gstatic.com"
 ];
+
+function redactSWLog(value) {
+  return String(value === undefined || value === null ? "" : value)
+    .replace(/(\d{3})\.?\d{3}\.?\d{3}-?(\d{2})/g, "$1.***.***-$2")
+    .replace(/([A-Z0-9._%+-])[A-Z0-9._%+-]*@([A-Z0-9.-]+\.[A-Z]{2,})/gi, "$1***@$2")
+    .replace(/\b[A-Za-z0-9_-]{48,}\b/g, "[token-redacted]");
+}
+
+function logSW(level, message, details) {
+  const method = ["error", "warn", "info", "log"].includes(level) ? level : "log";
+  const writer = console && typeof console[method] === "function" ? console[method].bind(console) : null;
+  if (!writer) return;
+  const safeMessage = redactSWLog(message);
+  if (details === undefined) writer(safeMessage);
+  else writer(safeMessage, redactSWLog(details && details.message ? details.message : details));
+}
 
 let firebaseInicializado = false;
 
@@ -57,7 +79,7 @@ try {
     firebaseInicializado = true;
   }
 } catch (error) {
-  console.warn("[SW] Firebase indisponivel no service worker:", error && error.message ? error.message : error);
+  logSW("warn", "[SW] Firebase indisponivel no service worker.", error);
 }
 
 function isHttpRequest(request) {
@@ -88,6 +110,33 @@ function isAppShellAsset(requestUrl) {
     /\.(?:html|css|js|json|png|jpg|jpeg|webp|svg|ico|woff2?)$/i.test(requestUrl.pathname);
 }
 
+async function broadcastToClients(message) {
+  const clientList = await clients.matchAll({ type: "window", includeUncontrolled: true });
+  clientList.forEach((client) => {
+    try {
+      client.postMessage(Object.assign({
+        source: "maestro-sw",
+        version: MAESTRO_SW_VERSION
+      }, message || {}));
+    } catch (error) {
+      logSW("warn", "[SW] Falha ao notificar cliente.", error);
+    }
+  });
+}
+
+function prepareOfflineStores(db) {
+  if (!db.objectStoreNames.contains(OFFLINE_STORES.inbox)) {
+    db.createObjectStore(OFFLINE_STORES.inbox, { keyPath: "timestamp" });
+  }
+
+  if (!db.objectStoreNames.contains(OFFLINE_STORES.cache)) {
+    const cacheStore = db.createObjectStore(OFFLINE_STORES.cache, { keyPath: "key" });
+    cacheStore.createIndex("domain", "domain", { unique: false });
+    cacheStore.createIndex("expiresAt", "expiresAt", { unique: false });
+    cacheStore.createIndex("updatedAt", "updatedAt", { unique: false });
+  }
+}
+
 async function matchCached(request) {
   return caches.match(request).then((cached) => cached || caches.match(request, { ignoreSearch: true }));
 }
@@ -100,7 +149,7 @@ async function cacheResponse(cacheName, request, response) {
     const cache = await caches.open(cacheName);
     await cache.put(request, response.clone());
   } catch (error) {
-    console.warn("[SW] Falha ao atualizar cache:", error && error.message ? error.message : error);
+    logSW("warn", "[SW] Falha ao atualizar cache.", error);
   }
 
   return response;
@@ -153,7 +202,7 @@ self.addEventListener("install", (event) => {
         try {
           await cache.add(asset);
         } catch (error) {
-          console.warn("[SW] Asset nao precacheado:", asset, error && error.message ? error.message : error);
+          logSW("warn", "[SW] Asset nao precacheado.", { asset: asset, error: error && error.message ? error.message : error });
         }
       }));
     })
@@ -171,7 +220,8 @@ self.addEventListener("activate", (event) => {
             cacheName === MAP_TILES_CACHE;
           return keep ? Promise.resolve(false) : caches.delete(cacheName);
         })
-      ))
+      )),
+      broadcastToClients({ type: "MAESTRO_SW_ACTIVATED", cacheName: CACHE_NAME })
     ])
   );
 });
@@ -193,7 +243,7 @@ self.addEventListener("message", (event) => {
     event.waitUntil(
       caches.keys().then((cacheNames) => Promise.all(
         cacheNames.map((cacheName) => /^maestro-/i.test(cacheName) ? caches.delete(cacheName) : Promise.resolve(false))
-      ))
+      )).then(() => broadcastToClients({ type: "MAESTRO_CACHES_CLEARED" }))
     );
     return;
   }
@@ -202,6 +252,16 @@ self.addEventListener("message", (event) => {
     event.waitUntil(
       caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE).catch(() => null))
     );
+    return;
+  }
+
+  if (data.type === "PING_VERSION" && event.source && typeof event.source.postMessage === "function") {
+    event.source.postMessage({
+      source: "maestro-sw",
+      type: "MAESTRO_SW_VERSION",
+      version: MAESTRO_SW_VERSION,
+      cacheName: CACHE_NAME
+    });
   }
 });
 
@@ -262,18 +322,15 @@ try {
       };
 
       const salvarNotificacao = () => {
-        const dbReq = indexedDB.open("MaestroOfflineDB", 1);
+        const dbReq = indexedDB.open(OFFLINE_DB_NAME, OFFLINE_DB_VERSION);
         dbReq.onupgradeneeded = (e) => {
-          const db = e.target.result;
-          if (!db.objectStoreNames.contains("notifications")) {
-            db.createObjectStore("notifications", { keyPath: "timestamp" });
-          }
+          prepareOfflineStores(e.target.result);
         };
         dbReq.onsuccess = (e) => {
           const db = e.target.result;
-          if (!db.objectStoreNames.contains("notifications")) return;
-          const tx = db.transaction("notifications", "readwrite");
-          const store = tx.objectStore("notifications");
+          if (!db.objectStoreNames.contains(OFFLINE_STORES.inbox)) return;
+          const tx = db.transaction(OFFLINE_STORES.inbox, "readwrite");
+          const store = tx.objectStore(OFFLINE_STORES.inbox);
 
           const limite = Date.now() - 604800000;
           const range = IDBKeyRange.upperBound(limite);
@@ -299,14 +356,14 @@ try {
       try {
         salvarNotificacao();
       } catch (error) {
-        console.error("[SW] Erro ao guardar Inbox:", error);
+        logSW("error", "[SW] Erro ao guardar Inbox.", error);
       }
 
       return self.registration.showNotification(notificationTitle, notificationOptions);
     });
   }
 } catch (error) {
-  console.log("[SW] Push em background ignorado:", error && error.message ? error.message : error);
+  logSW("warn", "[SW] Push em background ignorado.", error);
 }
 
 self.addEventListener("notificationclick", (event) => {

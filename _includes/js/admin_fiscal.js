@@ -204,7 +204,8 @@ function tocarBeep(tipo) {
         gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.5);
         osc.stop(ctx.currentTime + 0.5);
     } catch (e) {
-        console.warn("Áudio não suportado: " + e.message);
+        if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "Audio nao suportado.", e);
+        else console.warn("Audio nao suportado.");
     }
 }
 

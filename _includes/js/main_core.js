@@ -3,7 +3,7 @@
 // ========================================================================
 
 let deferredPrompt;
-const MAESTRO_PWA_VERSION = "12.22.0";
+const MAESTRO_PWA_VERSION = "12.37.0";
 window.MAESTRO_PWA_VERSION = MAESTRO_PWA_VERSION;
 window.MAESTRO_MANIFEST_URL = null;
 
@@ -195,6 +195,57 @@ function garantirViewInicialMaestro() {
   return !!ativa;
 }
 
+function obterPerfilAtualMaestro() {
+  const nav = window.MaestroNavigation || (window.MaestroData && window.MaestroData.navigation);
+  if (nav && typeof nav.getCurrentProfile === "function") {
+    return String(nav.getCurrentProfile() || "ANONIMO").toUpperCase();
+  }
+
+  const nivelOperador = localStorage.getItem("MAESTRO_OPERADOR_NIVEL");
+  const tokenOperador = localStorage.getItem("MAESTRO_TOKEN");
+  if (tokenOperador && nivelOperador) return String(nivelOperador).toUpperCase();
+
+  const tokenEstudante = localStorage.getItem("MAESTRO_EST_TOKEN");
+  return tokenEstudante ? "ESTUDANTE" : "ANONIMO";
+}
+
+function resolverShellResponsivoMaestro(viewId, perfil) {
+  const view = String(viewId || "");
+  const profile = String(perfil || "ANONIMO").toUpperCase();
+  const adminViews = ["view-admin-hub", "view-auditoria", "view-dashboard", "view-semestres", "view-moderador", "view-notificacoes"];
+  const studentViews = ["view-aluno-menu", "view-inscricao", "view-consult", "view-resgate", "view-login", "view-wallet", "view-nova-senha"];
+
+  if (view === "view-radar") return "radar";
+  if (profile === "MOTORISTA" || view === "view-painel-motorista") return "driver";
+  if (profile === "FISCAL" || view === "view-fiscal") return "field";
+  if (["MODERADOR", "SUPERVISOR", "OPERADOR"].includes(profile) || adminViews.includes(view)) return "admin";
+  if (profile === "ESTUDANTE" || studentViews.includes(view)) return "student";
+  return "public";
+}
+
+function aplicarShellResponsivoMaestro(viewId) {
+  const body = document.body;
+  if (!body) return;
+
+  const perfil = obterPerfilAtualMaestro();
+  const shell = resolverShellResponsivoMaestro(viewId, perfil);
+  const shellElement = document.getElementById("app-shell") || document.querySelector(".app-wrapper");
+  const header = document.getElementById("global-header");
+
+  body.setAttribute("data-maestro-profile", perfil.toLowerCase());
+  body.setAttribute("data-maestro-view", String(viewId || ""));
+  body.setAttribute("data-maestro-shell", shell);
+
+  if (shellElement) {
+    shellElement.setAttribute("data-maestro-profile", perfil.toLowerCase());
+    shellElement.setAttribute("data-maestro-shell", shell);
+  }
+
+  if (header) {
+    header.setAttribute("data-maestro-shell", shell);
+  }
+}
+
 async function bootSystem(options = {}) {
   try {
     const res = await apiCall("getConfiguracoesPWA");
@@ -242,7 +293,7 @@ async function bootSystem(options = {}) {
         if (typeof firebase !== 'undefined' && (!firebase.apps || firebase.apps.length === 0)) {
           window.firebaseReady = new Promise((resolve) => {
             firebase.initializeApp(window.FIREBASE_CONFIG);
-            console.log('Firebase inicializado com sucesso no bootSystem.');
+            if (localStorage.getItem("MAESTRO_DEBUG") === "true" && typeof logMaestroSafe === "function") logMaestroSafe("info", "Firebase inicializado no bootSystem.");
             resolve();
           });
         } else {
@@ -305,7 +356,8 @@ async function bootSystem(options = {}) {
       restaurarPWAOfflineMaestro();
     }
   } catch (e) {
-    console.warn("A arrancar em modo offline persistente.");
+    if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "A arrancar em modo offline persistente.");
+    else console.warn("A arrancar em modo offline persistente.");
     restaurarPWAOfflineMaestro();
   }
 
@@ -319,6 +371,14 @@ async function bootSystem(options = {}) {
 
   ocultarSplashScreen();
   if (typeof window.atualizarContadorNotificacoes === 'function') window.atualizarContadorNotificacoes();
+  if (
+    window.MaestroData &&
+    window.MaestroData.storage &&
+    window.MaestroData.storage.offlineDB &&
+    typeof window.MaestroData.storage.offlineDB.pruneExpired === "function"
+  ) {
+    window.MaestroData.storage.offlineDB.pruneExpired().catch(() => null);
+  }
 }
 
 function ocultarSplashScreen() {
@@ -341,6 +401,28 @@ function solicitarPrecachePWAMaestro() {
   }
 }
 
+function tratarMensagemServiceWorkerMaestro(event) {
+  const data = event && event.data ? event.data : {};
+  if (data.source !== "maestro-sw") return;
+
+  if (data.type === "MAESTRO_SW_ACTIVATED" || data.type === "MAESTRO_SW_VERSION") {
+    try {
+      localStorage.setItem("MAESTRO_ACTIVE_SW_VERSION", data.version || "");
+      localStorage.setItem("MAESTRO_ACTIVE_SW_CACHE", data.cacheName || "");
+    } catch (error) { }
+  }
+
+  if (data.type === "MAESTRO_CACHES_CLEARED") {
+    try {
+      if (window.MaestroData && window.MaestroData.storage) {
+        ["dashboard", "lists", "audit", "communication", "mobility"].forEach(domain => {
+          window.MaestroData.storage.invalidateDomain(domain);
+        });
+      }
+    } catch (error) { }
+  }
+}
+
 function sincronizarServiceWorkerMaestro(registration) {
   if (!registration) return;
 
@@ -353,6 +435,7 @@ function sincronizarServiceWorkerMaestro(registration) {
       type: "PREFETCH_APP_SHELL",
       version: MAESTRO_PWA_VERSION
     });
+    registration.active.postMessage({ type: "PING_VERSION" });
   }
 
   registration.addEventListener('updatefound', () => {
@@ -370,6 +453,11 @@ function initPWA() {
   if (!window.PWA_NOME) return;
 
   if ('serviceWorker' in navigator) {
+    if (!window.__maestroSwMessageListenerStarted) {
+      window.__maestroSwMessageListenerStarted = true;
+      navigator.serviceWorker.addEventListener("message", tratarMensagemServiceWorkerMaestro);
+    }
+
     const versionParam = `v=${encodeURIComponent(MAESTRO_PWA_VERSION)}`;
     if (window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.apiKey) {
       const swUrl = `./sw.js?${versionParam}&apiKey=${encodeURIComponent(window.FIREBASE_CONFIG.apiKey)}&projectId=${encodeURIComponent(window.FIREBASE_CONFIG.projectId || "")}&senderId=${encodeURIComponent(window.FIREBASE_CONFIG.messagingSenderId || "")}&appId=${encodeURIComponent(window.FIREBASE_CONFIG.appId || "")}`;
@@ -377,17 +465,18 @@ function initPWA() {
       navigator.serviceWorker.register(swUrl)
         .then(registration => {
           sincronizarServiceWorkerMaestro(registration);
-          console.log('SW registado com sucesso com chaves dinâmicas!', registration.scope);
+          if (localStorage.getItem("MAESTRO_DEBUG") === "true" && typeof logMaestroSafe === "function") logMaestroSafe("info", "SW registado com chaves dinamicas.", { scope: registration.scope });
         })
         .catch(err => {
-          console.log('Falha ao registar SW:', err);
+          if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "Falha ao registar SW.", err);
+          else console.warn("Falha ao registar SW.");
         });
 
     } else {
       navigator.serviceWorker.register(`./sw.js?${versionParam}`)
         .then((registration) => {
           sincronizarServiceWorkerMaestro(registration);
-          console.log('SW registado em modo apenas-offline.');
+          if (localStorage.getItem("MAESTRO_DEBUG") === "true" && typeof logMaestroSafe === "function") logMaestroSafe("info", "SW registado em modo apenas-offline.");
         });
     }
   }
@@ -454,7 +543,8 @@ function switchView(viewId) {
 
   let target = document.getElementById(viewId);
   if (!target) {
-    console.warn(`View não encontrada: ${viewId}. Redirecionando para 'view-gateway'.`);
+    if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "View nao encontrada. Redirecionando para view-gateway.", { viewId: viewId });
+    else console.warn("View nao encontrada. Redirecionando para view-gateway.");
     viewId = 'view-gateway';
     target = document.getElementById(viewId);
   }
@@ -463,15 +553,22 @@ function switchView(viewId) {
   views.forEach(v => {
     v.classList.remove('active-view');
     v.classList.remove('slide-in-right');
+    v.setAttribute('aria-hidden', 'true');
   });
 
   if (target) {
+    target.setAttribute('aria-hidden', 'false');
+    if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
     window.requestAnimationFrame(() => {
       target.classList.add('active-view');
       target.classList.add('slide-in-right');
+      try { target.focus({ preventScroll: true }); } catch (error) { }
     });
     sessionStorage.setItem('MAESTRO_LAST_VIEW', viewId);
   }
+
+  aplicarAcessibilidadeBaseMaestro(target || document);
+  aplicarShellResponsivoMaestro(viewId);
 
   window.scrollTo(0, 0);
 
@@ -504,7 +601,152 @@ function switchView(viewId) {
   }
 }
 
+function aplicarAcessibilidadeBaseMaestro(root) {
+  const scope = root && root.querySelectorAll ? root : document;
+
+  const toast = document.getElementById('toast');
+  if (toast) {
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
+    toast.setAttribute('aria-atomic', 'true');
+  }
+
+  [
+    'mural-avisos',
+    'mural-feed',
+    'auditoria-fila-container',
+    'semestres-lista-container',
+    'dashboard-async-state',
+    'wallet-container',
+    'res-estudante',
+    'cpf-feedback-box'
+  ].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && !el.hasAttribute('aria-live')) el.setAttribute('aria-live', 'polite');
+  });
+
+  document.querySelectorAll('button[title]:not([aria-label])').forEach(button => {
+    button.setAttribute('aria-label', button.getAttribute('title'));
+  });
+
+  const headerLabels = {
+    'btn-header-config': 'Abrir configuracoes',
+    'btn-header-back': 'Voltar para a tela anterior',
+    'btn-config': 'Abrir configuracoes'
+  };
+  Object.keys(headerLabels).forEach(id => {
+    const button = document.getElementById(id);
+    if (button && !button.hasAttribute('aria-label')) button.setAttribute('aria-label', headerLabels[id]);
+  });
+
+  scope.querySelectorAll('label.input-label:not([for])').forEach(label => {
+    let control = null;
+    const parent = label.parentElement;
+    if (parent) control = parent.querySelector('input[id], select[id], textarea[id]');
+    if (!control) {
+      let next = label.nextElementSibling;
+      while (next && !control) {
+        if (next.matches && next.matches('input[id], select[id], textarea[id]')) control = next;
+        else if (next.querySelector) control = next.querySelector('input[id], select[id], textarea[id]');
+        next = next.nextElementSibling;
+      }
+    }
+    if (control && control.id) label.setAttribute('for', control.id);
+  });
+
+  scope.querySelectorAll('input[id]:not([aria-label]), select[id]:not([aria-label]), textarea[id]:not([aria-label])').forEach(control => {
+    const label = document.querySelector(`label[for="${control.id}"]`);
+    if (!label && control.placeholder) control.setAttribute('aria-label', control.placeholder);
+  });
+
+  const stepper = document.getElementById('stepper-progress');
+  if (stepper) {
+    stepper.setAttribute('role', 'list');
+    stepper.setAttribute('aria-label', 'Progresso da inscricao');
+    stepper.querySelectorAll('.step-dot').forEach((dot, index) => {
+      dot.setAttribute('role', 'listitem');
+      dot.setAttribute('aria-label', `Etapa ${index + 1}`);
+    });
+  }
+}
+
+function renderizarAvisosAtivosMaestro(avisosNormalizados, opcoes) {
+  const container = document.getElementById('mural-avisos');
+  const header = document.getElementById('mural-avisos-header');
+  const avisos = (avisosNormalizados && avisosNormalizados.avisos) || [];
+
+  if (!avisos.length) {
+    if (container) container.classList.add('hidden');
+    if (header) header.classList.add('hidden');
+    return false;
+  }
+
+  let html = '';
+  avisos.forEach(function (aviso) {
+    let classeTipo = 'aviso-geral';
+    const tipoNormalizado = String(aviso.tipo || "").toLowerCase().trim();
+    const tipoSeguro = typeof escapeHTMLMaestro === 'function' ? escapeHTMLMaestro(aviso.tipo) : String(aviso.tipo || "");
+    const tituloSeguro = typeof escapeHTMLMaestro === 'function' ? escapeHTMLMaestro(aviso.titulo) : String(aviso.titulo || "");
+    const assuntoSeguro = typeof safeLinesMaestro === 'function' ? safeLinesMaestro(aviso.assunto) : String(aviso.assunto || "");
+    const imagemSegura = typeof safeUrlAttrMaestro === 'function' ? safeUrlAttrMaestro(aviso.imagem) : String(aviso.imagem || "");
+    const anexoSeguro = typeof safeUrlAttrMaestro === 'function' ? safeUrlAttrMaestro(aviso.anexo) : String(aviso.anexo || "");
+    if (tipoNormalizado === 'urgente') classeTipo = 'aviso-urgente';
+    if (tipoNormalizado === 'transporte') classeTipo = 'aviso-transporte';
+
+    html += `<div class="aviso-card ${classeTipo}">`;
+    if (imagemSegura) html += `<img src="${imagemSegura}" class="aviso-imagem" alt="Aviso">`;
+    html += `<span class="aviso-tag">${tipoSeguro}</span>`;
+    html += `<h4 class="aviso-titulo">${tituloSeguro}</h4>`;
+    if (assuntoSeguro) html += `<p class="aviso-texto">${assuntoSeguro}</p>`;
+    if (anexoSeguro) html += `<a href="${anexoSeguro}" target="_blank" rel="noopener noreferrer" class="aviso-btn-anexo">Documento</a>`;
+    html += `</div>`;
+  });
+
+  if (opcoes && opcoes.cache === true && typeof renderAsyncStateMaestro === "function") {
+    html += renderAsyncStateMaestro(opcoes.expired ? "offline" : "stale", {
+      message: opcoes.expired ? "Avisos exibidos do cache local." : "Avisos atualizados em segundo plano.",
+      className: "avisos-cache-state"
+    });
+  }
+
+  if (container) {
+    container.innerHTML = html;
+    container.classList.remove('hidden');
+  }
+  if (header) header.classList.remove('hidden');
+  return true;
+}
+
+function obterCacheAvisosAtivosMaestro(permitirExpirado) {
+  const storage = window.MaestroData && window.MaestroData.storage ? window.MaestroData.storage : null;
+  if (!storage || typeof storage.getDomainCache !== "function") return null;
+  const cache = storage.getDomainCache("communication", {
+    key: "MAESTRO_COMMUNICATION_CACHE_AVISOS",
+    allowExpired: permitirExpirado === true
+  });
+  return cache && cache.hit && cache.data ? cache : null;
+}
+
+function salvarCacheAvisosAtivosMaestro(avisosNormalizados) {
+  const storage = window.MaestroData && window.MaestroData.storage ? window.MaestroData.storage : null;
+  if (!storage || typeof storage.setDomainCache !== "function") return;
+  const ttlMs = typeof storage.getDomainTtlMs === "function"
+    ? storage.getDomainTtlMs("communication")
+    : 1000 * 60 * 10;
+  storage.setDomainCache("communication", avisosNormalizados, {
+    key: "MAESTRO_COMMUNICATION_CACHE_AVISOS",
+    source: "getAvisosAtivos",
+    ttlMs: ttlMs
+  });
+}
+
 async function carregarAvisosSMEB() {
+  const cacheInicial = obterCacheAvisosAtivosMaestro(typeof navigator !== "undefined" && navigator.onLine === false);
+  if (cacheInicial) {
+    renderizarAvisosAtivosMaestro(cacheInicial.data, { cache: cacheInicial.stale || cacheInicial.expired, expired: cacheInicial.expired });
+    if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+  }
+
   try {
     const res = await apiCall("getAvisosAtivos");
     const container = document.getElementById('mural-avisos');
@@ -518,6 +760,7 @@ async function carregarAvisosSMEB() {
       ? adapterAvisos(res)
       : { avisos: (res && Array.isArray(res.avisos)) ? res.avisos : [] };
     const avisos = avisosNormalizados.avisos || [];
+    salvarCacheAvisosAtivosMaestro(avisosNormalizados);
 
     if (!avisos.length) {
       if (container) container.classList.add('hidden');
@@ -552,7 +795,8 @@ async function carregarAvisosSMEB() {
     }
     if (header) header.classList.remove('hidden');
   } catch (e) {
-    // Silencia se offline
+    const cacheFallback = obterCacheAvisosAtivosMaestro(true);
+    if (cacheFallback) renderizarAvisosAtivosMaestro(cacheFallback.data, { cache: true, expired: true });
   }
 }
 
@@ -586,7 +830,8 @@ async function inicializarPushNotifications() {
   if (localStorage.getItem('MAESTRO_PREF_PUSH') === 'false') return;
 
   if (!window.FIREBASE_CONFIG || !window.FIREBASE_CONFIG.apiKey) {
-    console.warn("Chaves do Firebase não configuradas na planilha.");
+    if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "Chaves do Firebase nao configuradas na planilha.");
+    else console.warn("Chaves do Firebase nao configuradas na planilha.");
     desligarTogglePush("Chaves do Firebase ausentes no sistema.");
     return;
   }
@@ -596,7 +841,8 @@ async function inicializarPushNotifications() {
       firebase.initializeApp(window.FIREBASE_CONFIG);
     }
   } catch (e) {
-    console.warn("Firebase Init falhou:", e);
+    if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "Firebase Init falhou.", e);
+    else console.warn("Firebase Init falhou.");
     desligarTogglePush("Erro ao iniciar Firebase. Verifique as chaves.");
     return;
   }
@@ -619,7 +865,6 @@ async function inicializarPushNotifications() {
       }
 
       messaging.onMessage((payload) => {
-        console.log('Mensagem recebida em primeiro plano:', payload);
         const notificationObj = payload.notification || payload.data || {};
         const titulo = notificationObj.title || "Novo Aviso";
         const corpo = notificationObj.body || "Você tem uma nova mensagem.";
@@ -641,7 +886,8 @@ async function inicializarPushNotifications() {
       desligarTogglePush("Permissão negada no navegador.");
     }
   } catch (error) {
-    console.warn("Falha de Push:", error);
+    if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "Falha de Push.", error);
+    else console.warn("Falha de Push.");
     desligarTogglePush("Falha ao gerar Token. Verifique as configurações do Firebase.");
   }
 }
@@ -657,7 +903,8 @@ async function registrarTokenPush(token) {
     : null;
 
   if (!cpfParaSync) {
-    console.warn("registrarTokenPush: CPF ausente no cache — registo de push abortado.");
+    if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "registrarTokenPush: identidade ausente no cache; registo abortado.");
+    else console.warn("registrarTokenPush: identidade ausente no cache; registo abortado.");
     return;
   }
 
@@ -677,7 +924,10 @@ async function registrarTokenPush(token) {
       localStorage.setItem("MAESTRO_FCM_TOKEN", token);
       localStorage.setItem("FCM_SYNCED_ID", cpfParaSync);
     }
-  } catch (err) { console.error("Erro ao registrar token", err); }
+  } catch (err) {
+    if (typeof logMaestroSafe === "function") logMaestroSafe("error", "Erro ao registrar token.", err);
+    else console.error("Erro ao registrar token.");
+  }
 }
 
 function toggleDarkMode() {
@@ -764,10 +1014,12 @@ function aplicarTemaAtual() {
       const currentSrc = imgEl.src;
       const isAbsoluteFallback = currentSrc.endsWith(fallbackSrc) || currentSrc.includes('/' + fallbackSrc);
       if (!isAbsoluteFallback) {
-        console.warn(`[LogoFallback] Falha ao carregar logotipo remoto, tentando fallback local: ${fallbackSrc}`);
+        if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "[LogoFallback] Falha ao carregar logotipo remoto.", { fallbackSrc: fallbackSrc });
+        else console.warn("[LogoFallback] Falha ao carregar logotipo remoto.");
         imgEl.src = fallbackSrc;
       } else {
-        console.error(`[LogoFallback] Falha ao carregar fallback local de logotipo: ${fallbackSrc}. Exibindo placeholder.`);
+        if (typeof logMaestroSafe === "function") logMaestroSafe("error", "[LogoFallback] Falha ao carregar fallback local de logotipo.", { fallbackSrc: fallbackSrc });
+        else console.error("[LogoFallback] Falha ao carregar fallback local de logotipo.");
         imgEl.classList.add('hidden');
 
         let placeholder = imgEl.parentNode.querySelector('.logo-placeholder');
@@ -1037,11 +1289,12 @@ async function ativarModoViagemPWA(idOnibus, emailMotorista) {
   try {
     if ('wakeLock' in navigator) {
       wakeLockMotorista = await navigator.wakeLock.request('screen');
-      console.log("Wake Lock ativado: Ecrã permanecerá ligado.");
+      if (localStorage.getItem("MAESTRO_DEBUG") === "true" && typeof logMaestroSafe === "function") logMaestroSafe("debug", "Wake Lock ativado.");
       document.addEventListener('visibilitychange', lidarComMudancaVisibilidade);
     }
   } catch (err) {
-    console.warn("Wake Lock não suportado ou falhou:", err);
+    if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "Wake Lock nao suportado ou falhou.", err);
+    else console.warn("Wake Lock nao suportado ou falhou.");
     showToast("Atenção: O ecrã poderá apagar-se neste dispositivo.", "warning");
   }
 
@@ -1062,7 +1315,10 @@ async function ativarModoViagemPWA(idOnibus, emailMotorista) {
           if (indicador) indicador.classList.toggle('is-muted');
         }
       },
-      (err) => console.error("Erro no GPS do Mestre:", err),
+      (err) => {
+        if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "Erro no GPS do Mestre.", err);
+        else console.warn("Erro no GPS do Mestre.");
+      },
       { enableHighAccuracy: true, maximumAge: 0 }
     );
   } else {
@@ -1081,7 +1337,7 @@ function desativarModoViagemPWA() {
   if (wakeLockMotorista !== null) {
     wakeLockMotorista.release().then(() => {
       wakeLockMotorista = null;
-      console.log("Wake Lock libertado.");
+      if (localStorage.getItem("MAESTRO_DEBUG") === "true" && typeof logMaestroSafe === "function") logMaestroSafe("debug", "Wake Lock libertado.");
     });
   }
   document.removeEventListener('visibilitychange', lidarComMudancaVisibilidade);
@@ -1091,9 +1347,10 @@ async function lidarComMudancaVisibilidade() {
   if (wakeLockMotorista === null && document.visibilityState === 'visible' && document.body.classList.contains('modo-viagem-ativo')) {
     try {
       wakeLockMotorista = await navigator.wakeLock.request('screen');
-      console.log("Wake Lock restaurado.");
+      if (localStorage.getItem("MAESTRO_DEBUG") === "true" && typeof logMaestroSafe === "function") logMaestroSafe("debug", "Wake Lock restaurado.");
     } catch (err) {
-      console.warn("Falha ao restaurar Wake Lock:", err);
+      if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "Falha ao restaurar Wake Lock.", err);
+      else console.warn("Falha ao restaurar Wake Lock.");
     }
   }
 }
@@ -1103,16 +1360,33 @@ async function lidarComMudancaVisibilidade() {
 // ========================================================================
 (() => {
   const INBOX_DB_NAME = 'MaestroOfflineDB';
+  const INBOX_DB_VERSION = 2;
   const INBOX_STORE_NAME = 'notifications';
+  const CACHE_STORE_NAME = 'cacheEntries';
 
   function abrirBancoInbox() {
+    if (
+      window.MaestroData &&
+      window.MaestroData.storage &&
+      window.MaestroData.storage.offlineDB &&
+      typeof window.MaestroData.storage.offlineDB.open === "function"
+    ) {
+      return window.MaestroData.storage.offlineDB.open();
+    }
+
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open(INBOX_DB_NAME, 1);
+      const request = indexedDB.open(INBOX_DB_NAME, INBOX_DB_VERSION);
 
       request.onupgradeneeded = (event) => {
         const db = event.target.result;
         if (!db.objectStoreNames.contains(INBOX_STORE_NAME)) {
           db.createObjectStore(INBOX_STORE_NAME, { keyPath: 'timestamp' });
+        }
+        if (!db.objectStoreNames.contains(CACHE_STORE_NAME)) {
+          const cacheStore = db.createObjectStore(CACHE_STORE_NAME, { keyPath: 'key' });
+          cacheStore.createIndex("domain", "domain", { unique: false });
+          cacheStore.createIndex("expiresAt", "expiresAt", { unique: false });
+          cacheStore.createIndex("updatedAt", "updatedAt", { unique: false });
         }
       };
 
@@ -1189,7 +1463,8 @@ async function lidarComMudancaVisibilidade() {
 
       db.close();
     } catch (erro) {
-      console.error("Erro ao atualizar contador de notificações:", erro);
+      if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "Erro ao atualizar contador de notificacoes.", erro);
+      else console.warn("Erro ao atualizar contador de notificacoes.");
     }
   }
 
@@ -1198,7 +1473,9 @@ async function lidarComMudancaVisibilidade() {
     if (containers.length === 0) return;
 
     containers.forEach(container => {
-      container.innerHTML = '<div class="loader loader-center"></div>';
+      container.innerHTML = typeof renderAsyncStateMaestro === "function"
+        ? renderAsyncStateMaestro("loading", { message: "A carregar notificacoes locais...", className: "inbox-loading-state" })
+        : '<div class="dynamic-state-box dynamic-loading-state inbox-loading-state"><div class="loader loader-center"></div></div>';
     });
 
     try {
@@ -1211,7 +1488,9 @@ async function lidarComMudancaVisibilidade() {
 
       if (notificacoes.length === 0) {
         containers.forEach(container => {
-          container.innerHTML = '<div class="inbox-empty-state"><p class="inbox-empty-text">Nenhuma notificacao recente.</p></div>';
+          container.innerHTML = typeof renderAsyncStateMaestro === "function"
+            ? renderAsyncStateMaestro("empty", { message: "Nenhuma notificacao recente.", className: "inbox-empty-state" })
+            : '<div class="inbox-empty-state dynamic-state-box dynamic-empty-state"><p class="inbox-empty-text">Nenhuma notificacao recente.</p></div>';
         });
         db.close();
         await atualizarContadorNotificacoes();
@@ -1229,7 +1508,7 @@ async function lidarComMudancaVisibilidade() {
         const botaoMarcarLida = naoLida ? `<button type="button" class="btn-text inbox-mark-read" data-marcar-lida="${timestampSeguro}">Marcar como lida</button>` : '';
 
         return `
-          <div class="form-card inbox-card inbox-card-local${classeNaoLida}">
+          <div class="form-card inbox-card inbox-card-local dynamic-card dynamic-inbox-card${classeNaoLida}">
             <div class="inbox-header">
               <div class="inbox-title-row">
                 ${marcadorNaoLida}
@@ -1253,9 +1532,12 @@ async function lidarComMudancaVisibilidade() {
       await atualizarContadorNotificacoes();
       db.close();
     } catch (erro) {
-      console.error("Erro ao carregar notificações locais:", erro);
+      if (typeof logMaestroSafe === "function") logMaestroSafe("error", "Erro ao carregar notificacoes locais.", erro);
+      else console.error("Erro ao carregar notificacoes locais.");
       containers.forEach(container => {
-        container.innerHTML = '<div class="error-box">Erro ao carregar notificações locais.</div>';
+        container.innerHTML = typeof renderAsyncStateMaestro === "function"
+          ? renderAsyncStateMaestro("error", { message: "Erro ao carregar notificacoes locais.", className: "error-box" })
+          : '<div class="error-box dynamic-state-box dynamic-error-state">Erro ao carregar notificações locais.</div>';
       });
     }
   }
@@ -1286,7 +1568,8 @@ async function lidarComMudancaVisibilidade() {
       await abrirInboxIndexedDB();
       await atualizarContadorNotificacoes();
     } catch (erro) {
-      console.error("Erro ao marcar notificação como lida:", erro);
+      if (typeof logMaestroSafe === "function") logMaestroSafe("error", "Erro ao marcar notificacao como lida.", erro);
+      else console.error("Erro ao marcar notificacao como lida.");
       showToast("Erro ao atualizar notificação.", "error");
     }
   }
@@ -1303,7 +1586,8 @@ async function lidarComMudancaVisibilidade() {
       await atualizarContadorNotificacoes();
       showToast("Notificações apagadas", "success");
     } catch (erro) {
-      console.error("Erro ao apagar notificações locais:", erro);
+      if (typeof logMaestroSafe === "function") logMaestroSafe("error", "Erro ao apagar notificacoes locais.", erro);
+      else console.error("Erro ao apagar notificacoes locais.");
       showToast("Erro ao apagar notificações", "error");
     }
   }
@@ -1330,6 +1614,91 @@ async function lidarComMudancaVisibilidade() {
   });
 })();
 
+function obterChavesStorageMaestro(storage) {
+  const keys = [];
+  if (!storage) return keys;
+  for (let i = 0; i < storage.length; i += 1) {
+    const key = storage.key(i);
+    if (key && (/^MAESTRO_/i.test(key) || /^FCM_/i.test(key))) keys.push(key);
+  }
+  return keys;
+}
+
+function limparStorageMaestroSeletivo() {
+  const preservarLocal = {
+    MAESTRO_CLIENT_URL: localStorage.getItem("MAESTRO_CLIENT_URL") || "",
+    MAESTRO_CLIENT_URL_PREVIOUS: localStorage.getItem("MAESTRO_CLIENT_URL_PREVIOUS") || ""
+  };
+
+  obterChavesStorageMaestro(localStorage).forEach(key => {
+    try { localStorage.removeItem(key); } catch (error) { }
+  });
+  obterChavesStorageMaestro(sessionStorage).forEach(key => {
+    try { sessionStorage.removeItem(key); } catch (error) { }
+  });
+
+  Object.keys(preservarLocal).forEach(key => {
+    if (preservarLocal[key]) {
+      try { localStorage.setItem(key, preservarLocal[key]); } catch (error) { }
+    }
+  });
+}
+
+async function limparIndexedDBMaestroSeletivo(options = {}) {
+  const opts = options || {};
+  if (
+    window.MaestroData &&
+    window.MaestroData.storage &&
+    typeof window.MaestroData.storage.clearDomains === "function" &&
+    opts.full !== true
+  ) {
+    await window.MaestroData.storage.clearDomains(opts.domains || ["dashboard", "lists", "audit", "communication", "mobility"], {
+      includeLegacy: true,
+      includeCustom: true,
+      includeSensitive: false,
+      includeIndexedDB: true
+    });
+    return;
+  }
+
+  if (
+    window.MaestroData &&
+    window.MaestroData.storage &&
+    window.MaestroData.storage.offlineDB &&
+    typeof window.MaestroData.storage.offlineDB.clearStore === "function"
+  ) {
+    const stores = window.MaestroData.storage.offlineDB.stores || {};
+    await Promise.all(Object.keys(stores).map(key => window.MaestroData.storage.offlineDB.clearStore(stores[key]).catch(() => false)));
+    return;
+  }
+
+  await Promise.all(["MaestroOfflineDB", "MaestroDB"].map(dbName => new Promise(resolve => {
+    if (!window.indexedDB) {
+      resolve(false);
+      return;
+    }
+    const request = indexedDB.deleteDatabase(dbName);
+    request.onsuccess = () => resolve(true);
+    request.onerror = () => resolve(false);
+    request.onblocked = () => resolve(false);
+  })));
+}
+
+async function limparCachesMaestroSeletivo() {
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    try { navigator.serviceWorker.controller.postMessage({ type: "CLEAR_ALL_MAESTRO_CACHES" }); } catch (error) { }
+  }
+
+  if ('caches' in window) {
+    const keys = await caches.keys();
+    await Promise.all(keys.map(key => /^maestro-/i.test(key) ? caches.delete(key) : Promise.resolve(false)));
+  }
+}
+
+window.limparStorageMaestroSeletivo = limparStorageMaestroSeletivo;
+window.limparIndexedDBMaestroSeletivo = limparIndexedDBMaestroSeletivo;
+window.limparCachesMaestroSeletivo = limparCachesMaestroSeletivo;
+
 window.hardResetPWA = async function() {
   const confirmacao = window.confirm("Atenção: Isto irá apagar a sua carteira salva, histórico offline e forçar a atualização do sistema. Precisará de internet para entrar novamente.\n\nDeseja continuar?");
   
@@ -1338,9 +1707,8 @@ window.hardResetPWA = async function() {
   showToast("A limpar sistema...", "loading");
 
   try {
-    // 1. Limpar Storage
-    localStorage.clear();
-    sessionStorage.clear();
+    // 1. Limpar dados Maestro preservando a URL do backend configurada.
+    limparStorageMaestroSeletivo();
 
     // 2. Destruir Service Workers
     if ('serviceWorker' in navigator) {
@@ -1351,15 +1719,10 @@ window.hardResetPWA = async function() {
     }
 
     // 3. Limpar Cache API (Ficheiros Estáticos)
-    if ('caches' in window) {
-      const keys = await caches.keys();
-      await Promise.all(keys.map(key => caches.delete(key)));
-    }
+    await limparCachesMaestroSeletivo();
 
     // 4. Destruir IndexedDB (Notificações Offline)
-    if (window.indexedDB) {
-      indexedDB.deleteDatabase('MaestroOfflineDB');
-    }
+    await limparIndexedDBMaestroSeletivo({ full: true });
 
     // 5. Hard Reload
     showToast("Sistema limpo. A reiniciar...", "success");
@@ -1368,7 +1731,8 @@ window.hardResetPWA = async function() {
     }, 1500);
 
   } catch (err) {
-    console.error("Erro ao limpar PWA:", err);
+    if (typeof logMaestroSafe === "function") logMaestroSafe("error", "Erro ao limpar PWA.", err);
+    else console.error("Erro ao limpar PWA.");
     alert("Falha parcial ao limpar os dados. Por favor, reinicie o navegador.");
     window.location.reload(true);
   }
@@ -1404,7 +1768,7 @@ function interceptarMagicLinkRecuperacao(urlParams) {
   urlLimpa.searchParams.delete('email');
   history.replaceState({}, document.title, urlLimpa.pathname + urlLimpa.search + urlLimpa.hash);
 
-  console.log("Magic link de recuperação interceptado com sucesso.");
+  if (localStorage.getItem("MAESTRO_DEBUG") === "true" && typeof logMaestroSafe === "function") logMaestroSafe("debug", "Magic link de recuperacao interceptado com sucesso.");
   return true;
 }
 
@@ -1422,6 +1786,125 @@ function fecharModalSobre() {
   const modal = document.getElementById('modal-sobre');
   if (modal) modal.classList.add('hidden');
 }
+
+var maestroModalLastFocus = null;
+
+function isModalMaestroVisivel(modal) {
+  if (!modal || modal.classList.contains("hidden")) return false;
+  if (modal.classList.contains("bottom-sheet-overlay")) {
+    return modal.classList.contains("active") || !modal.classList.contains("hidden");
+  }
+  return true;
+}
+
+function obterPainelModalMaestro(modal) {
+  if (!modal) return null;
+  return modal.querySelector(".maestro-modal-panel, .form-card-modal, .bottom-sheet-content, .raio-x-container");
+}
+
+function obterElementoFocavelModalMaestro(modal, panel) {
+  const selectorPreferido = modal ? modal.getAttribute("data-modal-initial-focus") : "";
+  if (selectorPreferido) {
+    const preferido = modal.querySelector(selectorPreferido);
+    if (preferido && typeof preferido.focus === "function" && !preferido.disabled) return preferido;
+  }
+
+  const seletorFocavel = [
+    "button:not([disabled])",
+    "[href]",
+    "input:not([disabled])",
+    "select:not([disabled])",
+    "textarea:not([disabled])",
+    "[tabindex]:not([tabindex='-1'])"
+  ].join(",");
+  return panel ? panel.querySelector(seletorFocavel) : null;
+}
+
+function focarModalMaestro(modal) {
+  if (!isModalMaestroVisivel(modal)) return;
+  const panel = obterPainelModalMaestro(modal);
+  if (!panel) return;
+
+  if (!panel.hasAttribute("tabindex")) {
+    panel.setAttribute("tabindex", "-1");
+  }
+
+  setTimeout(function () {
+    if (!isModalMaestroVisivel(modal)) return;
+    const alvo = obterElementoFocavelModalMaestro(modal, panel) || panel;
+    try {
+      alvo.focus({ preventScroll: true });
+    } catch (error) {
+      try { alvo.focus(); } catch (innerError) { }
+    }
+  }, 40);
+}
+
+function atualizarEstadoModaisMaestro() {
+  const modais = document.querySelectorAll(".maestro-modal-overlay, .route-modal-overlay");
+  let modalAberto = null;
+
+  modais.forEach(function (modal) {
+    const visivel = isModalMaestroVisivel(modal);
+    modal.setAttribute("aria-hidden", visivel ? "false" : "true");
+    if (visivel && !modalAberto) modalAberto = modal;
+  });
+
+  document.body.classList.toggle("maestro-modal-open", !!modalAberto);
+
+  if (modalAberto) {
+    const focoAtual = document.activeElement;
+    if (!modalAberto.contains(focoAtual)) {
+      maestroModalLastFocus = focoAtual;
+      focarModalMaestro(modalAberto);
+    }
+    return;
+  }
+
+  if (maestroModalLastFocus && typeof maestroModalLastFocus.focus === "function") {
+    try { maestroModalLastFocus.focus({ preventScroll: true }); } catch (error) { }
+  }
+  maestroModalLastFocus = null;
+}
+
+function iniciarGestorModaisMaestro() {
+  const modais = document.querySelectorAll(".maestro-modal-overlay, .route-modal-overlay");
+  if (!modais.length) return;
+  if (window.__maestroModalManagerStarted) {
+    atualizarEstadoModaisMaestro();
+    return;
+  }
+  window.__maestroModalManagerStarted = true;
+
+  modais.forEach(function (modal) {
+    const panel = obterPainelModalMaestro(modal);
+    if (panel && !panel.hasAttribute("tabindex")) {
+      panel.setAttribute("tabindex", "-1");
+    }
+    modal.setAttribute("aria-hidden", isModalMaestroVisivel(modal) ? "false" : "true");
+  });
+
+  if (typeof MutationObserver !== "undefined") {
+    const observer = new MutationObserver(function (mutations) {
+      const mudouModal = mutations.some(function (mutation) {
+        return mutation.type === "attributes" && mutation.attributeName === "class";
+      });
+      if (mudouModal) atualizarEstadoModaisMaestro();
+    });
+
+    modais.forEach(function (modal) {
+      observer.observe(modal, { attributes: true, attributeFilter: ["class"] });
+    });
+  }
+
+  atualizarEstadoModaisMaestro();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  iniciarGestorModaisMaestro();
+  aplicarAcessibilidadeBaseMaestro(document);
+});
+setTimeout(iniciarGestorModaisMaestro, 1200);
 
 // Botão Voltar (Global)
 function voltarNavegacao() {

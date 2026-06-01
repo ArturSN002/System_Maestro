@@ -290,32 +290,99 @@ function abrirMesaAuditoria() {
     carregarFilaAuditoria();
 }
 
+function renderEstadoOperacaoMaestro(tipo, opcoes) {
+    if (typeof renderAsyncStateMaestro === "function") return renderAsyncStateMaestro(tipo, opcoes || {});
+    const mensagem = escapeHTMLAuditoria((opcoes && (opcoes.message || opcoes.title)) || "");
+    const classe = tipo === "error" ? "dynamic-error-state" : tipo === "empty" ? "dynamic-empty-state" : "dynamic-loading-state";
+    const loader = tipo === "loading" ? '<div class="loader loader-center"></div>' : "";
+    return `<div class="dynamic-state-box ${classe}">${loader}<p>${mensagem}</p></div>`;
+}
+
+function obterStorageOperacaoMaestro() {
+    return window.MaestroData && window.MaestroData.storage ? window.MaestroData.storage : null;
+}
+
+function obterTtlOperacaoMaestro(domain, fallback) {
+    const storage = obterStorageOperacaoMaestro();
+    return storage && typeof storage.getDomainTtlMs === "function"
+        ? storage.getDomainTtlMs(domain)
+        : fallback;
+}
+
+function obterCacheAuditoriaMaestro(semestreId, permitirExpirado) {
+    const storage = obterStorageOperacaoMaestro();
+    if (!storage || typeof storage.getDomainCache !== "function") return null;
+    const cache = storage.getDomainCache("audit", {
+        semestreId: semestreId || "",
+        allowExpired: permitirExpirado === true
+    });
+    return cache && cache.hit && cache.data && Array.isArray(cache.data.lista) ? cache : null;
+}
+
+function salvarCacheAuditoriaMaestro(lista, semestreId) {
+    const storage = obterStorageOperacaoMaestro();
+    if (!storage || typeof storage.setDomainCache !== "function" || !Array.isArray(lista)) return;
+    storage.setDomainCache("audit", {
+        lista: lista,
+        atualizadoEm: new Date().toISOString()
+    }, {
+        semestreId: semestreId || "",
+        source: "getListaAuditoria",
+        ttlMs: obterTtlOperacaoMaestro("audit", 1000 * 60 * 5)
+    });
+}
+
+function renderizarAuditoriaDoCacheMaestro(cache) {
+    if (!cache || !cache.data || !Array.isArray(cache.data.lista)) return false;
+    arrayAlunosAuditoria = cache.data.lista.map(normalizarAlunoAuditoria);
+    aplicarFiltrosAuditoria();
+    if ((cache.stale || cache.expired) && typeof showToast === "function") {
+        showToast("Fila de auditoria exibida do cache local.", "warning");
+    }
+    return true;
+}
+
 async function carregarFilaAuditoria(ehPesquisa = false) {
     if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
 
     const container = document.getElementById('auditoria-fila-container');
+    if (!container) return;
 
     // Sempre que carregar a lista ou pesquisar, volta à página 1
     paginaAtualAuditoria = 1;
 
-    container.innerHTML = '<div class="loading-state-box"><div class="loader"></div><p>A puxar a fila de trabalho...</p></div>';
+    const pesquisaAtual = ehPesquisa ? (document.getElementById('auditoria-pesquisa')?.value.trim() || "") : "";
+    const semesterContext = (window.MaestroData && window.MaestroData.contexts && window.MaestroData.contexts.semester)
+        ? window.MaestroData.contexts.semester.get()
+        : {};
+    const semestreId = semesterContext.semestreId || semesterContext.semestreAtual || "";
+    const cacheAuditoria = !pesquisaAtual ? obterCacheAuditoriaMaestro(semestreId, typeof navigator !== "undefined" && navigator.onLine === false) : null;
+
+    if (cacheAuditoria) {
+        renderizarAuditoriaDoCacheMaestro(cacheAuditoria);
+        if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+    } else {
+        container.innerHTML = renderEstadoOperacaoMaestro("loading", {
+            message: "A puxar a fila de trabalho...",
+            className: "loading-state-box admin-audit-loading"
+        });
+    }
 
     try {
-        const pesquisaAtual = ehPesquisa ? (document.getElementById('auditoria-pesquisa')?.value.trim() || "") : "";
-        const semesterContext = (window.MaestroData && window.MaestroData.contexts && window.MaestroData.contexts.semester)
-            ? window.MaestroData.contexts.semester.get()
-            : {};
         const res = await apiCall("getListaAuditoria", {
             pesquisa: pesquisaAtual,
             limite: 50,
-            semestreId: semesterContext.semestreId || semesterContext.semestreAtual || ""
+            semestreId: semestreId
         });
         if (res.sucesso) {
             arrayAlunosAuditoria = Array.isArray(res.lista) ? res.lista.map(normalizarAlunoAuditoria) : [];
+            if (!pesquisaAtual) salvarCacheAuditoriaMaestro(res.lista || [], semestreId);
             aplicarFiltrosAuditoria();
         } else {
+            const cacheFallback = !pesquisaAtual ? obterCacheAuditoriaMaestro(semestreId, true) : null;
+            if (cacheFallback && renderizarAuditoriaDoCacheMaestro(cacheFallback)) return;
             container.innerHTML = `
-                <div class="error-state-box">
+                <div class="error-state-box dynamic-state-box dynamic-error-state">
                     <span class="error-icon">⚠️</span>
                     <h3>Erro ao Carregar Fila</h3>
                     <p>${escapeHTMLAuditoria(res.erro)}</p>
@@ -324,8 +391,10 @@ async function carregarFilaAuditoria(ehPesquisa = false) {
             `;
         }
     } catch (e) {
+        const cacheFallback = !pesquisaAtual ? obterCacheAuditoriaMaestro(semestreId, true) : null;
+        if (cacheFallback && renderizarAuditoriaDoCacheMaestro(cacheFallback)) return;
         container.innerHTML = `
-            <div class="error-state-box">
+            <div class="error-state-box dynamic-state-box dynamic-error-state">
                 <span class="error-icon">📡</span>
                 <h3>Falha na Ligação</h3>
                 <p>Não foi possível conectar com o servidor: ${escapeHTMLAuditoria(e.message)}</p>
@@ -379,9 +448,17 @@ function aplicarFiltrosAuditoria() {
 
 function renderizarListaAuditoria() {
     const container = document.getElementById('auditoria-fila-container');
+    if (!arrayAlunosAuditoriaFiltrado || arrayAlunosAuditoriaFiltrado.length === 0) {
+        container.innerHTML = renderEstadoOperacaoMaestro("empty", {
+            title: "Fila vazia",
+            message: "Todos os pedidos foram atendidos ou nao ha resultados.",
+            className: "empty-state-box admin-audit-empty"
+        });
+        return;
+    }
 
     if (!arrayAlunosAuditoriaFiltrado || arrayAlunosAuditoriaFiltrado.length === 0) {
-        container.innerHTML = `<div class="empty-state-box"><h3>🎉 Fila Vazia!</h3><p>Todos os pedidos foram atendidos ou não há resultados.</p></div>`;
+        container.innerHTML = `<div class="empty-state-box dynamic-state-box dynamic-empty-state admin-audit-empty"><h3>🎉 Fila Vazia!</h3><p>Todos os pedidos foram atendidos ou não há resultados.</p></div>`;
         return;
     }
 
@@ -392,8 +469,8 @@ function renderizarListaAuditoria() {
     const itensPagina = arrayAlunosAuditoriaFiltrado.slice(inicio, fim);
 
     let html = `
-        <div class="auditoria-table-wrapper">
-            <table class="auditoria-table">
+        <div class="auditoria-table-wrapper dynamic-table-wrapper admin-audit-table-wrapper">
+            <table class="auditoria-table dynamic-table">
                 <thead>
                     <tr>
                         <th>Estudante</th>
@@ -428,7 +505,7 @@ function renderizarListaAuditoria() {
             : "";
 
         html += `
-        <tr class="auditoria-row">
+        <tr class="auditoria-row dynamic-table-row">
             <td data-label="Estudante">
                 <div class="auditoria-student-info">
                     <strong class="auditoria-nome">${nomeTratado}</strong>
@@ -439,7 +516,7 @@ function renderizarListaAuditoria() {
                 <span class="auditoria-data">${strDataSeguro}</span>
             </td>
             <td data-label="Status">
-                <span class="auditoria-badge ${badgeClass}">${statusAuditoria}</span>
+                <span class="auditoria-badge dynamic-status-badge ${badgeClass}">${statusAuditoria}</span>
             </td>
             <td data-label="Estágio">
                 ${badgeEstagio || '<span class="text-light">-</span>'}
@@ -462,7 +539,7 @@ function renderizarListaAuditoria() {
         const btnNextDisabled = paginaAtualAuditoria === totalPaginas ? 'disabled' : `onclick="mudarPaginaAuditoria(1)"`;
 
         html += `
-        <div class="auditoria-paginacao">
+        <div class="auditoria-paginacao dynamic-pagination">
             <button class="btn-solid dark-bg btn-paginacao" ${btnPrevDisabled}>⬅ Ant.</button>
             <span class="paginacao-texto">Pág. ${paginaAtualAuditoria} de ${totalPaginas}</span>
             <button class="btn-solid dark-bg btn-paginacao" ${btnNextDisabled}>Próx. ➡</button>
@@ -543,7 +620,12 @@ async function abrirDocumentoSeguro(cpf, tipoDoc, semestreId = "") {
         if (res.sucesso && res.base64) {
             document.getElementById('doc-viewer-title').innerText = tipoDoc;
             const mimeType = /^[-\w.]+\/[-\w.+]+$/.test(String(res.mimeType || "")) ? String(res.mimeType) : "application/octet-stream";
-            const fullBase64 = `data:${mimeType};base64,${String(res.base64 || "")}`;
+            const base64Seguro = String(res.base64 || "").replace(/\s+/g, "");
+            if (!/^[A-Za-z0-9+/=]+$/.test(base64Seguro)) {
+                contentBox.innerHTML = '<div class="error-box">Documento recebido em formato invalido.</div>';
+                return;
+            }
+            const fullBase64 = `data:${mimeType};base64,${base64Seguro}`;
 
             if (mimeType.includes("image")) {
                 contentBox.innerHTML = `<img src="${fullBase64}" class="zoom-hover doc-viewer-image" alt="Documento do estudante">`;
@@ -966,6 +1048,10 @@ async function dispararPushLoteManual() {
     }
 }
 
+function dispararPushSegmentado() {
+    return dispararPushLoteManual();
+}
+
 function calcularTempoRelativo(tsServidor) {
     const agoraLocal = new Date().getTime();
     const tsNormalizado = typeof tsServidor === "string" ? new Date(tsServidor).getTime() : Number(tsServidor);
@@ -977,6 +1063,87 @@ function calcularTempoRelativo(tsServidor) {
     if (horas < 24) return horas + (horas === 1 ? " hora atrás" : " horas atrás");
     const dias = Math.floor(horas / 24);
     return dias + (dias === 1 ? " dia atrás" : " dias atrás");
+}
+
+function obterCacheMuralMaestro(permitirExpirado) {
+    const storage = obterStorageOperacaoMaestro();
+    if (!storage || typeof storage.getDomainCache !== "function") return null;
+    const cache = storage.getDomainCache("communication", {
+        key: "MAESTRO_COMMUNICATION_CACHE_MURAL",
+        allowExpired: permitirExpirado === true
+    });
+    return cache && cache.hit && cache.data ? cache : null;
+}
+
+function salvarCacheMuralMaestro(muralNormalizado) {
+    const storage = obterStorageOperacaoMaestro();
+    if (!storage || typeof storage.setDomainCache !== "function" || !muralNormalizado || muralNormalizado.sucesso === false) return;
+    storage.setDomainCache("communication", muralNormalizado, {
+        key: "MAESTRO_COMMUNICATION_CACHE_MURAL",
+        source: "getMuralDaSemana",
+        ttlMs: obterTtlOperacaoMaestro("communication", 1000 * 60 * 10)
+    });
+}
+
+function renderizarMuralNormalizadoMaestro(container, btnNovoPostHTML, muralNormalizado, opcoes) {
+    if (!container || !muralNormalizado) return false;
+    const mensagensMural = muralNormalizado.mensagens || [];
+    const limiteSemanal = limitePostagensMuralMaestro(muralNormalizado);
+    if (!mensagensMural.length) {
+        container.innerHTML = `${btnNovoPostHTML}${renderEstadoOperacaoMaestro("empty", {
+            message: "Ainda nao ha contribuicoes nos ultimos 7 dias. Seja o primeiro a partilhar uma ideia!",
+            className: "mural-empty-state"
+        })}`;
+        return true;
+    }
+
+    let html = btnNovoPostHTML + `<div class="mural-limit-note">Limite: ${limiteSemanal} publicacoes por estudante a cada semana.</div>`;
+    if (opcoes && opcoes.cache === true && typeof renderAsyncStateMaestro === "function") {
+        html += renderAsyncStateMaestro(opcoes.expired ? "offline" : "stale", {
+            message: opcoes.expired ? "Mural exibido do cache local." : "Mural atualizado em segundo plano.",
+            className: "mural-cache-state"
+        });
+    }
+
+    mensagensMural.forEach((msg, index) => {
+        const upsInfo = Array.isArray(msg.arrayUpsInfo) ? msg.arrayUpsInfo : [];
+        const downsInfo = Array.isArray(msg.arrayDownsInfo) ? msg.arrayDownsInfo : [];
+        const upAtivo = currentWalletId && (msg.meuVoto === "up" || upsInfo.includes(currentWalletId)) ? ' is-active-up' : '';
+        const downAtivo = currentWalletId && (msg.meuVoto === "down" || downsInfo.includes(currentWalletId)) ? ' is-active-down' : '';
+        const coroa = index === 0 && msg.pontuacao > 0 ? 'Top Semanal' : '';
+        const tsMural = msg.tsMensagem || msg.criadoEm || (msg.raw && (msg.raw.tsMensagem || msg.raw.timestamp_epoch || msg.raw.criado_em));
+        const tempoCorrigido = escapeHTMLAuditoria(calcularTempoRelativo(tsMural));
+        const idElementoSeguro = safeDomIdAuditoria(msg.id);
+        const categoriaSegura = escapeHTMLAuditoria(msg.categoria || "");
+        const mensagemSegura = escapeHTMLAuditoria(msg.mensagem);
+        const autorSeguro = escapeHTMLAuditoria(msg.autor || msg.autorNome);
+        const votosUpSeguro = escapeHTMLAuditoria(msg.votosUp || 0);
+        const votosDownSeguro = escapeHTMLAuditoria(msg.votosDown || 0);
+
+        window.MaestroMuralIdMap = window.MaestroMuralIdMap || {};
+        window.MaestroMuralIdMap[idElementoSeguro] = String(msg.id || "");
+
+        html += `
+            <div class="form-card mural-post-card dynamic-card dynamic-feed-card">
+               <div class="mural-post-header">
+                  <div class="mural-post-tags">
+                     <span class="mural-tag">${categoriaSegura}</span>
+                     ${coroa ? `<span class="mural-tag mural-tag-top">${coroa}</span>` : ''}
+                  </div>
+                  <span class="mural-post-time">${tempoCorrigido}</span>
+               </div>
+               <p class="mural-message">"${mensagemSegura}"</p>
+               <div class="mural-post-footer">
+                  <span class="mural-author">Por: ${autorSeguro}</span>
+                  <div class="mural-vote-group">
+                     <button class="mural-vote-button${upAtivo}" onclick="votarNoMural('${idElementoSeguro}', 'UP')">UP <span id="count-up-${idElementoSeguro}" class="mural-vote-count">${votosUpSeguro}</span></button>
+                     <button class="mural-vote-button${downAtivo}" onclick="votarNoMural('${idElementoSeguro}', 'DOWN')">DOWN <span id="count-down-${idElementoSeguro}" class="mural-vote-count">${votosDownSeguro}</span></button>
+                  </div>
+               </div>
+            </div>`;
+    });
+    container.innerHTML = html;
+    return true;
 }
 
 async function abrirMuralDaSemana() {
@@ -995,7 +1162,16 @@ async function abrirMuralDaSemana() {
         btnNovoPostHTML = `<div class="mural-login-hint">Apenas estudantes logados na Carteira Digital podem publicar ou votar.</div>`;
     }
 
-    container.innerHTML = `${btnNovoPostHTML}<div class="loader loader-center"></div><p class="mural-loading-text mural-loading-spaced">A carregar a voz da comunidade...</p>`;
+    const cacheMural = obterCacheMuralMaestro(typeof navigator !== "undefined" && navigator.onLine === false);
+    if (cacheMural) {
+        renderizarMuralNormalizadoMaestro(container, btnNovoPostHTML, cacheMural.data, { cache: cacheMural.stale || cacheMural.expired, expired: cacheMural.expired });
+        if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+    } else {
+        container.innerHTML = `${btnNovoPostHTML}${renderEstadoOperacaoMaestro("loading", {
+            message: "A carregar a voz da comunidade...",
+            className: "mural-loading-state"
+        })}`;
+    }
 
     try {
         const res = await apiCall("getMuralDaSemana");
@@ -1003,13 +1179,15 @@ async function abrirMuralDaSemana() {
         const muralNormalizado = adapterMural ? adapterMural(res, currentWalletId) : res;
         const mensagensMural = (muralNormalizado && muralNormalizado.mensagens) || [];
         const limiteSemanal = limitePostagensMuralMaestro(muralNormalizado);
-        if (!muralNormalizado.sucesso) { container.innerHTML = `${btnNovoPostHTML}<div class="error-box">${escapeHTMLAuditoria(muralNormalizado.erro)}</div>`; return; }
+        if (!muralNormalizado.sucesso) { container.innerHTML = `${btnNovoPostHTML}<div class="error-box dynamic-state-box dynamic-error-state">${escapeHTMLAuditoria(muralNormalizado.erro)}</div>`; return; }
+        salvarCacheMuralMaestro(muralNormalizado);
         if (!mensagensMural.length) {
-            container.innerHTML = `${btnNovoPostHTML}<div class="mural-empty-state">Ainda não há contribuições nos últimos 7 dias.<br><br><b>Seja o primeiro a partilhar uma ideia!</b></div>`;
+            container.innerHTML = `${btnNovoPostHTML}<div class="mural-empty-state dynamic-state-box dynamic-empty-state">Ainda não há contribuições nos últimos 7 dias.<br><br><b>Seja o primeiro a partilhar uma ideia!</b></div>`;
             return;
         }
 
-        let html = btnNovoPostHTML + `<div class="mural-limit-note">Limite: ${limiteSemanal} publicacoes por estudante a cada semana.</div>`;
+        const limiteSemanalSeguro = escapeHTMLAuditoria(limiteSemanal);
+        let html = btnNovoPostHTML + `<div class="mural-limit-note">Limite: ${limiteSemanalSeguro} publicacoes por estudante a cada semana.</div>`;
         mensagensMural.forEach((msg, index) => {
             const upsInfo = Array.isArray(msg.arrayUpsInfo) ? msg.arrayUpsInfo : [];
             const downsInfo = Array.isArray(msg.arrayDownsInfo) ? msg.arrayDownsInfo : [];
@@ -1017,7 +1195,7 @@ async function abrirMuralDaSemana() {
             const downAtivo = currentWalletId && (msg.meuVoto === "down" || downsInfo.includes(currentWalletId)) ? ' is-active-down' : '';
             const coroa = index === 0 && msg.pontuacao > 0 ? '👑 Top Semanal' : '';
             const tsMural = msg.tsMensagem || msg.criadoEm || (msg.raw && (msg.raw.tsMensagem || msg.raw.timestamp_epoch || msg.raw.criado_em));
-            const tempoCorrigido = calcularTempoRelativo(tsMural);
+            const tempoCorrigido = escapeHTMLAuditoria(calcularTempoRelativo(tsMural));
             const idElementoSeguro = safeDomIdAuditoria(msg.id);
             const categoriaBruta = String(msg.categoria || "");
             const categoriaSegura = escapeHTMLAuditoria(categoriaBruta);
@@ -1042,7 +1220,7 @@ async function abrirMuralDaSemana() {
             msg.votosDown = votosDownSeguro;
 
             html += `
-            <div class="form-card mural-post-card">
+            <div class="form-card mural-post-card dynamic-card dynamic-feed-card">
                <div class="mural-post-header">
                   <div class="mural-post-tags">
                      <span class="mural-tag">${iconCat} ${msg.categoria}</span>
@@ -1062,7 +1240,9 @@ async function abrirMuralDaSemana() {
         });
         container.innerHTML = html;
     } catch (e) {
-        container.innerHTML = `<div class="error-box">Erro ao comunicar com o servidor do Mural: ${escapeHTMLAuditoria(e.message)}</div>`;
+        const cacheFallback = obterCacheMuralMaestro(true);
+        if (cacheFallback && renderizarMuralNormalizadoMaestro(container, btnNovoPostHTML, cacheFallback.data, { cache: true, expired: true })) return;
+        container.innerHTML = `<div class="error-box dynamic-state-box dynamic-error-state">Erro ao comunicar com o servidor do Mural: ${escapeHTMLAuditoria(e.message)}</div>`;
     }
 }
 
@@ -1119,7 +1299,7 @@ function abrirInbox() {
 function renderizarNotificacoes() {
     const containers = document.querySelectorAll('.inbox-container');
     containers.forEach(container => {
-        container.innerHTML = '<div class="loader loader-center"></div>';
+        container.innerHTML = '<div class="dynamic-state-box dynamic-loading-state inbox-loading-state"><div class="loader loader-center"></div></div>';
     });
 
     const dbRequest = indexedDB.open('MaestroDB', 1);
@@ -1127,7 +1307,7 @@ function renderizarNotificacoes() {
         const db = e.target.result;
         if (!db.objectStoreNames.contains('notificacoes')) {
             containers.forEach(container => {
-                container.innerHTML = '<div class="inbox-empty-state"><p class="inbox-empty-text">Caixa de entrada vazia.</p></div>';
+                container.innerHTML = '<div class="inbox-empty-state dynamic-state-box dynamic-empty-state"><p class="inbox-empty-text">Caixa de entrada vazia.</p></div>';
             });
             return;
         }
@@ -1139,7 +1319,7 @@ function renderizarNotificacoes() {
             const notificacoes = request.result.sort((a, b) => b.timestamp - a.timestamp);
             if (notificacoes.length === 0) {
                 containers.forEach(container => {
-                    container.innerHTML = '<div class="inbox-empty-state"><p class="inbox-empty-text">Caixa de entrada vazia.</p></div>';
+                    container.innerHTML = '<div class="inbox-empty-state dynamic-state-box dynamic-empty-state"><p class="inbox-empty-text">Caixa de entrada vazia.</p></div>';
                 });
                 return;
             }
@@ -1153,7 +1333,7 @@ function renderizarNotificacoes() {
                 const linkSeguro = safeUrlAttrOperacao(n.link, "");
                 const linkHtml = linkSeguro && linkSeguro !== "/" ? `<a href="${linkSeguro}" target="_blank" rel="noopener noreferrer" class="inbox-link">Ver detalhes</a>` : '';
                 html += `
-                <div class="form-card inbox-card">
+                <div class="form-card inbox-card dynamic-card dynamic-inbox-card">
                     <img src="${iconeSeguro}" class="inbox-icon" alt="">
                     <div class="inbox-content">
                         <div class="inbox-header">
@@ -1178,7 +1358,7 @@ function renderizarNotificacoes() {
     };
     dbRequest.onerror = () => {
         containers.forEach(container => {
-            container.innerHTML = '<div class="error-box">Erro ao carregar notificações locais.</div>';
+            container.innerHTML = '<div class="error-box dynamic-state-box dynamic-error-state">Erro ao carregar notificações locais.</div>';
         });
     };
 }

@@ -50,6 +50,7 @@ function formatarNome(nome) {
  * Manipulador de Erros Global
  */
 function handleError(err) {
-  console.error("Erro no Sistema:", err);
+  if (typeof logMaestroSafe === "function") logMaestroSafe("error", "Erro no Sistema.", err);
+  else console.error("Erro no Sistema.");
   showToast("Erro: " + (err.message || err), "error");
 }

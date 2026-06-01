@@ -18,11 +18,9 @@ function atualizarFeedbackCPFInscricao(estado, mensagem) {
     if (!feedbackBox) return false;
     feedbackBox.classList.remove('feedback-error', 'feedback-success', 'feedback-info', 'hidden');
     feedbackBox.classList.add(`feedback-${estado}`);
-    if (typeof escapeHTMLMaestro === 'function') {
-        feedbackBox.textContent = mensagem;
-    } else {
-        feedbackBox.innerHTML = mensagem;
-    }
+    feedbackBox.setAttribute("role", estado === "error" ? "alert" : "status");
+    feedbackBox.setAttribute("aria-live", estado === "error" ? "assertive" : "polite");
+    feedbackBox.textContent = typeof safeMessageMaestro === "function" ? safeMessageMaestro(mensagem, "") : String(mensagem || "");
     return true;
 }
 
@@ -278,13 +276,7 @@ async function verificarCPFInscricao() {
             const mensagemDuplicidade = resDuplicidade.mensagem || "Ja existe uma inscricao ativa para este CPF neste semestre.";
             const feedbackBox = document.getElementById('cpf-feedback-box');
             if (feedbackBox) {
-                feedbackBox.classList.remove('feedback-success', 'feedback-info');
-                feedbackBox.classList.add('feedback-error');
-                if (typeof escapeHTMLMaestro === 'function') {
-                    feedbackBox.textContent = "⚠️ " + mensagemDuplicidade;
-                } else
-                feedbackBox.innerHTML = `⚠️ ${mensagemDuplicidade}`;
-                feedbackBox.classList.remove('hidden');
+                atualizarFeedbackCPFInscricao("error", "Atencao: " + mensagemDuplicidade);
             } else {
                 showToast(mensagemDuplicidade, "error");
             }
@@ -370,7 +362,8 @@ async function verificarCPFInscricao() {
         }
 
     } catch (err) {
-        console.error("Erro na verificação de CPF:", err);
+        if (typeof logMaestroSafe === "function") logMaestroSafe("error", "Erro na verificacao de CPF.", err);
+        else console.error("Erro na verificacao de CPF.");
         showToast("Falha de conexão ao servidor. Tente novamente.", "error");
     } finally {
         btn.innerText = "VERIFICAR CPF";
@@ -543,7 +536,8 @@ async function iniciarCamera3x4() {
         if (btnCapturar) btnCapturar.classList.remove('hidden');
 
     } catch (err) {
-        console.error("Câmara:", err);
+        if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "Falha ao iniciar camera.", err);
+        else console.warn("Falha ao iniciar camera.");
         showToast("Não foi possível aceder à câmara. Verifique as permissões.", "error");
     }
 }
@@ -608,11 +602,12 @@ function finalizarInscricaoLimparHardware() {
             try {
                 track.stop();
             } catch (err) {
-                console.warn("[Inscrição] Falha ao encerrar faixa da câmera:", err);
+                if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "[Inscricao] Falha ao encerrar faixa da camera.", err);
+                else console.warn("[Inscricao] Falha ao encerrar faixa da camera.");
             }
         });
         cameraStream = null;
-        console.log("[Inscrição] Câmera fechada por segurança.");
+        if (localStorage.getItem("MAESTRO_DEBUG") === "true" && typeof logMaestroSafe === "function") logMaestroSafe("debug", "[Inscricao] Camera fechada por seguranca.");
     }
 
     const video = document.getElementById('camera-video');
@@ -812,10 +807,6 @@ function prepararEnvioNativo() {
         origemEnvio: 'PWA_NATIVA'
     };
 
-    console.log("========== PAYLOAD INSCRIÇÃO NATIVA ==========");
-    console.log(payloadNativo);
-    console.log("===============================================");
-
     // Feedback visual.
     btn.innerHTML = "📤 A ENVIAR... ⏳";
     btn.disabled = true;
@@ -846,7 +837,8 @@ function prepararEnvioNativo() {
             }
         })
         .catch(err => {
-            console.error("Erro de rede na inscrição:", err);
+            if (typeof logMaestroSafe === "function") logMaestroSafe("error", "Erro de rede na inscricao.", err);
+            else console.error("Erro de rede na inscricao.");
             showToast("Falha de conexão. Verifique a internet e tente novamente.", "error");
             btn.innerHTML = "📤 SUBMETER INSCRIÇÃO";
             btn.disabled = false;
@@ -947,14 +939,74 @@ function _resetarFormularioInscricao() {
  * e popula os <select> do Smart Stepper. Mantém as opções estáticas
  * ("Selecione..." e "Outra/Outro") intactas.
  */
+function obterStorageInscricaoMaestro() {
+    return window.MaestroData && window.MaestroData.storage ? window.MaestroData.storage : null;
+}
+
+function obterTtlListasInscricaoMaestro() {
+    const storage = obterStorageInscricaoMaestro();
+    return storage && typeof storage.getDomainTtlMs === "function"
+        ? storage.getDomainTtlMs("lists")
+        : 1000 * 60 * 60;
+}
+
+function obterCacheListasInscricaoMaestro(permitirExpirado) {
+    const storage = obterStorageInscricaoMaestro();
+    if (!storage || typeof storage.getDomainCache !== "function") return null;
+    const cache = storage.getDomainCache("lists", {
+        key: "MAESTRO_LISTS_CACHE_INSCRICAO",
+        allowExpired: permitirExpirado === true
+    });
+    return cache && cache.hit && cache.data ? cache : null;
+}
+
+function salvarCacheListasInscricaoMaestro(res) {
+    const storage = obterStorageInscricaoMaestro();
+    if (!storage || typeof storage.setDomainCache !== "function" || !res || res.sucesso === false) return;
+    storage.setDomainCache("lists", {
+        instituicoes: res.instituicoes || [],
+        rotas: res.rotas || [],
+        bairros: res.bairros || [],
+        linkDeclaracaoMenor: res.linkDeclaracaoMenor || "",
+        atualizadoEm: new Date().toISOString()
+    }, {
+        key: "MAESTRO_LISTS_CACHE_INSCRICAO",
+        source: "getListsInscricao",
+        ttlMs: obterTtlListasInscricaoMaestro()
+    });
+}
+
+function aplicarListasInscricaoMaestro(res) {
+    if (!res) return false;
+        _popularSelect('insc-instituicao', res.instituicoes || [], 'Outra (NÃ£o listada)');
+    _popularSelect('insc-rota', res.rotas || [], 'Outra (NÃ£o listada)');
+    _popularSelect('insc-bairro-23h', res.bairros || [], 'Outro');
+
+    if (res.linkDeclaracaoMenor) {
+        const linkMenor = document.getElementById('link-declaracao-menor');
+        if (linkMenor) linkMenor.href = res.linkDeclaracaoMenor;
+    }
+    return true;
+}
+
 async function carregarListasInscricao() {
+    const cacheInicial = obterCacheListasInscricaoMaestro(typeof navigator !== "undefined" && navigator.onLine === false);
+    if (cacheInicial) {
+        aplicarListasInscricaoMaestro(cacheInicial.data);
+        if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+    }
+
     try {
         const res = await apiCall("getListsInscricao");
         if (!res || !res.sucesso) {
-            console.warn("[LISTAS] Falha ao carregar listas dinâmicas:", res ? res.erro : "sem resposta");
+            const cacheFallback = obterCacheListasInscricaoMaestro(true);
+            if (cacheFallback && aplicarListasInscricaoMaestro(cacheFallback.data)) return;
+            if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "[LISTAS] Falha ao carregar listas dinamicas.", res ? res.erro : "sem resposta");
+            else console.warn("[LISTAS] Falha ao carregar listas dinamicas.");
             return;
         }
 
+        salvarCacheListasInscricaoMaestro(res);
         _popularSelect('insc-instituicao', res.instituicoes || [], 'Outra (Não listada)');
         _popularSelect('insc-rota', res.rotas || [], 'Outra (Não listada)');
         _popularSelect('insc-bairro-23h', res.bairros || [], 'Outro');
@@ -965,7 +1017,10 @@ async function carregarListasInscricao() {
         }
 
     } catch (err) {
-        console.warn("[LISTAS] Erro de rede ao carregar listas:", err);
+        const cacheFallback = obterCacheListasInscricaoMaestro(true);
+        if (cacheFallback && aplicarListasInscricaoMaestro(cacheFallback.data)) return;
+        if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "[LISTAS] Erro de rede ao carregar listas.", err);
+        else console.warn("[LISTAS] Erro de rede ao carregar listas.");
     }
 }
 

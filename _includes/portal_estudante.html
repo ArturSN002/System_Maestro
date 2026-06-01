@@ -1,8 +1,8 @@
-      <section id="view-aluno-menu" class="view-section">
-        <div class="welcome-text">Área do Estudante</div>
+      <section id="view-aluno-menu" class="view-section student-view student-hub-view">
+        <div class="welcome-text student-hub-title">Área do Estudante</div>
 
-        <div class="grid-desktop">
-          <button class="menu-card outline-card menu-card-success" onclick="abrirNovaInscricao()">
+        <div class="grid-desktop student-action-grid">
+          <button class="menu-card outline-card menu-card-success student-action-card student-action-card-new" onclick="abrirNovaInscricao()">
             <span class="icon">📝</span>
             <div class="info">
               <strong class="text-success">Nova Inscrição</strong>
@@ -10,7 +10,7 @@
             </div>
           </button>
 
-          <button class="menu-card outline-card" onclick="switchView('view-consult')">
+          <button class="menu-card outline-card student-action-card student-action-card-query" onclick="switchView('view-consult')">
             <span class="icon">🔍</span>
             <div class="info">
               <strong>Acompanhar Inscrição</strong>
@@ -18,7 +18,7 @@
             </div>
           </button>
 
-          <button class="menu-card primary-card" onclick="switchView('view-login')">
+          <button class="menu-card primary-card student-action-card student-action-card-wallet" onclick="switchView('view-login')">
             <span class="icon">🪪</span>
             <div class="info">
               <strong>Abrir Carteira Digital</strong>
@@ -27,11 +27,11 @@
           </button>
         </div>
 
-        <button class="btn-text" onclick="switchView('view-hub')">⬅ Voltar ao Início</button>
+        <button class="btn-text student-back-link" onclick="switchView('view-hub')">⬅ Voltar ao Início</button>
       </section>
 
-      <section id="view-inscricao" class="view-section">
-        <div class="form-card">
+      <section id="view-inscricao" class="view-section student-view student-registration-view">
+        <div class="form-card student-flow-card student-registration-card">
           <div class="form-header mb-10">
             <span class="card-icon-emoji">📝</span>
             <h2>Inscrição no Transporte</h2>
@@ -39,7 +39,7 @@
           </div>
 
           <!-- Progress Indicator -->
-          <div class="stepper-progress" id="stepper-progress">
+          <div class="stepper-progress student-stepper-progress" id="stepper-progress">
             <div class="step-dot step-active" id="dot-1"></div>
             <div class="step-connector" id="conn-1"></div>
             <div class="step-dot" id="dot-2"></div>
@@ -48,10 +48,10 @@
             <div class="step-connector" id="conn-3"></div>
             <div class="step-dot" id="dot-4"></div>
           </div>
-          <div class="stepper-label" id="stepper-label">Etapa <strong>1</strong> de 4 — Triagem</div>
+          <div class="stepper-label student-stepper-label" id="stepper-label">Etapa <strong>1</strong> de 4 — Triagem</div>
 
           <!-- ============ STEP 1: Triagem ============ -->
-          <div class="step-container step-visible" id="step-1">
+          <div class="step-container step-visible student-step-container" id="step-1">
             <div class="step-section-title">Identificação</div>
             <label class="input-label">CPF (APENAS NÚMEROS)</label>
             <input type="tel" id="insc-cpf" class="input-field" placeholder="000.000.000-00" maxlength="14" inputmode="numeric">
@@ -62,7 +62,7 @@
           </div>
 
           <!-- ============ STEP 2: Rota Acadêmica ============ -->
-          <div class="step-container" id="step-2">
+          <div class="step-container student-step-container" id="step-2">
             <div class="step-section-title">Dados Acadêmicos</div>
 
             <div class="grid-desktop">
@@ -149,7 +149,7 @@
           </div>
 
           <!-- ============ STEP 3: Condicionais ============ -->
-          <div class="step-container" id="step-3">
+          <div class="step-container student-step-container" id="step-3">
             <div class="step-section-title">Perguntas Condicionais</div>
 
             <!-- Q1: Transporte 23h -->
@@ -262,7 +262,7 @@
           </div>
 
           <!-- ============ STEP 4: Cofre Digital / Uploads ============ -->
-          <div class="step-container" id="step-4">
+          <div class="step-container student-step-container" id="step-4">
             <div class="step-section-title">📎 Documentos Obrigatórios</div>
 
             <div class="custom-file-upload mb-15">
@@ -335,13 +335,13 @@
         </div>
       </section>
 
-      <section id="view-consult" class="view-section">
-        <div class="form-card">
+      <section id="view-consult" class="view-section student-view student-consult-view">
+        <div class="form-card student-flow-card student-consult-card">
           <div class="form-header">
             <h2>Situação Cadastral</h2>
             <p>Acompanhe a emissão da sua identidade</p>
           </div>
-          <div class="grid-desktop">
+          <div class="grid-desktop student-query-grid">
             <div>
               <input type="text" id="id-estudante" class="input-field" placeholder="Digite apenas os números do CPF">
             </div>
@@ -354,8 +354,8 @@
         <div id="res-estudante" class="result-container hidden"></div>
       </section>
 
-      <section id="view-resgate" class="view-section">
-         <div class="form-card form-card-accent">
+      <section id="view-resgate" class="view-section student-view student-rescue-view">
+         <div class="form-card form-card-accent student-flow-card student-rescue-card">
             <div class="form-header mb-15">
                <span class="card-icon-emoji">📤</span>
                <h2 class="text-accent">RESGATE DOCUMENTAL</h2>
@@ -432,8 +432,8 @@
          </div>
       </section>
 
-      <section id="view-login" class="view-section">
-        <div class="form-card">
+      <section id="view-login" class="view-section student-view student-login-view">
+        <div class="form-card student-flow-card student-login-card">
           <div class="form-header">
             <span class="card-icon-emoji">🔒</span>
             <h2>Cofre Digital</h2>
@@ -451,8 +451,8 @@
         <div id="res-login" class="error-box hidden"></div>
       </section>
 
-      <section id="view-nova-senha" class="view-section">
-        <div class="form-card">
+      <section id="view-nova-senha" class="view-section student-view student-password-view">
+        <div class="form-card student-flow-card student-password-card">
           <div class="form-header">
             <span class="card-icon-emoji">🔐</span>
             <h2>Definir Senha de Acesso</h2>
@@ -482,15 +482,15 @@
         </div>
       </section>
 
-      <section id="view-wallet" class="view-section">
-        <div class="wallet-wrapper">
+      <section id="view-wallet" class="view-section student-view student-wallet-view">
+        <div class="wallet-wrapper student-wallet-wrapper">
           <div id="wallet-container"></div>
           <div id="wallet-actions" class="hidden mt-15">
             <button class="btn-solid btn-radar-open" onclick="abrirRadarMasterView()">
               <span>🗺️</span> ABRIR RADAR DE VIAGENS
             </button>
           </div>
-          <div id="wallet-privacy-card" class="form-card mt-15">
+          <div id="wallet-privacy-card" class="form-card mt-15 student-wallet-privacy-card">
             <div class="form-header text-left">
               <h2 class="wallet-privacy-title">Privacidade e Meus Dados</h2>
               <p class="wallet-privacy-desc">Acesse seus dados pessoais ou solicite a anonimização da sua conta.</p>

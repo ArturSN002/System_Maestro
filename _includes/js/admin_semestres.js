@@ -47,7 +47,8 @@
         });
       }
     } catch (e) {
-      console.warn("[Semestres] Falha ao atualizar semesterContext:", e);
+      if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "[Semestres] Falha ao atualizar semesterContext.", e);
+      else console.warn("[Semestres] Falha ao atualizar semesterContext.");
     }
   }
 
@@ -98,7 +99,7 @@
     const vigencia = [semestre.inicio, semestre.fim].filter(Boolean).join(" ate ");
 
     return `
-      <div class="form-card semestre-card ${statusClass}">
+      <div class="form-card semestre-card dynamic-card semester-dynamic-card ${statusClass}">
         <div class="semestre-card-header">
           <div>
             <strong class="semestre-card-title">${escapeHTML(semestre.label)}</strong>
@@ -108,7 +109,7 @@
           </div>
           ${renderStatusChip(semestre.status)}
         </div>
-        <div class="semestre-card-actions">
+        <div class="semestre-card-actions dynamic-card-actions">
           <button class="btn-text" onclick="preencherSemestreMaestro(${index})">Editar</button>
           <button class="btn-solid btn-semestre-atual" ${isAtual ? "disabled" : ""} data-semestre-id="${escapeHTML(semestre.id)}" onclick="definirSemestreAtualMaestroUI(this.dataset.semestreId)">Atual</button>
           <button class="btn-solid btn-semestre-passado" ${isAtual ? "disabled" : ""} data-semestre-id="${escapeHTML(semestre.id)}" onclick="marcarSemestrePassadoMaestroUI(this.dataset.semestreId)">Passado</button>
@@ -139,7 +140,7 @@
     if (atual.id) setSemesterContextSafe(atual);
 
     if (!lista.length) {
-      container.innerHTML = '<div class="empty-state" style="padding: 24px; text-align:center;">Nenhum semestre cadastrado.</div>';
+      container.innerHTML = '<div class="empty-state empty-state-semestres dynamic-state-box dynamic-empty-state">Nenhum semestre cadastrado.</div>';
       return;
     }
 
@@ -151,7 +152,9 @@
 
     const container = byId("semestres-lista-container");
     if (container) {
-      container.innerHTML = '<div class="loading-state-box"><div class="loader"></div><p>A carregar semestres...</p></div>';
+      container.innerHTML = typeof renderAsyncStateMaestro === "function"
+        ? renderAsyncStateMaestro("loading", { message: "A carregar semestres...", className: "loading-state-box" })
+        : '<div class="loading-state-box dynamic-state-box dynamic-loading-state"><div class="loader"></div><p>A carregar semestres...</p></div>';
     }
 
     try {
@@ -162,8 +165,16 @@
       renderizarSemestresMaestro(res);
     } catch (e) {
       if (container) {
+        if (typeof renderAsyncStateMaestro === "function") {
+          container.innerHTML = renderAsyncStateMaestro("error", {
+            title: "Erro ao carregar semestres",
+            message: e.message,
+            className: "error-state-box"
+          });
+          return;
+        }
         container.innerHTML = `
-          <div class="error-state-box">
+          <div class="error-state-box dynamic-state-box dynamic-error-state">
             <span class="error-icon">⚠️</span>
             <h3>Erro ao Carregar Semestres</h3>
             <p>${escapeHTML(e.message)}</p>

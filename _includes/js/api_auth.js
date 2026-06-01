@@ -19,6 +19,35 @@ const CLIENT_DIRECTORY = {
 const MAESTRO_CLIENT_DIRECTORY_VERSION = "2026-05-26-cache-reset";
 const MAESTRO_CLIENT_URL_VERSION_KEY = "MAESTRO_CLIENT_URL_VERSION";
 
+function setAuthElementVisibilityMaestro(element, visible, active = false) {
+  if (!element) return;
+  if (element.classList.contains("view-section")) {
+    if (visible) element.classList.remove("hidden");
+    element.classList.toggle("active-view", Boolean(visible && active));
+    return;
+  }
+  element.classList.toggle("hidden", !visible);
+  element.classList.toggle("active-view", Boolean(visible && active));
+}
+
+function showSplashAuthMaestro(splash) {
+  if (!splash) return;
+  splash.classList.remove("hidden", "is-exiting");
+}
+
+function hideSplashAuthMaestro(splash, delay = 300) {
+  if (!splash) return;
+  splash.classList.add("is-exiting");
+  setTimeout(() => splash.classList.add("hidden"), delay);
+}
+
+function atualizarBotaoSenhaIAM(btn, habilitado) {
+  if (!btn) return;
+  btn.classList.add("auth-password-action");
+  btn.disabled = !habilitado;
+  btn.classList.toggle("is-disabled", !habilitado);
+}
+
 function obterUrlPadraoClienteMaestro() {
   const urls = Object.values(CLIENT_DIRECTORY).filter(Boolean);
   return urls.length === 1 ? urls[0] : "";
@@ -35,7 +64,19 @@ function resolverUrlClienteSalvaMaestro(savedUrl) {
   return obterUrlPadraoClienteMaestro() || atual;
 }
 
-function removerCachesLocaisDeBackendMaestro() {
+async function removerCachesLocaisDeBackendMaestro() {
+  if (window.MaestroData && window.MaestroData.storage && typeof window.MaestroData.storage.clearDomains === "function") {
+    await window.MaestroData.storage.clearDomains(
+      ["theme", "wallet", "dashboard", "lists", "audit", "communication", "mobility", "session"],
+      {
+        includeLegacy: true,
+        includeCustom: true,
+        includeSensitive: true,
+        includeIndexedDB: true
+      }
+    ).catch(() => null);
+  }
+
   [
     "MAESTRO_TOKEN",
     "MAESTRO_EST_TOKEN",
@@ -49,7 +90,14 @@ function removerCachesLocaisDeBackendMaestro() {
     "MAESTRO_TENANT_CONTEXT",
     "MAESTRO_SEMESTER_CONTEXT",
     "MAESTRO_THEME_CACHE",
-    "MAESTRO_CACHE_META"
+    "MAESTRO_CACHE_META",
+    "MAESTRO_LISTS_CACHE_INSCRICAO",
+    "MAESTRO_COMMUNICATION_CACHE_AVISOS",
+    "MAESTRO_COMMUNICATION_CACHE_MURAL",
+    "MAESTRO_WALLET_CREDS",
+    "MAESTRO_FCM_TOKEN",
+    "MAESTRO_FCM_TOKEN_TEMP",
+    "FCM_SYNCED_ID"
   ].forEach((key) => {
     try { localStorage.removeItem(key); } catch (error) { }
   });
@@ -87,12 +135,13 @@ async function aplicarTrocaBackendMaestro(previousUrl, nextUrl, options = {}) {
   localStorage.setItem("MAESTRO_CLIENT_URL_PREVIOUS", anterior);
   localStorage.setItem("MAESTRO_CLIENT_URL", proxima);
   localStorage.setItem(MAESTRO_CLIENT_URL_VERSION_KEY, MAESTRO_CLIENT_DIRECTORY_VERSION);
-  removerCachesLocaisDeBackendMaestro();
+  await removerCachesLocaisDeBackendMaestro();
 
   try {
     await limparCachesNavegadorMaestro();
   } catch (error) {
-    console.warn("Nao foi possivel limpar todos os caches antigos do Maestro:", error);
+    if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "Nao foi possivel limpar todos os caches antigos do Maestro.", error);
+    else console.warn("Nao foi possivel limpar todos os caches antigos do Maestro.");
   }
 
   if (options.reload === false) return false;
@@ -122,33 +171,20 @@ async function checkClientGateway() {
   const gateway = document.getElementById("view-gateway");
 
   if (savedUrl) {
-    if (splash) {
-      splash.style.display = "flex";
-      splash.style.opacity = "1";
-      splash.classList.remove("hidden");
-    }
-    if (gateway) {
-      gateway.style.display = "none";
-      gateway.classList.remove("active-view");
-    }
+    showSplashAuthMaestro(splash);
+    setAuthElementVisibilityMaestro(gateway, false);
     GAS_URL = savedUrl;
     if (typeof bootSystem === "function") await bootSystem();
     return true;
   } else {
-    if (splash) {
-      splash.style.opacity = "0";
-      setTimeout(() => { splash.style.display = "none"; }, 300);
-    }
+    hideSplashAuthMaestro(splash);
 
     document.querySelectorAll(".view-section").forEach(sec => {
-      sec.classList.remove("active-view");
-      sec.style.display = "none";
+      setAuthElementVisibilityMaestro(sec, false);
     });
 
-    if (gateway) {
-      gateway.style.display = "block";
-      setTimeout(() => gateway.classList.add("active-view"), 10);
-    }
+    setAuthElementVisibilityMaestro(gateway, true);
+    setTimeout(() => setAuthElementVisibilityMaestro(gateway, true, true), 10);
 
     const select = document.getElementById("client-select");
     if (select) {
@@ -181,13 +217,10 @@ async function salvarCliente() {
   GAS_URL = selectedUrl;
 
   const gateway = document.getElementById("view-gateway");
-  if (gateway) {
-    gateway.classList.remove("active-view");
-    gateway.style.display = "none";
-  }
+  setAuthElementVisibilityMaestro(gateway, false);
 
   const splash = document.getElementById("splash-screen");
-  if (splash) splash.classList.remove("hidden");
+  showSplashAuthMaestro(splash);
 
   sessionStorage.setItem("MAESTRO_LAST_VIEW", "view-hub");
 
@@ -365,7 +398,8 @@ async function apiCall(action, payload = {}, options = {}) {
     data = normalizarErroBackendMaestro(data, action);
 
     if (data.status === 401 && action !== "invalidarTokenSessao") {
-      console.error("401 Unauthorized na rota:", action);
+      if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "401 Unauthorized na rota.", { action: action });
+      else console.warn("401 Unauthorized na rota.");
       localStorage.removeItem("MAESTRO_TOKEN");
       localStorage.removeItem("MAESTRO_EST_TOKEN");
       if (typeof limparContextsSessaoMaestro === "function") limparContextsSessaoMaestro();
@@ -381,7 +415,8 @@ async function apiCall(action, payload = {}, options = {}) {
     return data;
   } catch (error) {
     if (timeoutId) clearTimeout(timeoutId);
-    console.error("Erro na chamada API:", error);
+    if (typeof logMaestroSafe === "function") logMaestroSafe("error", "Erro na chamada API.", { action: action, error: error });
+    else console.error("Erro na chamada API.");
     const abortado = error && error.name === "AbortError";
     return {
       sucesso: false,
@@ -447,7 +482,8 @@ function sincronizarSessoesMaestroDoStorage() {
     try {
       sincronizarStudentIdentityMaestro(JSON.parse(cacheBruto), "");
     } catch (erro) {
-      console.warn("Nao foi possivel sincronizar studentIdentity do cache local:", erro);
+      if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "Nao foi possivel sincronizar studentIdentity do cache local.", erro);
+      else console.warn("Nao foi possivel sincronizar studentIdentity do cache local.");
     }
   }
 }
@@ -568,9 +604,7 @@ function inicializarValidadorSenhaIAM() {
   const atualizarEstado = () => {
     const resultado = validarRegrasSenha(novaSenha.value);
     const senhasConferem = novaSenha.value !== "" && novaSenha.value === confirmarSenha.value;
-    btnSalvar.disabled = !(resultado.valida && senhasConferem);
-    btnSalvar.style.opacity = btnSalvar.disabled ? "0.55" : "1";
-    btnSalvar.style.cursor = btnSalvar.disabled ? "not-allowed" : "pointer";
+    atualizarBotaoSenhaIAM(btnSalvar, resultado.valida && senhasConferem);
   };
 
   if (novaSenha.dataset.iamValidatorBound !== "true") {
@@ -608,7 +642,9 @@ function atualizarItemRegraSenhaIAM(id, valido, texto) {
   itens.forEach(item => {
     if (item) {
       item.textContent = (valido ? "✅ " : "❌ ") + texto;
-      item.style.color = valido ? "var(--success)" : "var(--danger)";
+      item.classList.add("password-rule-state");
+      item.classList.toggle("is-valid", valido);
+      item.classList.toggle("is-invalid", !valido);
     }
   });
 }
@@ -688,7 +724,8 @@ async function loginCarteiraIAM() {
             resBox.innerText = "Carteira digital nao liberada com este PIN. Acompanhe a inscricao pelo CPF ou entre com o ID/e-mail e a senha ja definida.";
           }
         } catch (statusError) {
-          console.warn("Nao foi possivel consultar o status do CPF apos falha de carteira:", statusError);
+          if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "Nao foi possivel consultar o status do CPF apos falha de carteira.", statusError);
+          else console.warn("Nao foi possivel consultar o status do CPF apos falha de carteira.");
         }
       }
       resBox.classList.remove('hidden');
@@ -702,7 +739,8 @@ async function loginCarteiraIAM() {
 
     finalizarLoginEstudanteIAM(login, senha, res);
   } catch (err) {
-    console.warn("Falha no login IAM da carteira:", err);
+    if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "Falha no login IAM da carteira.", err);
+    else console.warn("Falha no login IAM da carteira.");
     resBox.innerText = "Falha de ligação. Necessita de internet.";
     resBox.classList.remove('hidden');
   } finally {
@@ -720,6 +758,7 @@ function finalizarLoginEstudanteIAM(login, senha, res) {
   localStorage.setItem("MAESTRO_WALLET_CACHE", JSON.stringify(res));
   localStorage.setItem("MAESTRO_WALLET_CREDS", JSON.stringify({ id: login, senha }));
   sincronizarStudentIdentityMaestro(res, login);
+  if (typeof marcarCacheCarteiraMaestro === "function") marcarCacheCarteiraMaestro(res, "autenticarEstudanteIAM");
 
   renderizarCarteira(res);
   switchView('view-wallet');
@@ -808,7 +847,8 @@ async function salvarNovaSenhaPrimeiroAcesso() {
       switchView('view-login');
     }
   } catch (e) {
-    console.error("Erro ao salvar senha de primeiro acesso:", e);
+    if (typeof logMaestroSafe === "function") logMaestroSafe("error", "Erro ao salvar senha de primeiro acesso.", e);
+    else console.error("Erro ao salvar senha de primeiro acesso.");
     showToast("Erro de ligação ao salvar a senha.", "error");
   } finally {
     btn.innerText = "Salvar e Entrar";
@@ -988,7 +1028,8 @@ function obterCpfPrivacidadeEstudante() {
     const dados = JSON.parse(cacheBruto);
     return String(dados.cpf || dados.cpfAluno || "").replace(/\D/g, "");
   } catch (erro) {
-    console.warn("Não foi possível ler o CPF da carteira local:", erro);
+    if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "Nao foi possivel ler a identidade da carteira local.", erro);
+    else console.warn("Nao foi possivel ler a identidade da carteira local.");
     return "";
   }
 }
@@ -1023,7 +1064,8 @@ async function downloadDadosPessoais() {
 
     showToast("Arquivo JSON gerado com sucesso.", "success");
   } catch (erro) {
-    console.error("Erro ao baixar dados pessoais:", erro);
+    if (typeof logMaestroSafe === "function") logMaestroSafe("error", "Erro ao baixar dados pessoais.", erro);
+    else console.error("Erro ao baixar dados pessoais.");
     showToast("Falha de conexão ao exportar seus dados.", "error");
   }
 }
@@ -1065,7 +1107,8 @@ async function confirmarExclusaoConta() {
       switchView("view-aluno-menu");
     }, 1200);
   } catch (erro) {
-    console.error("Erro ao solicitar anonimização:", erro);
+    if (typeof logMaestroSafe === "function") logMaestroSafe("error", "Erro ao solicitar anonimizacao.", erro);
+    else console.error("Erro ao solicitar anonimizacao.");
     showToast("Falha de conexão ao solicitar a exclusão da conta.", "error");
   }
 }
@@ -1091,5 +1134,5 @@ function limparCarteiraLocalAposAnonimizacao() {
   if (walletActions) walletActions.classList.add("hidden");
 
   const painelMobilidade = document.getElementById("view-mobilidade");
-  if (painelMobilidade) painelMobilidade.style.display = "none";
+  if (painelMobilidade) painelMobilidade.classList.add("hidden");
 }

@@ -5,8 +5,8 @@
 {% include admin/login.html %}
 {% include admin/menu.html %}
 
-      <section id="view-notificacoes" class="view-section hidden">
-         <div class="form-card p-15-mb-10">
+      <section id="view-notificacoes" class="view-section admin-view admin-notifications-view hidden">
+         <div class="form-card p-15-mb-10 admin-panel-card admin-panel-toolbar">
             <div class="flex-between-center-mb-15">
                <h2 class="admin-section-title">🔔 CAIXA DE MENSAGENS</h2>
                <button onclick="limparInbox()" class="btn-clear-inbox">Limpar Tudo</button>
@@ -15,20 +15,20 @@
          </div>
          
          <div class="inbox-container grid-desktop">
-            <div class="loading-state-box"><div class="loader"></div><p>A carregar caixa de mensagens...</p></div>
+            <div class="loading-state-box dynamic-state-box dynamic-loading-state"><div class="loader"></div><p>A carregar caixa de mensagens...</p></div>
          </div>
          
          <button class="btn-solid dark-bg mt-15" onclick="switchView('view-admin-hub')">Voltar ao Menu</button>
       </section>
 
-      <section id="view-auditoria" class="view-section">
-         <div class="form-card p-15-mb-10">
+      <section id="view-auditoria" class="view-section admin-view admin-audit-view">
+         <div class="form-card p-15-mb-10 admin-panel-card admin-panel-toolbar admin-audit-toolbar">
             <div class="flex-between-center-mb-15">
                <h2 class="admin-section-title">📂 MESA DE AUDITORIA</h2>
                <button onclick="carregarFilaAuditoria()" class="btn-icon-refresh">🔄</button>
             </div>
             
-            <div class="auditoria-filters-row">
+            <div class="auditoria-filters-row admin-filter-bar">
                <input type="text" id="auditoria-pesquisa" class="input-field auditoria-filter-search" placeholder="Pesquisar por Nome, CPF ou E-mail..." onkeyup="aplicarFiltrosAuditoria()">
                <select id="auditoria-status" class="input-field auditoria-filter-select" onchange="aplicarFiltrosAuditoria()">
                   <option value="">Status (Todos)</option>
@@ -52,16 +52,16 @@
             <p class="admin-tip-text">A mostrar os casos mais antigos na fila (FIFO). Use a pesquisa para encontrar um aluno específico.</p>
          </div>
          
-         <div id="auditoria-fila-container" class="grid-desktop">
-            <div class="loading-state-box"><div class="loader"></div><p>A puxar a fila de trabalho...</p></div>
+         <div id="auditoria-fila-container" class="grid-desktop admin-audit-results">
+            <div class="loading-state-box dynamic-state-box dynamic-loading-state"><div class="loader"></div><p>A puxar a fila de trabalho...</p></div>
          </div>
          
          <button class="btn-solid dark-bg mt-15" onclick="switchView('view-admin-hub')">Voltar ao Menu</button>
       </section>
 
-      <section id="view-semestres" class="view-section">
-         <div class="form-card p-15-mb-10">
-            <div class="semestres-header-row">
+      <section id="view-semestres" class="view-section admin-view admin-semesters-view">
+         <div class="form-card p-15-mb-10 admin-panel-card admin-semesters-editor">
+            <div class="semestres-header-row admin-panel-header-row">
                <div>
                   <h2 class="admin-section-title">GESTAO DE SEMESTRES</h2>
                   <p class="semestres-header-desc">Supervisor e moderador podem criar, atualizar, arquivar e definir o ciclo oficial usado por auditoria, dashboard e carteira.</p>
@@ -75,7 +75,7 @@
                <span id="semestres-atual-id" class="semestre-atual-id">-</span>
             </div>
 
-            <div class="grid-desktop semestre-fields-grid">
+            <div class="grid-desktop semestre-fields-grid admin-semester-form-grid">
                <input type="text" id="semestre-id" class="input-field m-0" placeholder="ID: 2026_1">
                <input type="text" id="semestre-label" class="input-field m-0" placeholder="Nome exibido: 2026.1">
                <input type="number" id="semestre-ano" class="input-field m-0" placeholder="Ano">
@@ -99,8 +99,8 @@
             </div>
          </div>
 
-         <div id="semestres-lista-container" class="grid-desktop">
-            <div class="loading-state-box"><div class="loader"></div><p>A carregar semestres...</p></div>
+         <div id="semestres-lista-container" class="grid-desktop admin-semesters-list">
+            <div class="loading-state-box dynamic-state-box dynamic-loading-state"><div class="loader"></div><p>A carregar semestres...</p></div>
          </div>
 
          <button class="btn-solid dark-bg mt-15" onclick="switchView('view-admin-hub')">Voltar ao Menu</button>
@@ -163,58 +163,59 @@
          </div>
       </section>
 
-      <section id="view-fiscal" class="view-section">
-        <div class="form-card dark-form" id="app-fiscal">
-          <div class="form-header">
+      <section id="view-fiscal" class="view-section operational-view fiscal-view">
+        <div class="form-card dark-form fiscal-panel-card" id="app-fiscal">
+          <div class="form-header fiscal-panel-header">
             <h2>🛂 VALIDAÇÃO</h2>
             <p>Aponte a câmara para o QR Code do aluno</p>
           </div>
           
-          <button class="btn-solid dark-bg btn-scanner-action mb-10" id="btn-scanner" onclick="iniciarScanner()">
+          <button class="btn-solid dark-bg btn-scanner-action mb-10 fiscal-primary-scan-button" id="btn-scanner" onclick="iniciarScanner()">
             <span class="scanner-button-icon">📷</span> LER VÍDEO CONTÍNUO
           </button>
           
-          <button class="btn-solid accent-bg btn-scanner-action btn-scanner-native mb-15" id="btn-scanner-nativo" onclick="document.getElementById('input-qr-file').click()">
+          <button class="btn-solid accent-bg btn-scanner-action btn-scanner-native mb-15 fiscal-native-scan-button" id="btn-scanner-nativo" onclick="document.getElementById('input-qr-file').click()">
             <span class="scanner-button-icon">📱</span> USAR CÂMARA NATIVA
           </button>
           <input type="file" id="input-qr-file" accept="image/*" capture="environment" class="hidden" onchange="lerQRCodePorFoto(event)">
 
-          <div id="leitor-qr-container" class="hidden qr-scanner-admin-viewport">
+          <div id="leitor-qr-container" class="hidden qr-scanner-admin-viewport fiscal-scanner-box">
             <div id="leitor-qr"></div>
             <button class="btn-solid text-danger btn-cancel-scanner" onclick="fecharScanner()">❌ CANCELAR CÂMARA</button>
           </div>
 
-          <div class="divider-text">OU DIGITE O ID MANUALMENTE</div>
+          <div class="divider-text fiscal-manual-divider">OU DIGITE O ID MANUALMENTE</div>
 
-          <input type="text" id="id-fiscal" class="input-field uppercase text-center">
-          <button class="btn-solid accent-bg" id="btn-fiscal" onclick="validarFiscal()">VERIFICAR ESTUDANTE</button>
+          <input type="text" id="id-fiscal" class="input-field uppercase text-center fiscal-manual-input">
+          <button class="btn-solid accent-bg fiscal-verify-button" id="btn-fiscal" onclick="validarFiscal()">VERIFICAR ESTUDANTE</button>
           
           <button class="btn-text text-light mt-15" onclick="fecharModoFiscalizacao()">Voltar ao Menu</button>
         </div>
         
-        <div id="res-fiscal" class="result-container"></div>
+        <div id="res-fiscal" class="result-container fiscal-result-panel"></div>
       </section>
 
-      <section id="view-dashboard" class="view-section">
-        <div class="form-card dark-form p-15">
+      <section id="view-dashboard" class="view-section admin-view admin-dashboard-view">
+        <div class="form-card dark-form p-15 admin-panel-card admin-dashboard-card">
           <div class="form-header mb-20">
             <h2 class="text-primary">📊 DASHBOARD</h2>
             <p>Dados oficiais do semestre letivo</p>
           </div>
 
-          <div class="dash-kpi-grid">
-            <div class="dash-kpi"><strong id="kpi-ativos" class="text-success-val">-</strong><span>ATIVOS</span></div>
-            <div class="dash-kpi"><strong id="kpi-pendentes" class="text-warning-val">-</strong><span>NA FILA</span></div>
-            <div class="dash-kpi"><strong id="kpi-retidos" class="text-orange-val">-</strong><span>ATENÇÃO</span></div>
-            <div class="dash-kpi"><strong id="kpi-suspensos" class="text-danger-val">-</strong><span>INATIVOS</span></div>
+          <div class="dash-kpi-grid admin-dashboard-kpis">
+            <div class="dash-kpi dashboard-kpi-card dashboard-kpi-active"><strong id="kpi-ativos" class="text-success-val">-</strong><span>ATIVOS</span></div>
+            <div class="dash-kpi dashboard-kpi-card dashboard-kpi-queue"><strong id="kpi-pendentes" class="text-warning-val">-</strong><span>NA FILA</span></div>
+            <div class="dash-kpi dashboard-kpi-card dashboard-kpi-review"><strong id="kpi-retidos" class="text-orange-val">-</strong><span>ATENÇÃO</span></div>
+            <div class="dash-kpi dashboard-kpi-card dashboard-kpi-inactive"><strong id="kpi-suspensos" class="text-danger-val">-</strong><span>INATIVOS</span></div>
           </div>
+          <div id="dashboard-async-state" class="dashboard-async-state hidden" aria-live="polite"></div>
 
-          <div class="dash-box">
+          <div class="dash-box admin-dashboard-status-card dashboard-chart-card">
             <h3>Status Global</h3>
             <div class="chart-wrapper"><canvas id="chart-status"></canvas></div>
           </div>
 
-          <div class="dash-box">
+          <div class="dash-box admin-dashboard-usage-card dashboard-usage-card">
             <div class="flex-between-fs11-mb5">
               <span class="text-light">Motor Gemini IA (Gasto/Limite OCR)</span>
               <strong id="kpi-ia-text" class="text-accent">- / -</strong>
@@ -222,22 +223,22 @@
             <div class="progress-track"><div id="bar-ia-usage" class="progress-fill"></div></div>
           </div>
 
-          <div class="dash-tabs mb-10">
+          <div class="dash-tabs mb-10 admin-dashboard-tabs">
             <button class="dash-tab active" id="tab-logistica" onclick="mudarAbaDashboard('logistica')">Visão Geral</button>
             <button class="dash-tab" id="tab-analise" onclick="mudarAbaDashboard('analise')">BI (Cruzamento)</button>
             <button class="dash-tab" id="tab-noturno" onclick="mudarAbaDashboard('noturno')">Rotas 23h</button>
             <button class="dash-tab" id="tab-inclusao" onclick="mudarAbaDashboard('inclusao')">Inclusão</button>
           </div>
 
-          <div id="dash-area-logistica" class="grid-desktop">
-            <div class="dash-box"><h3>Instituições Top 5</h3><div class="chart-wrapper"><canvas id="chart-instituicoes"></canvas></div></div>
-            <div class="dash-box"><h3>Dias de Utilização</h3><div class="chart-wrapper"><canvas id="chart-dias"></canvas></div></div>
-            <div class="dash-box"><h3>Turnos</h3><div class="chart-wrapper"><canvas id="chart-turnos"></canvas></div></div>
-            <div class="dash-box"><h3>Rotas Ativas</h3><div class="chart-wrapper"><canvas id="chart-rotas"></canvas></div></div>
+          <div id="dash-area-logistica" class="grid-desktop admin-dashboard-chart-grid">
+            <div class="dash-box dashboard-chart-card"><h3>Instituições Top 5</h3><div class="chart-wrapper"><canvas id="chart-instituicoes"></canvas></div></div>
+            <div class="dash-box dashboard-chart-card"><h3>Dias de Utilização</h3><div class="chart-wrapper"><canvas id="chart-dias"></canvas></div></div>
+            <div class="dash-box dashboard-chart-card"><h3>Turnos</h3><div class="chart-wrapper"><canvas id="chart-turnos"></canvas></div></div>
+            <div class="dash-box dashboard-chart-card"><h3>Rotas Ativas</h3><div class="chart-wrapper"><canvas id="chart-rotas"></canvas></div></div>
           </div>
 
           <div id="dash-area-analise" class="hidden">
-             <div class="dash-box dash-free-analysis-box">
+             <div class="dash-box dash-free-analysis-box dashboard-chart-card dashboard-bi-card">
                 <div class="dash-bi-header-row">
                    <h3 class="bi-analysis-title">🔍 Análise Livre</h3>
                    <div class="text-right">
@@ -257,17 +258,17 @@
                 
                 <div class="mb-15">
                    <strong class="bi-category-title">INSTITUIÇÕES</strong>
-                   <div id="container-chips-inst" class="chip-group"></div>
+                   <div id="container-chips-inst" class="chip-group dashboard-chip-group"></div>
                 </div>
 
                 <div class="mb-15">
                    <strong class="bi-category-title">TURNOS</strong>
-                   <div id="container-chips-turno" class="chip-group"></div>
+                   <div id="container-chips-turno" class="chip-group dashboard-chip-group"></div>
                 </div>
                 
                 <div class="mb-20">
                    <strong class="bi-category-title">DIAS DA SEMANA</strong>
-                   <div id="container-chips-dia" class="chip-group"></div>
+                   <div id="container-chips-dia" class="chip-group dashboard-chip-group"></div>
                 </div>
                 
                 <div class="chart-wrapper"><canvas id="chart-bi"></canvas></div>
@@ -275,16 +276,16 @@
              </div>
           </div>
 
-          <div id="dash-area-noturno" class="hidden grid-desktop">
-            <div class="dash-box"><h3>Adesão Rota da Madrugada</h3><div class="chart-wrapper"><canvas id="chart-adesao-23h"></canvas></div></div>
-            <div class="dash-box"><h3>Bairros de Desembarque</h3><div class="chart-wrapper chart-wrapper-h300"><canvas id="chart-bairros-23h"></canvas></div></div>
+          <div id="dash-area-noturno" class="hidden grid-desktop admin-dashboard-chart-grid">
+            <div class="dash-box dashboard-chart-card"><h3>Adesão Rota da Madrugada</h3><div class="chart-wrapper"><canvas id="chart-adesao-23h"></canvas></div></div>
+            <div class="dash-box dashboard-chart-card"><h3>Bairros de Desembarque</h3><div class="chart-wrapper chart-wrapper-h300"><canvas id="chart-bairros-23h"></canvas></div></div>
           </div>
 
-          <div id="dash-area-inclusao" class="hidden grid-desktop">
-            <div class="dash-box"><h3>Estagiários</h3><div class="chart-wrapper"><canvas id="chart-estagio"></canvas></div></div>
-            <div class="dash-box"><h3>Acessibilidade (PCD)</h3><div class="chart-wrapper"><canvas id="chart-pcd"></canvas></div></div>
-            <div class="dash-box"><h3>Menores de Idade</h3><div class="chart-wrapper"><canvas id="chart-menor"></canvas></div></div>
-            <div class="dash-box"><h3>Acompanhados (Filhos)</h3><div class="chart-wrapper"><canvas id="chart-acompanhado"></canvas></div></div>
+          <div id="dash-area-inclusao" class="hidden grid-desktop admin-dashboard-chart-grid">
+            <div class="dash-box dashboard-chart-card"><h3>Estagiários</h3><div class="chart-wrapper"><canvas id="chart-estagio"></canvas></div></div>
+            <div class="dash-box dashboard-chart-card"><h3>Acessibilidade (PCD)</h3><div class="chart-wrapper"><canvas id="chart-pcd"></canvas></div></div>
+            <div class="dash-box dashboard-chart-card"><h3>Menores de Idade</h3><div class="chart-wrapper"><canvas id="chart-menor"></canvas></div></div>
+            <div class="dash-box dashboard-chart-card"><h3>Acompanhados (Filhos)</h3><div class="chart-wrapper"><canvas id="chart-acompanhado"></canvas></div></div>
           </div>
 
           <button class="btn-solid dark-bg mt-15" onclick="switchView('view-admin-hub')">Voltar ao Menu</button>

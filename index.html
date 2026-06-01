@@ -6,13 +6,13 @@
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://script.google.com https://*.googleusercontent.com https://cdn.jsdelivr.net https://*.googleapis.com https://*.firebaseio.com https://www.gstatic.com https://unpkg.com; manifest-src 'self' blob: data:; worker-src 'self' blob:;">
+    content="default-src 'self'; base-uri 'self'; form-action 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://script.google.com https://*.googleusercontent.com https://cdn.jsdelivr.net https://*.googleapis.com https://*.firebaseio.com https://www.gstatic.com https://unpkg.com; manifest-src 'self' blob: data:; worker-src 'self' blob:; object-src 'self' data: blob:; frame-src 'self' data: blob: https://drive.google.com https://*.googleusercontent.com;">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
   <title>Portal Maestro</title>
   <script>
     (function () {
-      var MAESTRO_FRONTEND_VERSION = "12.22.0";
+      var MAESTRO_FRONTEND_VERSION = "12.37.0";
       var MAESTRO_DEFAULT_CLIENT_URL = "https://script.google.com/macros/s/AKfycbzCd37kAa5r-6hjAHOXvwSPRXdHUWiQzfHygKdS_HdUW60FOUZzr5KkR2x57nTJeBJ0PA/exec";
       var VERSION_KEY = "MAESTRO_FRONTEND_VERSION";
       var RESET_KEY = "MAESTRO_FRONTEND_RESETTING";
@@ -50,6 +50,32 @@
         localStorage.setItem("MAESTRO_CLIENT_URL", MAESTRO_DEFAULT_CLIENT_URL);
       }
 
+      if (versionChanged || backendChanged) {
+        [
+          "MAESTRO_DASH_STATS",
+          "MAESTRO_THEME_CACHE",
+          "MAESTRO_LISTS_CACHE",
+          "MAESTRO_LISTS_CACHE_INSCRICAO",
+          "MAESTRO_AUDIT_CACHE",
+          "MAESTRO_COMMUNICATION_CACHE",
+          "MAESTRO_COMMUNICATION_CACHE_AVISOS",
+          "MAESTRO_COMMUNICATION_CACHE_MURAL",
+          "MAESTRO_MOBILITY_CACHE",
+          "MAESTRO_CACHE_THEME",
+          "MAESTRO_CACHE_DASHBOARD",
+          "MAESTRO_CACHE_LISTS",
+          "MAESTRO_CACHE_AUDIT",
+          "MAESTRO_CACHE_COMMUNICATION",
+          "MAESTRO_CACHE_MOBILITY",
+          "MAESTRO_CACHE_META",
+          "MAESTRO_CACHE_SCHEMA_VERSION",
+          "MAESTRO_ACTIVE_SW_VERSION",
+          "MAESTRO_ACTIVE_SW_CACHE"
+        ].forEach(function (key) {
+          try { localStorage.removeItem(key); } catch (error) { }
+        });
+      }
+
       if (backendChanged) {
         [
           "MAESTRO_TOKEN",
@@ -59,12 +85,13 @@
           "MAESTRO_OPERADOR_NIVEL",
           "MAESTRO_WALLET_CACHE",
           "MAESTRO_OFFLINE_WALLET",
-          "MAESTRO_DASH_STATS",
+          "MAESTRO_WALLET_CREDS",
+          "MAESTRO_FCM_TOKEN",
+          "MAESTRO_FCM_TOKEN_TEMP",
+          "FCM_SYNCED_ID",
           "MAESTRO_THEME_CONFIG",
           "MAESTRO_TENANT_CONTEXT",
-          "MAESTRO_SEMESTER_CONTEXT",
-          "MAESTRO_THEME_CACHE",
-          "MAESTRO_CACHE_META"
+          "MAESTRO_SEMESTER_CONTEXT"
         ].forEach(function (key) {
           try { localStorage.removeItem(key); } catch (error) { }
         });
@@ -89,6 +116,17 @@
             }));
           });
         })
+        .then(function () {
+          if (!window.indexedDB) return null;
+          return Promise.all(["MaestroOfflineDB", "MaestroDB"].map(function (dbName) {
+            return new Promise(function (resolve) {
+              var request = indexedDB.deleteDatabase(dbName);
+              request.onsuccess = function () { resolve(true); };
+              request.onerror = function () { resolve(false); };
+              request.onblocked = function () { resolve(false); };
+            });
+          }));
+        })
         .catch(function () { })
         .then(function () {
           var url = new URL(window.location.href);
@@ -106,14 +144,14 @@
   <meta name="apple-mobile-web-app-title" content="Maestro">
   <meta name="application-name" content="Maestro">
 
-  <link rel="manifest" href="manifest.json?v=12.22">
+  <link rel="manifest" href="manifest.json?v=12.37">
   <link id="apple-touch-icon" rel="apple-touch-icon" href="icone.png">
   <link rel="icon" type="image/png" href="icone.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
-  <link rel="stylesheet" href="style.css?v=12.22">
+  <link rel="stylesheet" href="style.css?v=12.37">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet.marker.slideto@0.2.0/Leaflet.Marker.SlideTo.js"></script>
@@ -126,6 +164,7 @@
 </head>
 
 <body>
+  <a href="#app-content" class="skip-link">Ir para o conteudo principal</a>
 
   <div id="splash-screen" class="splash-overlay">
     <div class="splash-content">
@@ -137,8 +176,8 @@
 
   {% include modais.html %}
 
-  <div class="app-wrapper">
-    <header class="app-header app-header-global" id="global-header">
+  <div class="app-wrapper maestro-shell" id="app-shell" data-maestro-shell="public">
+    <header class="app-header app-header-global" id="global-header" role="banner">
       <div id="header-left-actions">
         <button id="btn-header-config" class="icon-btn header-btn" onclick="toggleSidebar('left')" title="Configurações">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
@@ -166,7 +205,7 @@
       </button>
     </header>
 
-    <main class="app-content">
+    <main class="app-content" id="app-content" tabindex="-1">
 
       <div id="mural-avisos-header" class="section-title hidden">📌 AVISOS DA SEMANA</div>
       <div id="mural-avisos" class="avisos-container hidden"></div>
@@ -181,7 +220,7 @@
 
     </main>
 
-    <footer class="app-footer">
+    <footer class="app-footer" role="contentinfo">
       <p id="ui-endereco" class="hidden"></p>
       <p id="ui-email" class="hidden"></p>
       <p id="ui-cnpj" class="hidden"></p>
@@ -202,29 +241,31 @@
     </footer>
   </div>
 
-  <div id="modal-selecao-rota" class="bottom-sheet-overlay hidden">
-    <div class="bottom-sheet-content">
-      <div class="form-header">
-        <h2>Selecione o Veículo</h2>
+  <div id="modal-selecao-rota" class="bottom-sheet-overlay route-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-rota-title" data-modal-profile="driver" data-modal-tone="route" data-modal-initial-focus="#select-frota-motorista">
+    <div class="bottom-sheet-content maestro-modal-panel route-modal-panel maestro-modal-panel-route" tabindex="-1">
+      <div class="form-header maestro-modal-header">
+        <h2 id="modal-rota-title">Selecione o Veículo</h2>
         <p>Apenas rotas do seu turno atual estão disponíveis.</p>
       </div>
       <label class="input-label">VEÍCULO / ROTA:</label>
       <select id="select-frota-motorista" class="input-field"></select>
-      <button onclick="uiIniciarRota()" class="btn-solid route-start-button">▶ INICIAR ROTA</button>
-      <button onclick="fecharModalSelecaoRota()" class="btn-text">Cancelar</button>
+      <div class="maestro-modal-actions">
+        <button onclick="uiIniciarRota()" class="btn-solid route-start-button maestro-modal-primary">▶ INICIAR ROTA</button>
+        <button onclick="fecharModalSelecaoRota()" class="btn-text maestro-modal-secondary">Cancelar</button>
+      </div>
     </div>
   </div>
 
 
 
-  <div id="toast"></div>
+  <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
-  <script src="app.js?v=12.22" defer></script>
+  <script src="app.js?v=12.37" defer></script>
 
   <div id="ui-overlay" class="ui-overlay" onclick="closeAllSidebars()"></div>
 
   <!-- LEFT SIDEBAR: CONFIGS -->
-  <aside id="sidebar-left" class="sidebar-drawer sidebar-left">
+  <aside id="sidebar-left" class="sidebar-drawer sidebar-left" aria-label="Configurações e navegação auxiliar">
     <h3 class="sidebar-title">⚙️ Configurações</h3>
     <div class="prefs-group prefs-panel">
       <p class="input-label prefs-label">Preferências do Sistema</p>
@@ -293,7 +334,7 @@
   </aside>
 
   <!-- RIGHT SIDEBAR: INBOX -->
-  <aside id="sidebar-right" class="sidebar-drawer sidebar-right">
+  <aside id="sidebar-right" class="sidebar-drawer sidebar-right" aria-label="Central de notificações">
     <h3 class="sidebar-title">🔔 Notificações</h3>
     <p class="sidebar-right-desc">Histórico dos últimos 7 dias (Offline).</p>
     <div class="inbox-container">

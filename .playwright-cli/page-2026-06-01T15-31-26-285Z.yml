@@ -1,0 +1,92 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - img "Carregando..."
+    - paragraph [ref=e5]: A sincronizar portal...
+  - generic [ref=e6]:
+    - banner [ref=e7]:
+      - button "Configurações" [ref=e9] [cursor=pointer]:
+        - img [ref=e10]
+      - generic [ref=e12]:
+        - img "Logo do Portal Maestro" [ref=e13]
+        - heading "MAESTRO - SMEB" [level=1] [ref=e14]
+        - paragraph [ref=e15]: Secretaria Municipal de Educação Básica
+      - button "Notificações" [ref=e16] [cursor=pointer]:
+        - img [ref=e17]
+    - main [ref=e19]:
+      - generic [ref=e20]:
+        - generic [ref=e21]: Selecione o seu perfil de acesso
+        - generic [ref=e22]:
+          - button "🎓 Acesso do Estudante Carteira Digital e Consulta de Status" [ref=e23] [cursor=pointer]:
+            - generic [ref=e24]: 🎓
+            - generic [ref=e25]:
+              - strong [ref=e26]: Acesso do Estudante
+              - generic [ref=e27]: Carteira Digital e Consulta de Status
+          - button "🗣️ Voz da Comunidade Ver Mural da Semana" [ref=e28] [cursor=pointer]:
+            - generic [ref=e29]: 🗣️
+            - generic [ref=e30]:
+              - strong [ref=e31]: Voz da Comunidade
+              - generic [ref=e32]: Ver Mural da Semana
+      - text: Posicione o rosto no oval
+    - contentinfo [ref=e33]:
+      - generic [ref=e34]:
+        - link "📖 Sobre o Maestro" [ref=e35] [cursor=pointer]:
+          - /url: "#"
+        - link "🎧 Suporte" [ref=e36] [cursor=pointer]:
+          - /url: mailto:teste@falso.com
+        - link "🔒 Privacidade" [ref=e37] [cursor=pointer]:
+          - /url: "#"
+        - link "📜 Termos de Uso" [ref=e38] [cursor=pointer]:
+          - /url: "#"
+      - generic [ref=e41]: Operando Offline
+      - generic [ref=e42]: ⚡ POWERED BY MAESTRO
+  - complementary [ref=e43]:
+    - heading "⚙️ Configurações" [level=3] [ref=e44]
+    - generic [ref=e45]:
+      - paragraph [ref=e46]: Preferências do Sistema
+      - generic [ref=e47]:
+        - paragraph [ref=e48]: 🌗 Modo Escuro
+        - generic [ref=e49]:
+          - checkbox
+      - generic [ref=e51]:
+        - paragraph [ref=e52]: 🔔 Notificações
+        - generic [ref=e53]:
+          - checkbox
+      - generic [ref=e55]:
+        - paragraph [ref=e56]: 📍 Partilhar GPS
+        - generic [ref=e57]:
+          - checkbox
+      - generic [ref=e59]:
+        - paragraph [ref=e60]: 📷 Câmera
+        - generic [ref=e61]:
+          - checkbox
+      - generic [ref=e63]:
+        - paragraph [ref=e64]: ✈️ Forçar Offline
+        - generic [ref=e65]:
+          - checkbox
+    - button "🛡️ Validar Documento Verificar autenticidade de declaração" [ref=e67] [cursor=pointer]:
+      - generic [ref=e68]: 🛡️
+      - generic [ref=e69]:
+        - strong [ref=e70]: Validar Documento
+        - generic [ref=e71]: Verificar autenticidade de declaração
+    - button "📖 Sobre o Maestro Como funciona, cores e status" [ref=e72] [cursor=pointer]:
+      - generic [ref=e73]: 📖
+      - generic [ref=e74]:
+        - strong [ref=e75]: Sobre o Maestro
+        - generic [ref=e76]: Como funciona, cores e status
+    - button "🔐 Acesso da Secretaria Acesso Restrito" [ref=e77] [cursor=pointer]:
+      - generic [ref=e78]: 🔐
+      - generic [ref=e79]:
+        - strong [ref=e80]: Acesso da Secretaria
+        - generic [ref=e81]: Acesso Restrito
+    - generic [ref=e82] [cursor=pointer]:
+      - generic [ref=e83]: 📱
+      - generic [ref=e84]:
+        - strong [ref=e85]: Instalar Maestro
+        - generic [ref=e86]: Adicionar ao ecrã inicial
+    - generic [ref=e87]:
+      - button "⚠️ Limpar Dados do Aplicativo" [ref=e88] [cursor=pointer]
+      - paragraph [ref=e89]: Use esta opção se o portal apresentar lentidão ou para forçar a atualização do sistema. Exigirá novo login.
+  - complementary [ref=e90]:
+    - heading "🔔 Notificações" [level=3] [ref=e91]
+    - paragraph [ref=e92]: Histórico dos últimos 7 dias (Offline).
+    - button "Limpar Tudo" [ref=e96] [cursor=pointer]

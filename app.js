@@ -23,4 +23,6 @@
 {% include js/admin_fiscal.js %}
 {% include js/admin_sos.js %}
 
-console.log("🚀 [Jekyll] Maestro Bundle carregado com sucesso!");
+if (localStorage.getItem("MAESTRO_DEBUG") === "true" && typeof logMaestroSafe === "function") {
+  logMaestroSafe("info", "[Jekyll] Maestro Bundle carregado com sucesso.");
+}

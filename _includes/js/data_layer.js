@@ -8,8 +8,18 @@
 (function initMaestroDataLayer(window) {
   "use strict";
 
-  const DATA_LAYER_VERSION = "2.2.0";
-  const CACHE_SCHEMA_VERSION = "maestro-data-schema-v1";
+  const DATA_LAYER_VERSION = "2.3.1";
+  const CACHE_SCHEMA_VERSION = "maestro-data-schema-v2";
+  const OFFLINE_DB_NAME = "MaestroOfflineDB";
+  const OFFLINE_DB_VERSION = 2;
+  const SECOND_MS = 1000;
+  const MINUTE_MS = SECOND_MS * 60;
+  const HOUR_MS = MINUTE_MS * 60;
+  const DAY_MS = HOUR_MS * 24;
+  const OFFLINE_STORES = {
+    inbox: "notifications",
+    cache: "cacheEntries"
+  };
   const STORAGE_KEYS = {
     tenantContext: "MAESTRO_TENANT_CONTEXT",
     themeConfig: "MAESTRO_THEME_CONFIG",
@@ -23,22 +33,81 @@
   const CACHE_DOMAINS = {
     theme: {
       version: "theme-v2",
-      derivedKeys: [STORAGE_KEYS.themeConfig, STORAGE_KEYS.tenantContext, STORAGE_KEYS.semesterContext]
+      ttlMs: DAY_MS * 7,
+      primaryKey: "MAESTRO_THEME_CACHE",
+      derivedKeys: [STORAGE_KEYS.themeConfig, STORAGE_KEYS.tenantContext, STORAGE_KEYS.semesterContext],
+      keyPrefixes: ["MAESTRO_THEME_CACHE"]
     },
     wallet: {
-      version: "wallet-v1",
+      version: "wallet-v2",
+      ttlMs: HOUR_MS * 12,
+      primaryKey: "MAESTRO_WALLET_CACHE",
       derivedKeys: [STORAGE_KEYS.studentIdentity],
-      legacyKeys: ["MAESTRO_WALLET_CACHE", "MAESTRO_OFFLINE_WALLET"]
+      legacyKeys: ["MAESTRO_WALLET_CACHE", "MAESTRO_OFFLINE_WALLET"],
+      keyPrefixes: ["MAESTRO_WALLET_CACHE", "MAESTRO_OFFLINE_WALLET"],
+      sensitiveKeys: ["MAESTRO_WALLET_CREDS", "MAESTRO_EST_TOKEN"]
     },
     dashboard: {
-      version: "dashboard-v1",
-      derivedKeys: ["MAESTRO_DASH_STATS"]
+      version: "dashboard-v2",
+      ttlMs: HOUR_MS * 6,
+      primaryKey: "MAESTRO_DASH_STATS",
+      derivedKeys: ["MAESTRO_DASH_STATS"],
+      keyPrefixes: ["MAESTRO_DASH_STATS", "MAESTRO_DASHBOARD_CACHE"]
+    },
+    lists: {
+      version: "lists-v1",
+      ttlMs: HOUR_MS,
+      primaryKey: "MAESTRO_LISTS_CACHE",
+      derivedKeys: ["MAESTRO_LISTS_CACHE"],
+      legacyKeys: ["MAESTRO_LISTA_ESTUDANTES"],
+      keyPrefixes: ["MAESTRO_LISTS_CACHE"]
+    },
+    audit: {
+      version: "audit-v1",
+      ttlMs: MINUTE_MS * 5,
+      primaryKey: "MAESTRO_AUDIT_CACHE",
+      derivedKeys: ["MAESTRO_AUDIT_CACHE"],
+      keyPrefixes: ["MAESTRO_AUDIT_CACHE"]
+    },
+    communication: {
+      version: "communication-v1",
+      ttlMs: MINUTE_MS * 10,
+      primaryKey: "MAESTRO_COMMUNICATION_CACHE",
+      derivedKeys: ["MAESTRO_COMMUNICATION_CACHE"],
+      keyPrefixes: ["MAESTRO_COMMUNICATION_CACHE"]
+    },
+    mobility: {
+      version: "mobility-v1",
+      ttlMs: SECOND_MS * 30,
+      primaryKey: "MAESTRO_MOBILITY_CACHE",
+      derivedKeys: ["MAESTRO_MOBILITY_CACHE"],
+      keyPrefixes: ["MAESTRO_MOBILITY_CACHE"]
     },
     session: {
-      version: "session-v1",
+      version: "session-v2",
+      ttlMs: HOUR_MS * 8,
+      primaryKey: "MAESTRO_SESSION_CACHE",
       derivedKeys: [STORAGE_KEYS.operatorSession],
-      legacyKeys: ["MAESTRO_TOKEN"]
+      legacyKeys: ["MAESTRO_TOKEN"],
+      keyPrefixes: ["MAESTRO_SESSION_CACHE"],
+      sensitiveKeys: [
+        "MAESTRO_TOKEN",
+        "MAESTRO_OPERADOR_EMAIL",
+        "MAESTRO_FCM_TOKEN",
+        "MAESTRO_FCM_TOKEN_TEMP",
+        "FCM_SYNCED_ID"
+      ]
     }
+  };
+
+  const ASYNC_STATE_TYPES = {
+    idle: "idle",
+    loading: "loading",
+    empty: "empty",
+    error: "error",
+    offline: "offline",
+    stale: "stale",
+    success: "success"
   };
 
   const BUSINESS_RULES = {
@@ -290,11 +359,168 @@
     return true;
   }
 
+  function sanitizeHTML(html) {
+    const raw = String(html || "");
+    if (!raw) return "";
+    if (!window.document || !window.document.createElement) return escapeHTML(raw);
+
+    const template = window.document.createElement("template");
+    template.innerHTML = raw;
+    const allowedTags = {
+      A: true, B: true, BR: true, BUTTON: true, CODE: true, DIV: true, EM: true,
+      H1: true, H2: true, H3: true, H4: true, H5: true, H6: true,
+      IMG: true, LI: true, OL: true, P: true, SMALL: true, SPAN: true, STRONG: true,
+      TABLE: true, TBODY: true, TD: true, TH: true, THEAD: true, TR: true, UL: true
+    };
+    const allowedAttr = /^(aria-[\w-]+|data-[\w-]+|class|id|role|title|type|disabled|tabindex)$/i;
+
+    Array.from(template.content.querySelectorAll("*")).forEach(node => {
+      if (!allowedTags[node.tagName]) {
+        node.replaceWith(window.document.createTextNode(node.textContent || ""));
+        return;
+      }
+
+      Array.from(node.attributes).forEach(attr => {
+        const name = attr.name;
+        const lowerName = name.toLowerCase();
+        const value = attr.value;
+        if (lowerName.indexOf("on") === 0 || lowerName === "style") {
+          node.removeAttribute(name);
+          return;
+        }
+        if (["href", "src"].includes(lowerName)) {
+          const safe = safeUrl(value);
+          if (safe) node.setAttribute(name, safe);
+          else node.removeAttribute(name);
+          return;
+        }
+        if (lowerName === "target") {
+          node.setAttribute("target", value === "_blank" ? "_blank" : "_self");
+          if (value === "_blank") node.setAttribute("rel", "noopener noreferrer");
+          return;
+        }
+        if (lowerName === "rel") {
+          node.setAttribute("rel", "noopener noreferrer");
+          return;
+        }
+        if (!allowedAttr.test(name)) node.removeAttribute(name);
+      });
+    });
+
+    return template.innerHTML;
+  }
+
   function setSafeHTML(elementOrId, html) {
     const element = typeof elementOrId === "string" ? window.document.getElementById(elementOrId) : elementOrId;
     if (!element) return false;
-    element.innerHTML = String(html || "");
+    element.innerHTML = sanitizeHTML(html);
     return true;
+  }
+
+  function redactSensitiveText(value) {
+    let text = safeString(value);
+    if (!text) return text;
+    text = text.replace(/(\d{3})\.?\d{3}\.?\d{3}-?(\d{2})/g, "$1.***.***-$2");
+    text = text.replace(/([A-Z0-9._%+-])[A-Z0-9._%+-]*@([A-Z0-9.-]+\.[A-Z]{2,})/gi, "$1***@$2");
+    text = text.replace(/\b(Bearer\s+)?[A-Za-z0-9_-]{24,}\.[A-Za-z0-9_-]{12,}\.[A-Za-z0-9_-]{12,}\b/g, "[token-redacted]");
+    text = text.replace(/\b[A-Za-z0-9_-]{48,}\b/g, "[token-redacted]");
+    return text;
+  }
+
+  function sanitizeLogDetails(value, depth) {
+    const currentDepth = Number(depth) || 0;
+    if (value instanceof Error) {
+      return {
+        name: safeString(value.name || "Error"),
+        message: redactSensitiveText(value.message || ""),
+        code: value.code || "",
+        status: value.status || ""
+      };
+    }
+    if (typeof value === "string") return redactSensitiveText(value);
+    if (value === null || value === undefined || typeof value !== "object") return value;
+    if (currentDepth >= 3) return "[object-redacted]";
+    if (Array.isArray(value)) {
+      return value.slice(0, 10).map(item => sanitizeLogDetails(item, currentDepth + 1));
+    }
+
+    const sanitized = {};
+    Object.keys(value).slice(0, 24).forEach(key => {
+      if (/cpf|token|senha|password|pin|email|base64|foto|arquivo|documento|auth|cookie|payload/i.test(key)) {
+        sanitized[key] = "[redacted]";
+      } else {
+        sanitized[key] = sanitizeLogDetails(value[key], currentDepth + 1);
+      }
+    });
+    return sanitized;
+  }
+
+  function logSafe(level, message, details) {
+    const consoleRef = window.console || {};
+    const method = ["error", "warn", "info", "debug", "log"].includes(level) ? level : "log";
+    const writer = typeof consoleRef[method] === "function" ? consoleRef[method].bind(consoleRef) : null;
+    if (!writer) return false;
+    const safeMessage = redactSensitiveText(message);
+    if (details === undefined) writer(safeMessage);
+    else writer(safeMessage, sanitizeLogDetails(details, 0));
+    return true;
+  }
+
+  function renderAsyncState(type, options) {
+    const opts = options || {};
+    const state = ASYNC_STATE_TYPES[type] ? type : ASYNC_STATE_TYPES.idle;
+    const defaults = {
+      offline: { title: "Modo offline", message: "Dados exibidos do cache local." },
+      stale: { title: "Dados em cache", message: "Conteudo atualizado em segundo plano." },
+      success: { title: "Atualizado", message: "Dados sincronizados com sucesso." },
+      empty: { title: "Nada encontrado", message: "" },
+      error: { title: "Nao foi possivel carregar", message: "" },
+      loading: { title: "", message: "A carregar..." }
+    };
+    const fallback = defaults[state] || {};
+    const title = safeText(opts.title || fallback.title || "", "");
+    const message = safeMessage(opts.message || fallback.message || "", "");
+    const icon = safeText(opts.icon || "", "");
+    const extraClass = safeText(opts.className || "", "").replace(/[^A-Za-z0-9_\-\s]/g, "");
+    const loader = state === ASYNC_STATE_TYPES.loading ? '<div class="loader loader-center"></div>' : "";
+    const iconHtml = icon ? `<span class="dynamic-state-icon" aria-hidden="true">${escapeHTML(icon)}</span>` : "";
+    const titleHtml = title ? `<strong class="dynamic-state-title">${escapeHTML(title)}</strong>` : "";
+    const messageHtml = message ? `<p class="dynamic-state-message">${escapeHTML(message)}</p>` : "";
+    const staleMeta = opts.updatedAt ? `<small class="dynamic-state-meta">Atualizado em ${escapeHTML(opts.updatedAt)}</small>` : "";
+
+    return `<div class="dynamic-state-box dynamic-${state}-state ${extraClass}" data-async-state="${state}" role="${state === "error" ? "alert" : "status"}">${loader}${iconHtml}${titleHtml}${messageHtml}${staleMeta}</div>`;
+  }
+
+  function setAsyncState(elementOrId, type, options) {
+    return setSafeHTML(elementOrId, renderAsyncState(type, options || {}));
+  }
+
+  function formatCacheTimestamp(value) {
+    const time = toTimestamp(value);
+    if (!time) return "";
+    try {
+      return new Date(time).toLocaleString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    } catch (err) {
+      return "";
+    }
+  }
+
+  function renderCacheState(domain, cacheResult, options) {
+    const opts = options || {};
+    const cache = cacheResult || {};
+    const state = opts.state || (cache.expired ? "offline" : (cache.stale ? "stale" : "success"));
+    const updatedAt = opts.updatedAt || (cache.meta && cache.meta.updatedAt ? formatCacheTimestamp(cache.meta.updatedAt) : "");
+    return renderAsyncState(state, {
+      title: opts.title,
+      message: opts.message,
+      className: opts.className || ("cache-state cache-state-" + safeDomId(domain || "generic")),
+      updatedAt: updatedAt
+    });
   }
 
   function pickFirst() {
@@ -445,6 +671,275 @@
     return setLocal(key, JSON.stringify(value));
   }
 
+  function toTimestamp(value) {
+    if (!value) return 0;
+    const time = value instanceof Date ? value.getTime() : new Date(value).getTime();
+    return Number.isFinite(time) ? time : 0;
+  }
+
+  function getCacheDomainConfig(domain) {
+    return CACHE_DOMAINS[safeString(domain)] || null;
+  }
+
+  function getDomainStorageKey(domain, options) {
+    const config = getCacheDomainConfig(domain);
+    const opts = options || {};
+    return safeString(opts.key || opts.storageKey || (config && (config.primaryKey || config.storageKey)) || ("MAESTRO_CACHE_" + safeString(domain).toUpperCase()));
+  }
+
+  function getCurrentTenantIdSafe() {
+    try {
+      return getTenantContext().tenantId || "";
+    } catch (err) {
+      return "";
+    }
+  }
+
+  function getCurrentSemesterIdSafe() {
+    try {
+      return getSemesterContext().semestreId || "";
+    } catch (err) {
+      return "";
+    }
+  }
+
+  function resolveCacheTtlMs(domain, options) {
+    const config = getCacheDomainConfig(domain);
+    const opts = options || {};
+    if (Number.isFinite(Number(opts.ttlMs))) return Math.max(0, Number(opts.ttlMs));
+    if (config && Number.isFinite(Number(config.ttlMs))) return Math.max(0, Number(config.ttlMs));
+    return 0;
+  }
+
+  function buildCacheEnvelope(domain, data, options) {
+    const config = getCacheDomainConfig(domain);
+    const opts = options || {};
+    const now = new Date();
+    const ttlMs = resolveCacheTtlMs(domain, opts);
+    const staleMs = Number.isFinite(Number(opts.staleMs)) ? Math.max(0, Number(opts.staleMs)) : Math.floor(ttlMs / 2);
+    const updatedAt = now.toISOString();
+    const expiresAt = ttlMs > 0 ? new Date(now.getTime() + ttlMs).toISOString() : "";
+    const staleAt = staleMs > 0 ? new Date(now.getTime() + staleMs).toISOString() : "";
+
+    return {
+      __maestroCache: true,
+      schemaVersion: CACHE_SCHEMA_VERSION,
+      domain: safeString(domain),
+      domainVersion: config ? config.version : "",
+      appVersion: safeString(window.MAESTRO_PWA_VERSION || ""),
+      tenantId: opts.tenantId !== undefined ? safeString(opts.tenantId) : getCurrentTenantIdSafe(),
+      semestreId: opts.semestreId !== undefined ? safeString(opts.semestreId) : getCurrentSemesterIdSafe(),
+      updatedAt: updatedAt,
+      staleAt: staleAt,
+      expiresAt: expiresAt,
+      ttlMs: ttlMs,
+      source: safeString(opts.source || "runtime"),
+      data: data
+    };
+  }
+
+  function isCacheEnvelope(value) {
+    return isObject(value) && value.__maestroCache === true;
+  }
+
+  function readCacheEnvelope(key) {
+    const stored = getJson(key, null);
+    return isCacheEnvelope(stored) ? stored : null;
+  }
+
+  function evaluateCacheEnvelope(envelope, options) {
+    const opts = options || {};
+    if (!isCacheEnvelope(envelope)) {
+      return { hit: false, fresh: false, stale: false, expired: false, reason: "missing", data: null, meta: null };
+    }
+
+    const domain = envelope.domain;
+    const config = getCacheDomainConfig(domain);
+    const now = Date.now();
+    const expiredAt = toTimestamp(envelope.expiresAt);
+    const staleAt = toTimestamp(envelope.staleAt);
+    const expired = expiredAt > 0 && now > expiredAt;
+    const stale = !expired && staleAt > 0 && now > staleAt;
+    const versionMismatch = config && envelope.domainVersion && envelope.domainVersion !== config.version;
+    const schemaMismatch = envelope.schemaVersion !== CACHE_SCHEMA_VERSION;
+    const tenantMismatch = opts.tenantId && envelope.tenantId && opts.tenantId !== envelope.tenantId;
+    const semesterMismatch = opts.semestreId && envelope.semestreId && opts.semestreId !== envelope.semestreId;
+    let reason = "";
+
+    if (schemaMismatch) reason = "schema";
+    else if (versionMismatch) reason = "domain_version";
+    else if (tenantMismatch) reason = "tenant";
+    else if (semesterMismatch) reason = "semester";
+    else if (expired) reason = "expired";
+    else if (stale) reason = "stale";
+    else reason = "fresh";
+
+    const validScope = !schemaMismatch && !versionMismatch && !tenantMismatch && !semesterMismatch;
+    return {
+      hit: validScope && (!expired || opts.allowExpired === true),
+      fresh: validScope && !expired && !stale,
+      stale: validScope && stale,
+      expired: validScope && expired,
+      reason: reason,
+      data: validScope && (!expired || opts.allowExpired === true) ? envelope.data : null,
+      meta: envelope
+    };
+  }
+
+  function setDomainCache(domain, data, options) {
+    const key = getDomainStorageKey(domain, options);
+    if (!key) return null;
+    const envelope = buildCacheEnvelope(domain, data, options || {});
+    setJson(key, envelope);
+    markCacheDomain(domain, mergeDefined(options || {}, {
+      key: key,
+      ttlMs: envelope.ttlMs,
+      staleAt: envelope.staleAt,
+      expiresAt: envelope.expiresAt
+    }));
+    return envelope;
+  }
+
+  function getDomainCache(domain, options) {
+    const key = getDomainStorageKey(domain, options);
+    if (!key) return { hit: false, fresh: false, stale: false, expired: false, reason: "missing", data: null, meta: null };
+    const envelope = readCacheEnvelope(key);
+    return evaluateCacheEnvelope(envelope, options || {});
+  }
+
+  function removeDomainCache(domain, options) {
+    const key = getDomainStorageKey(domain, options);
+    if (key) removeLocal(key);
+    return invalidateCacheDomain(domain, options || {});
+  }
+
+  function executarIndexedDBRequest(request) {
+    return new Promise((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error("Falha no IndexedDB."));
+    });
+  }
+
+  function prepararStoresOffline(db) {
+    if (!db.objectStoreNames.contains(OFFLINE_STORES.inbox)) {
+      db.createObjectStore(OFFLINE_STORES.inbox, { keyPath: "timestamp" });
+    }
+
+    if (!db.objectStoreNames.contains(OFFLINE_STORES.cache)) {
+      const cacheStore = db.createObjectStore(OFFLINE_STORES.cache, { keyPath: "key" });
+      cacheStore.createIndex("domain", "domain", { unique: false });
+      cacheStore.createIndex("expiresAt", "expiresAt", { unique: false });
+      cacheStore.createIndex("updatedAt", "updatedAt", { unique: false });
+    }
+  }
+
+  function openOfflineDB() {
+    return new Promise((resolve, reject) => {
+      if (!window.indexedDB) {
+        reject(new Error("IndexedDB indisponivel neste navegador."));
+        return;
+      }
+
+      const request = window.indexedDB.open(OFFLINE_DB_NAME, OFFLINE_DB_VERSION);
+      request.onupgradeneeded = (event) => prepararStoresOffline(event.target.result);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error("Falha ao abrir cache offline."));
+      request.onblocked = () => reject(new Error("Cache offline bloqueado por outra aba."));
+    });
+  }
+
+  async function putOfflineCacheEntry(domain, key, data, options) {
+    const storageKey = safeString(key || getDomainStorageKey(domain, options));
+    if (!storageKey) return null;
+    const envelope = buildCacheEnvelope(domain, data, mergeDefined(options || {}, { key: storageKey }));
+    const db = await openOfflineDB();
+    const tx = db.transaction(OFFLINE_STORES.cache, "readwrite");
+    const store = tx.objectStore(OFFLINE_STORES.cache);
+    await executarIndexedDBRequest(store.put(Object.assign({ key: storageKey }, envelope)));
+    db.close();
+    return envelope;
+  }
+
+  async function getOfflineCacheEntry(key, options) {
+    const db = await openOfflineDB();
+    const tx = db.transaction(OFFLINE_STORES.cache, "readonly");
+    const store = tx.objectStore(OFFLINE_STORES.cache);
+    const envelope = await executarIndexedDBRequest(store.get(safeString(key)));
+    db.close();
+    return evaluateCacheEnvelope(envelope, options || {});
+  }
+
+  async function deleteOfflineCacheEntry(key) {
+    const storageKey = safeString(key);
+    if (!storageKey) return false;
+    const db = await openOfflineDB();
+    const tx = db.transaction(OFFLINE_STORES.cache, "readwrite");
+    const store = tx.objectStore(OFFLINE_STORES.cache);
+    await executarIndexedDBRequest(store.delete(storageKey));
+    db.close();
+    return true;
+  }
+
+  async function clearOfflineCacheDomain(domain) {
+    const targetDomain = safeString(domain);
+    if (!targetDomain) return false;
+    const readDb = await openOfflineDB();
+    const readTx = readDb.transaction(OFFLINE_STORES.cache, "readonly");
+    const readStore = readTx.objectStore(OFFLINE_STORES.cache);
+    const allEntries = await executarIndexedDBRequest(readStore.getAll());
+    readDb.close();
+
+    const keys = (allEntries || [])
+      .filter(entry => safeString(entry && entry.domain) === targetDomain)
+      .map(entry => entry.key)
+      .filter(Boolean);
+    if (!keys.length) return true;
+
+    const writeDb = await openOfflineDB();
+    const writeTx = writeDb.transaction(OFFLINE_STORES.cache, "readwrite");
+    const writeStore = writeTx.objectStore(OFFLINE_STORES.cache);
+    await Promise.all(keys.map(key => executarIndexedDBRequest(writeStore.delete(key))));
+    writeDb.close();
+    return true;
+  }
+
+  async function clearOfflineStore(storeName) {
+    const name = safeString(storeName);
+    if (!name || !Object.keys(OFFLINE_STORES).some(key => OFFLINE_STORES[key] === name)) return false;
+    const db = await openOfflineDB();
+    const tx = db.transaction(name, "readwrite");
+    const store = tx.objectStore(name);
+    await executarIndexedDBRequest(store.clear());
+    db.close();
+    return true;
+  }
+
+  async function deleteExpiredOfflineCacheEntries() {
+    const readDb = await openOfflineDB();
+    const readTx = readDb.transaction(OFFLINE_STORES.cache, "readonly");
+    const readStore = readTx.objectStore(OFFLINE_STORES.cache);
+    const allEntries = await executarIndexedDBRequest(readStore.getAll());
+    readDb.close();
+
+    const now = Date.now();
+    const expiredKeys = (allEntries || [])
+      .filter(entry => {
+        const expiresAt = toTimestamp(entry && entry.expiresAt);
+        return expiresAt > 0 && now > expiresAt;
+      })
+      .map(entry => entry.key)
+      .filter(Boolean);
+
+    if (!expiredKeys.length) return true;
+
+    const writeDb = await openOfflineDB();
+    const writeTx = writeDb.transaction(OFFLINE_STORES.cache, "readwrite");
+    const writeStore = writeTx.objectStore(OFFLINE_STORES.cache);
+    await Promise.all(expiredKeys.map(key => executarIndexedDBRequest(writeStore.delete(key))));
+    writeDb.close();
+    return true;
+  }
+
   function getCacheMetaRoot() {
     const meta = getJson(STORAGE_KEYS.cacheMeta, {});
     if (!isObject(meta.domains)) meta.domains = {};
@@ -465,11 +960,20 @@
     if (!config) return null;
     const meta = getCacheMetaRoot();
     const payload = details || {};
+    const ttlMs = resolveCacheTtlMs(domain, payload);
+    const updatedAt = new Date();
+    const expiresAt = payload.expiresAt || (ttlMs > 0 ? new Date(updatedAt.getTime() + ttlMs).toISOString() : "");
+    const staleAt = payload.staleAt || (ttlMs > 0 ? new Date(updatedAt.getTime() + Math.floor(ttlMs / 2)).toISOString() : "");
     meta.domains[domain] = mergeDefined(meta.domains[domain] || {}, {
       version: config.version,
-      updatedAt: new Date().toISOString(),
+      updatedAt: updatedAt.toISOString(),
+      staleAt: staleAt,
+      expiresAt: expiresAt,
+      ttlMs: ttlMs,
       schemaVersion: CACHE_SCHEMA_VERSION,
       tenantId: payload.tenantId,
+      semestreId: payload.semestreId,
+      appVersion: safeString(window.MAESTRO_PWA_VERSION || ""),
       source: payload.source || "runtime",
       key: payload.key
     });
@@ -491,6 +995,11 @@
       return Boolean(opts.allowLegacy);
     }
     if (opts.tenantId && meta.tenantId && meta.tenantId !== opts.tenantId) return false;
+    if (opts.semestreId && meta.semestreId && meta.semestreId !== opts.semestreId) return false;
+    if (meta.expiresAt) {
+      const expiresAt = new Date(meta.expiresAt).getTime();
+      if (Number.isFinite(expiresAt) && Date.now() > expiresAt) return false;
+    }
     if (opts.maxAgeMs && meta.updatedAt) {
       const updatedAt = new Date(meta.updatedAt).getTime();
       if (Number.isFinite(updatedAt) && Date.now() - updatedAt > opts.maxAgeMs) return false;
@@ -498,25 +1007,67 @@
     return true;
   }
 
+  function getLocalKeysByPrefixes(prefixes) {
+    const result = [];
+    const normalizedPrefixes = toArray(prefixes).filter(Boolean);
+    if (!normalizedPrefixes.length || !window.localStorage) return result;
+    try {
+      for (let i = 0; i < window.localStorage.length; i += 1) {
+        const key = window.localStorage.key(i);
+        if (key && normalizedPrefixes.some(prefix => key.indexOf(prefix) === 0)) result.push(key);
+      }
+    } catch (err) {
+      return result;
+    }
+    return result;
+  }
+
   function invalidateCacheDomain(domain, options) {
     const config = CACHE_DOMAINS[domain];
     if (!config) return false;
     const opts = options || {};
-    const keys = opts.includeLegacy
-      ? (config.derivedKeys || []).concat(config.legacyKeys || [])
-      : (config.derivedKeys || []);
-    keys.forEach(removeLocal);
+    const exactKeys = (config.derivedKeys || []).concat([config.primaryKey || ""]);
+    if (opts.includeLegacy) exactKeys.push.apply(exactKeys, config.legacyKeys || []);
+    if (opts.includeSensitive) exactKeys.push.apply(exactKeys, config.sensitiveKeys || []);
+    const prefixedKeys = opts.includeCustom === false ? [] : getLocalKeysByPrefixes(config.keyPrefixes || []);
+    const keys = {};
+    exactKeys.concat(prefixedKeys).filter(Boolean).forEach(key => { keys[key] = true; });
+    Object.keys(keys).forEach(removeLocal);
     const meta = getCacheMetaRoot();
     if (meta.domains) delete meta.domains[domain];
     setCacheMetaRoot(meta);
     return true;
   }
 
+  async function clearCacheDomains(domains, options) {
+    const opts = options || {};
+    const targetDomains = toArray(domains).length
+      ? toArray(domains).map(safeString).filter(domain => CACHE_DOMAINS[domain])
+      : Object.keys(CACHE_DOMAINS);
+    const uniqueDomains = uniqueArray(targetDomains);
+
+    uniqueDomains.forEach(domain => invalidateCacheDomain(domain, {
+      includeLegacy: opts.includeLegacy !== false,
+      includeCustom: opts.includeCustom !== false,
+      includeSensitive: opts.includeSensitive === true
+    }));
+
+    if (opts.includeIndexedDB !== false) {
+      await Promise.all(uniqueDomains.map(domain => clearOfflineCacheDomain(domain).catch(() => false)));
+      if (opts.pruneExpired !== false) await deleteExpiredOfflineCacheEntries().catch(() => false);
+    }
+
+    return {
+      sucesso: true,
+      domains: uniqueDomains
+    };
+  }
+
   function ensureStorageSchemaVersion() {
     const current = getLocal(STORAGE_KEYS.cacheSchemaVersion, "");
     const changed = current !== CACHE_SCHEMA_VERSION;
     if (changed && current) {
-      ["theme", "dashboard", "session"].forEach(domain => invalidateCacheDomain(domain));
+      ["theme", "dashboard", "session", "lists", "audit", "communication", "mobility"].forEach(domain => invalidateCacheDomain(domain));
     }
     setLocal(STORAGE_KEYS.cacheSchemaVersion, CACHE_SCHEMA_VERSION);
     const meta = getCacheMetaRoot();
@@ -1088,7 +1639,12 @@
   function setStudentIdentity(identity) {
     const next = adaptStudentIdentity(identity || {});
     setJson(STORAGE_KEYS.studentIdentity, next);
-    markCacheDomain("wallet", { source: "studentIdentity", key: STORAGE_KEYS.studentIdentity });
+    markCacheDomain("wallet", {
+      tenantId: getTenantContext().tenantId,
+      semestreId: getSemesterContext().semestreId,
+      source: "studentIdentity",
+      key: STORAGE_KEYS.studentIdentity
+    });
     return next;
   }
 
@@ -1562,6 +2118,8 @@
     let code = "unknown_error";
     if (status === 401 || /sess/i.test(message)) code = "session_expired";
     else if (status === 403 || /permiss/i.test(message)) code = "forbidden";
+    else if (/timeout|tempo limite|demor/i.test(message)) code = "timeout";
+    else if (/network|rede|conex/i.test(message)) code = "network_error";
     else if (/tenant/i.test(message)) code = "tenant_missing";
     else if (/payload|tamanho|large/i.test(message)) code = "payload_too_large";
     else if (/valid/i.test(message)) code = "validation_error";
@@ -1600,6 +2158,7 @@
     const opts = options || {};
     const builder = typeof opts.builder === "function" ? opts.builder : null;
     const finalPayload = builder ? builder(payload || {}) : (payload || {});
+    const timeoutMs = Number(opts.timeoutMs || 0);
 
     if (typeof window.apiCall !== "function") {
       return normalizeApiResult({
@@ -1610,7 +2169,15 @@
     }
 
     try {
-      const raw = await window.apiCall(action, finalPayload);
+      const requestPromise = window.apiCall(action, finalPayload);
+      const raw = timeoutMs > 0
+        ? await Promise.race([
+          requestPromise,
+          new Promise((_, reject) => {
+            window.setTimeout(() => reject(new Error("Timeout ao comunicar com o servidor.")), timeoutMs);
+          })
+        ])
+        : await requestPromise;
       const normalized = normalizeApiResult(raw, action);
       if (typeof opts.adapter === "function" && normalized.ok) {
         normalized.data = opts.adapter(normalized.data);
@@ -1796,15 +2363,35 @@
     keys: STORAGE_KEYS,
     domains: CACHE_DOMAINS,
     schemaVersion: CACHE_SCHEMA_VERSION,
+    asyncStates: ASYNC_STATE_TYPES,
+    offlineDbName: OFFLINE_DB_NAME,
+    offlineDbVersion: OFFLINE_DB_VERSION,
     getJson: getJson,
     setJson: setJson,
     remove: removeLocal,
     getMeta: getCacheMetaRoot,
     getDomainMeta: getCacheDomainMeta,
+    getDomainTtlMs: resolveCacheTtlMs,
     markDomain: markCacheDomain,
     isDomainFresh: isCacheDomainFresh,
     invalidateDomain: invalidateCacheDomain,
-    ensureSchemaVersion: ensureStorageSchemaVersion
+    clearDomains: clearCacheDomains,
+    ensureSchemaVersion: ensureStorageSchemaVersion,
+    setDomainCache: setDomainCache,
+    getDomainCache: getDomainCache,
+    removeDomainCache: removeDomainCache,
+    buildEnvelope: buildCacheEnvelope,
+    evaluateEnvelope: evaluateCacheEnvelope,
+    offlineDB: {
+      open: openOfflineDB,
+      putCacheEntry: putOfflineCacheEntry,
+      getCacheEntry: getOfflineCacheEntry,
+      deleteCacheEntry: deleteOfflineCacheEntry,
+      clearCacheDomain: clearOfflineCacheDomain,
+      clearStore: clearOfflineStore,
+      pruneExpired: deleteExpiredOfflineCacheEntries,
+      stores: OFFLINE_STORES
+    }
   };
 
   const storageState = ensureStorageSchemaVersion();
@@ -1817,10 +2404,14 @@
     url: safeUrl,
     urlAttr: safeUrlAttr,
     lines: safeLines,
+    html: sanitizeHTML,
     domId: safeDomId,
     jsStringAttr: safeJsStringAttr,
     setText: setSafeText,
-    setHTML: setSafeHTML
+    setHTML: setSafeHTML,
+    renderAsyncState: renderAsyncState,
+    renderCacheState: renderCacheState,
+    setAsyncState: setAsyncState
   };
 
   const themeTokens = {
@@ -1924,6 +2515,9 @@
       safeAttr: safeAttr,
       safeUrl: safeUrl,
       sanitizeCssColor: sanitizeCssColor,
+      redactLogValue: redactSensitiveText,
+      sanitizeLogDetails: sanitizeLogDetails,
+      logSafe: logSafe,
       normalizeAccessProfile: normalizeAccessProfile,
       normalizeTurno: normalizeTurno,
       normalizeUpper: normalizeUpper,
@@ -1938,6 +2532,16 @@
   window.MaestroAPI = apiClient;
   window.MaestroSafeRender = safeRender;
   window.MaestroTheme = themeTokens;
+  window.MaestroLogger = {
+    log: function log(message, details) { return logSafe("log", message, details); },
+    info: function info(message, details) { return logSafe("info", message, details); },
+    warn: function warn(message, details) { return logSafe("warn", message, details); },
+    error: function error(message, details) { return logSafe("error", message, details); },
+    debug: function debug(message, details) { return logSafe("debug", message, details); },
+    sanitize: sanitizeLogDetails,
+    redact: redactSensitiveText
+  };
+  window.logMaestroSafe = logSafe;
   window.MaestroNavigation = navigation;
   window.aplicarTokensVisuaisMaestro = applyVisualTokens;
   window.aplicarNavegacaoMaestro = applyNavigationVisibility;
@@ -1955,6 +2559,10 @@
   window.safeUrlMaestro = safeUrl;
   window.safeUrlAttrMaestro = safeUrlAttr;
   window.safeLinesMaestro = safeLines;
+  window.sanitizeHTMLMaestro = sanitizeHTML;
   window.safeDomIdMaestro = safeDomId;
   window.safeJsStringAttrMaestro = safeJsStringAttr;
+  window.renderAsyncStateMaestro = renderAsyncState;
+  window.renderCacheStateMaestro = renderCacheState;
+  window.setAsyncStateMaestro = setAsyncState;
 })(window);

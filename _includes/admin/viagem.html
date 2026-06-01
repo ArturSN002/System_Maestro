@@ -1,13 +1,13 @@
 <!-- COMPONENTE: VIAGEM ATIVA (RASTREAMENTO GPS MESTRE) -->
-<div id="painel-viagem-ativa" class="hidden">
-  <div class="viagem-status-container">
-    <div id="indicador-gps-mestre" class="bolinha-pulsante-verde"></div>
+<div id="painel-viagem-ativa" class="hidden driver-live-panel">
+  <div class="viagem-status-container driver-live-status">
+    <div id="indicador-gps-mestre" class="bolinha-pulsante-verde driver-gps-dot"></div>
     <p class="viagem-mestre-label">TRANSMISSÃO GPS MESTRE ATIVA</p>
     <h1 id="viagem-placa-display">ABC-1234</h1>
   </div>
 
   <div class="viagem-botoes-container viagem-mestre-actions">
-    <button onclick="abrirModalSOS()" class="btn-sos-gigante">🚨 SOS AVARIA</button>
-    <button onclick="uiFinalizarRota()" class="btn-finalizar-gigante">⏹ FINALIZAR ROTA</button>
+    <button onclick="abrirModalSOS()" class="btn-sos-gigante driver-critical-button driver-sos-button">🚨 SOS AVARIA</button>
+    <button onclick="uiFinalizarRota()" class="btn-finalizar-gigante driver-critical-button driver-finish-button">⏹ FINALIZAR ROTA</button>
   </div>
 </div>

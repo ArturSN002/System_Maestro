@@ -1,24 +1,24 @@
-<section id="view-radar" class="view-section split-view-desktop radar-view-shell">
+<section id="view-radar" class="view-section split-view-desktop radar-view-shell operational-view operational-radar-view">
     
-    <div id="radar-lista-container" class="split-sidebar">
-        <div class="radar-list-header">
+    <div id="radar-lista-container" class="split-sidebar operational-radar-list">
+        <div class="radar-list-header operational-radar-list-header">
             <h2 class="radar-list-title">Autocarros em Operação</h2>
         </div>
         <p class="radar-list-subtitle">Acompanhe os veículos e rotas em tempo real.</p>
-        <div id="lista-viagens-cards">
+        <div id="lista-viagens-cards" class="operational-radar-trips">
             <div class="loader radar-list-loader"></div>
             <p class="radar-list-loading-text">A procurar viagens disponíveis...</p>
         </div>
-        <div id="radar-voltar-footer">
+        <div id="radar-voltar-footer" class="operational-radar-footer">
             <button class="btn-voltar-red" onclick="switchView('view-wallet')">
                 <span>⬅</span> Voltar à Carteira Digital
             </button>
         </div>
     </div>
 
-    <div id="radar-mapa-container" class="hidden split-main radar-map-container">
+    <div id="radar-mapa-container" class="hidden split-main radar-map-container operational-radar-map">
         
-        <div class="radar-map-topbar">
+        <div class="radar-map-topbar operational-radar-topbar">
             <button class="hide-on-desktop radar-map-pill-button" onclick="fecharMapaVoltarLista()">
                 ⬅ Voltar à Lista
             </button>
@@ -32,7 +32,7 @@
 
         <div id="mapa-paradas-container" class="radar-leaflet-host"></div>
 
-        <button class="hide-on-desktop radar-locate-button" onclick="centralizarMapaEmMim()">🎯</button>
+        <button class="hide-on-desktop radar-locate-button operational-locate-button" onclick="centralizarMapaEmMim()">🎯</button>
         
         <div id="painel-viagem-ativa" class="hidden radar-active-trip-panel"></div>
     </div>

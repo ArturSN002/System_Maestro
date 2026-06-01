@@ -40,7 +40,8 @@ async function solicitarConsentimentoPushAnonimo(cpf) {
         if (window.firebaseReady) await window.firebaseReady;
 
         if (typeof firebase === 'undefined' || !firebase.apps || firebase.apps.length === 0) { 
-            console.warn("Firebase não disponível após aguardar inicialização."); 
+            if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "Firebase nao disponivel apos aguardar inicializacao.");
+            else console.warn("Firebase nao disponivel apos aguardar inicializacao.");
             return; 
         }
         if (!firebase.messaging.isSupported()) return;
@@ -75,12 +76,15 @@ async function solicitarConsentimentoPushAnonimo(cpf) {
             showToast("Permissão de notificações negada pelo dispositivo.", "info");
         }
     } catch (error) {
-        console.warn("Push anónimo falhou ou foi bloqueado.", error);
+        if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "Push anonimo falhou ou foi bloqueado.", error);
+        else console.warn("Push anonimo falhou ou foi bloqueado.");
     }
 }
 
 function renderizarTimelineEstudante(dados, container) {
-    const nomeLimpo = formatarNomeProprio(dados.nome).split(' ')[0];
+    const nomeLimpo = typeof escapeHTMLMaestro === 'function'
+        ? escapeHTMLMaestro(formatarNomeProprio(dados.nome).split(' ')[0])
+        : String(formatarNomeProprio(dados.nome).split(' ')[0] || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     let html = `<h3 class="timeline-greeting">Ola, ${nomeLimpo}!</h3>`;
     html += `<div class="timeline timeline-result-container">`;
 
@@ -152,12 +156,15 @@ function renderizarTimelineEstudante(dados, container) {
 
                 if (dados.idAcesso) {
                     const idSeguro = typeof escapeHTMLMaestro === 'function' ? escapeHTMLMaestro(dados.idAcesso) : String(dados.idAcesso || "");
+                    const idJsSeguro = typeof safeJsStringAttrMaestro === 'function'
+                        ? safeJsStringAttrMaestro(dados.idAcesso)
+                        : JSON.stringify(String(dados.idAcesso || "")).replace(/"/g, "&quot;");
                     html += `
            <div class="timeline-id-card">
              <span class="timeline-id-label">O seu ID de Acesso e:</span>
              <strong class="timeline-access-id">${idSeguro}</strong>
              <p class="timeline-id-help">Use este ID e os 4 ultimos digitos do seu CPF para abrir o cofre digital.</p>
-             <button class="btn-solid timeline-action-button" onclick="irParaCofreComId('${idSeguro}')">IR PARA O COFRE</button>
+             <button class="btn-solid timeline-action-button" onclick="irParaCofreComId(${idJsSeguro})">IR PARA O COFRE</button>
            </div>`;
                 }
             } else {

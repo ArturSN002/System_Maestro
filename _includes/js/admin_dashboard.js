@@ -18,6 +18,42 @@ function mudarAbaDashboard(aba) {
 
 const CACHE_STATS_KEY = "MAESTRO_DASH_STATS";
 
+function obterTtlDashboardMaestro() {
+    const storage = window.MaestroData && window.MaestroData.storage ? window.MaestroData.storage : null;
+    return storage && typeof storage.getDomainTtlMs === "function"
+        ? storage.getDomainTtlMs("dashboard")
+        : 1000 * 60 * 60 * 6;
+}
+
+function atualizarEstadoDashboardMaestro(tipo, mensagem, opcoes = {}) {
+    const container = document.getElementById("dashboard-async-state");
+    if (!container) return;
+    const isHidden = opcoes.hidden === true;
+    container.classList.toggle("hidden", isHidden);
+    if (isHidden) {
+        container.innerHTML = "";
+        return;
+    }
+    container.innerHTML = typeof renderAsyncStateMaestro === "function"
+        ? renderAsyncStateMaestro(tipo, {
+            message: mensagem,
+            title: opcoes.title || "",
+            updatedAt: opcoes.updatedAt || "",
+            className: opcoes.className || "dashboard-state-banner"
+        })
+        : `<div class="dynamic-state-box dynamic-${tipo}-state dashboard-state-banner"><p>${String(mensagem || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p></div>`;
+}
+
+function atualizarEstadoCacheDashboardMaestro(cache) {
+    if (!cache) return;
+    const tipo = cache.expired ? "offline" : (cache.stale ? "stale" : "success");
+    const mensagem = cache.expired
+        ? "Dashboard exibido do cache local."
+        : (cache.stale ? "Dashboard em cache enquanto sincronizamos." : "Dashboard sincronizado.");
+    const updatedAt = cache.meta && cache.meta.updatedAt ? cache.meta.updatedAt : "";
+    atualizarEstadoDashboardMaestro(tipo, mensagem, { updatedAt: updatedAt, className: "dashboard-state-banner" });
+}
+
 function normalizarDashboardStatsMaestro(payload) {
     const adapter = window.MaestroData &&
         window.MaestroData.adapters &&
@@ -60,24 +96,59 @@ function aplicarBarraIADashboardMaestro(percentual) {
 
 function obterCacheDashboardMaestro() {
     const cachedStatsRaw = localStorage.getItem(CACHE_STATS_KEY);
-    if (!cachedStatsRaw) return null;
+    const storage = window.MaestroData && window.MaestroData.storage ? window.MaestroData.storage : null;
 
-    if (window.MaestroData && window.MaestroData.storage) {
+    if (!cachedStatsRaw && storage && typeof storage.getDomainCache === "function") {
         const tenantContext = window.MaestroData.contexts && window.MaestroData.contexts.tenant
             ? window.MaestroData.contexts.tenant.get()
             : {};
+        const semesterContext = window.MaestroData.contexts && window.MaestroData.contexts.semester
+            ? window.MaestroData.contexts.semester.get()
+            : {};
+        const envelope = storage.getDomainCache("dashboard", {
+            tenantId: tenantContext.tenantId,
+            semestreId: semesterContext.semestreId
+        });
+        if (envelope && envelope.hit && dashboardStatsValido(envelope.data)) {
+            const statsEnvelope = normalizarDashboardStatsMaestro(envelope.data);
+            statsEnvelope.__cacheState = envelope;
+            return statsEnvelope;
+        }
+        return null;
+    }
+    if (!cachedStatsRaw) return null;
+
+    if (storage) {
+        const tenantContext = window.MaestroData.contexts && window.MaestroData.contexts.tenant
+            ? window.MaestroData.contexts.tenant.get()
+            : {};
+        const semesterContext = window.MaestroData.contexts && window.MaestroData.contexts.semester
+            ? window.MaestroData.contexts.semester.get()
+            : {};
         const cacheValido = window.MaestroData.storage.isDomainFresh("dashboard", {
             tenantId: tenantContext.tenantId,
-            maxAgeMs: 1000 * 60 * 60 * 6
+            semestreId: semesterContext.semestreId,
+            maxAgeMs: obterTtlDashboardMaestro()
         });
         if (!cacheValido) return null;
     }
 
     try {
         const dashboardStats = normalizarDashboardStatsMaestro(JSON.parse(cachedStatsRaw));
+        if (dashboardStatsValido(dashboardStats) && storage && typeof storage.getDomainMeta === "function") {
+            const meta = storage.getDomainMeta("dashboard");
+            dashboardStats.__cacheState = {
+                hit: true,
+                fresh: true,
+                stale: false,
+                expired: false,
+                meta: meta || {}
+            };
+        }
         return dashboardStatsValido(dashboardStats) ? dashboardStats : null;
     } catch (erro) {
-        console.warn("Cache do dashboard invalido. Ignorando leitura local.", erro);
+        if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "Cache do dashboard invalido. Ignorando leitura local.", erro);
+        else console.warn("Cache do dashboard invalido. Ignorando leitura local.");
         return null;
     }
 }
@@ -91,11 +162,37 @@ function salvarCacheDashboardMaestro(statsObj) {
         const tenantContext = window.MaestroData.contexts && window.MaestroData.contexts.tenant
             ? window.MaestroData.contexts.tenant.get()
             : {};
+        const semesterContext = window.MaestroData.contexts && window.MaestroData.contexts.semester
+            ? window.MaestroData.contexts.semester.get()
+            : {};
         window.MaestroData.storage.markDomain("dashboard", {
             tenantId: tenantContext.tenantId,
+            semestreId: semesterContext.semestreId,
             source: "getDashboardStats",
-            key: CACHE_STATS_KEY
+            key: CACHE_STATS_KEY,
+            ttlMs: obterTtlDashboardMaestro()
         });
+        if (typeof window.MaestroData.storage.setDomainCache === "function") {
+            window.MaestroData.storage.setDomainCache("dashboard", dashboardStats, {
+                tenantId: tenantContext.tenantId,
+                semestreId: semesterContext.semestreId,
+                source: "getDashboardStats",
+                ttlMs: obterTtlDashboardMaestro()
+            });
+        }
+        if (
+            window.MaestroData.storage.offlineDB &&
+            typeof window.MaestroData.storage.offlineDB.putCacheEntry === "function"
+        ) {
+            window.MaestroData.storage.offlineDB
+                .putCacheEntry("dashboard", "dashboardStats", dashboardStats, {
+                    tenantId: tenantContext.tenantId,
+                    semestreId: semesterContext.semestreId,
+                    source: "getDashboardStats",
+                    ttlMs: obterTtlDashboardMaestro()
+                })
+                .catch(() => null);
+        }
     }
 }
 
@@ -143,24 +240,37 @@ async function carregarDashboard() {
 
     if (cachedStats) {
         atualizarDashboardComStatsMaestro(cachedStats, { cache: false });
+        atualizarEstadoCacheDashboardMaestro(cachedStats.__cacheState || {
+            hit: true,
+            stale: true,
+            expired: typeof navigator !== "undefined" && navigator.onLine === false,
+            meta: {}
+        });
         switchView('view-dashboard');
 
         buscarDashboardStatsServidorMaestro().then(stats => {
             atualizarDashboardComStatsMaestro(stats);
+            atualizarEstadoDashboardMaestro("success", "Dashboard sincronizado com o semestre atual.", { className: "dashboard-state-banner" });
         }).catch(e => {
-            console.error("Erro de Rede BI:", e);
+            if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "Erro de Rede BI.", e);
+            else console.warn("Erro de Rede BI.");
+            atualizarEstadoDashboardMaestro("stale", "Nao foi possivel atualizar agora. Mantivemos os dados em cache.", { className: "dashboard-state-banner" });
             showToast("Erro ao carregar os dados analiticos: " + e.message, "error");
         });
         return;
     }
 
     showToast("A extrair dados para o Dashboard...", "info");
+    atualizarEstadoDashboardMaestro("loading", "A carregar dados analiticos...", { className: "dashboard-state-banner" });
     try {
         const stats = await buscarDashboardStatsServidorMaestro();
         atualizarDashboardComStatsMaestro(stats);
+        atualizarEstadoDashboardMaestro("success", "Dashboard sincronizado com o semestre atual.", { className: "dashboard-state-banner" });
         switchView('view-dashboard');
     } catch (err) {
-        console.error("Erro de Rede BI:", err);
+        if (typeof logMaestroSafe === "function") logMaestroSafe("error", "Erro de Rede BI.", err);
+        else console.error("Erro de Rede BI.");
+        atualizarEstadoDashboardMaestro("error", "Nao foi possivel carregar o Dashboard.", { className: "dashboard-state-banner" });
         showToast("Erro de ligacao aos dados analiticos: " + err.message, "error");
     }
 }
@@ -259,7 +369,8 @@ function renderizarDashboardUI(payload) {
         renderInclusao('chart-estagio', inclusao.estagio);
 
     } catch (erro) {
-        console.error("[Dashboard] Ocorreu um erro ao renderizar os gráficos:", erro);
+        if (typeof logMaestroSafe === "function") logMaestroSafe("error", "[Dashboard] Erro ao renderizar graficos.", erro);
+        else console.error("[Dashboard] Erro ao renderizar graficos.");
         showToast("Falha parcial ao carregar os gráficos.", "warning");
     }
 }
@@ -305,7 +416,10 @@ function gerarChipsDinamicos() {
         Array.from(setValores).sort().forEach(val => {
             const chipAntigo = document.querySelector(`span.chip-filter[data-value="${val}"][data-group="${grupoNome}"]`);
             const classeAtiva = (chipAntigo && chipAntigo.classList.contains('chip-active')) ? 'chip-active' : '';
-            html += `<span class="chip-filter ${classeAtiva}" data-group="${grupoNome}" data-value="${val}" onclick="toggleChip(this)">${val}</span>`;
+            const valorSeguro = typeof escapeHTMLMaestro === "function" ? escapeHTMLMaestro(val) : String(val || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            const valorAttrSeguro = typeof safeAttrMaestro === "function" ? safeAttrMaestro(val) : valorSeguro.replace(/"/g, "&quot;");
+            const grupoAttrSeguro = typeof safeAttrMaestro === "function" ? safeAttrMaestro(grupoNome) : String(grupoNome || "").replace(/"/g, "&quot;");
+            html += `<span class="chip-filter ${classeAtiva}" role="button" tabindex="0" data-group="${grupoAttrSeguro}" data-value="${valorAttrSeguro}" onclick="toggleChip(this)" onkeydown="ativarChipPorTeclado(event, this)">${valorSeguro}</span>`;
         });
         return html;
     };
@@ -322,7 +436,16 @@ function gerarChipsDinamicos() {
 
 function toggleChip(element) {
     element.classList.toggle('chip-active');
+    element.setAttribute('aria-pressed', element.classList.contains('chip-active') ? 'true' : 'false');
     renderizarDashboardBI();
+}
+
+function ativarChipPorTeclado(event, element) {
+    if (!event || !element) return;
+    if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        toggleChip(element);
+    }
 }
 
 function renderizarDashboardBI() {

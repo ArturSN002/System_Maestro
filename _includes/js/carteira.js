@@ -10,6 +10,31 @@ let timeoutSessaoEstudanteID = null;
 let walletStageUpdateFile = null;
 let walletStageUpdateSubmitting = false;
 
+function obterTtlCarteiraMaestro() {
+    const storage = window.MaestroData && window.MaestroData.storage ? window.MaestroData.storage : null;
+    return storage && typeof storage.getDomainTtlMs === "function"
+        ? storage.getDomainTtlMs("wallet")
+        : 1000 * 60 * 60 * 12;
+}
+
+function marcarCacheCarteiraMaestro(dados, origem) {
+    if (!window.MaestroData || !window.MaestroData.storage) return;
+    const identidade = window.MaestroData.adapters && typeof window.MaestroData.adapters.studentIdentity === "function"
+        ? window.MaestroData.adapters.studentIdentity(dados || {})
+        : {};
+    const semesterContext = window.MaestroData.contexts && window.MaestroData.contexts.semester
+        ? window.MaestroData.contexts.semester.get()
+        : {};
+
+    window.MaestroData.storage.markDomain("wallet", {
+        tenantId: identidade.tenantId,
+        semestreId: semesterContext.semestreId || (dados && (dados.semestreId || dados.SEMESTRE_ATUAL)),
+        source: origem || "carteira",
+        key: "MAESTRO_WALLET_CACHE",
+        ttlMs: obterTtlCarteiraMaestro()
+    });
+}
+
 function triggerVibration(ms) {
     if ("vibrate" in navigator) {
         navigator.vibrate(ms);
@@ -32,7 +57,8 @@ function restaurarSessaoEstudante() {
             armarRelogioSessaoEstudante();
             abrirTelaCofreOuEntrarDireto();
         } catch (e) {
-            console.warn("Erro ao restaurar sessão de estudante na RAM.");
+            if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "Erro ao restaurar sessao de estudante na memoria.", e);
+            else console.warn("Erro ao restaurar sessao de estudante na memoria.");
         }
     }
 }
@@ -118,6 +144,7 @@ async function loginCarteira() {
       localStorage.setItem("MAESTRO_WALLET_CACHE", JSON.stringify(res));
       localStorage.setItem("MAESTRO_WALLET_CREDS", JSON.stringify({id: id, senha: senha}));
       if (typeof sincronizarStudentIdentityMaestro === 'function') sincronizarStudentIdentityMaestro(res, id);
+      marcarCacheCarteiraMaestro(res, "autenticarCarteiraDigital");
 
       renderizarCarteira(res);
       switchView('view-wallet');
@@ -677,11 +704,13 @@ async function enviarAtualizacaoEstagioCarteira() {
         });
         localStorage.setItem("MAESTRO_WALLET_CACHE", JSON.stringify(carteiraAtualizada));
         if (typeof sincronizarStudentIdentityMaestro === 'function') sincronizarStudentIdentityMaestro(carteiraAtualizada, currentWalletId);
+        marcarCacheCarteiraMaestro(carteiraAtualizada, "atualizarEstagioCarteira");
         walletStageUpdateFile = null;
         showToast(res.msg || "Atualizacao enviada para auditoria.", "success");
         renderizarCarteira(carteiraAtualizada);
     } catch (erro) {
-        console.error("Erro ao atualizar estagio pela carteira:", erro);
+        if (typeof logMaestroSafe === "function") logMaestroSafe("error", "Erro ao atualizar estagio pela carteira.", erro);
+        else console.error("Erro ao atualizar estagio pela carteira.");
         showToast("Falha de conexao ao atualizar estagio.", "error");
     } finally {
         walletStageUpdateSubmitting = false;
@@ -705,7 +734,8 @@ async function toggleFullscreenQR(elementId) {
             try {
                 wakeLock = await navigator.wakeLock.request('screen');
             } catch (err) {
-                console.warn("Wake Lock falhou:", err);
+                if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "Wake Lock falhou.", err);
+                else console.warn("Wake Lock falhou.");
             }
         }
     } else {

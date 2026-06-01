@@ -1,0 +1,1262 @@
+{
+  "generatedAt": "2026-06-01T01:08:13.117Z",
+  "results": [
+    {
+      "name": "mobile-public-hub",
+      "viewport": "mobile",
+      "view": "view-hub",
+      "profile": "ANONIMO",
+      "route": "",
+      "status": "pass",
+      "error": "",
+      "bodyState": {
+        "shell": "public",
+        "profile": "anonimo",
+        "view": "view-hub",
+        "qaError": ""
+      },
+      "layout": {
+        "view": "view-hub",
+        "profile": "ANONIMO",
+        "route": "",
+        "viewportWidth": 390,
+        "viewportHeight": 844,
+        "bodyScrollWidth": 390,
+        "bodyClientWidth": 390,
+        "hasHorizontalOverflow": false,
+        "activeView": "view-hub",
+        "activeHeight": 206,
+        "overflowElements": [],
+        "smallTargets": []
+      },
+      "console": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        }
+      ],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\asn03\\Downloads\\Maestro\\System Maestro V12\\GitHub\\System_Maestro\\output\\playwright\\phase-4-9\\mobile-public-hub.png"
+    },
+    {
+      "name": "tablet-public-mural",
+      "viewport": "tablet",
+      "view": "view-mural",
+      "profile": "ANONIMO",
+      "route": "mural",
+      "status": "pass",
+      "error": "",
+      "bodyState": {
+        "shell": "public",
+        "profile": "anonimo",
+        "view": "view-mural",
+        "qaError": ""
+      },
+      "layout": {
+        "view": "view-mural",
+        "profile": "ANONIMO",
+        "route": "mural",
+        "viewportWidth": 820,
+        "viewportHeight": 1180,
+        "bodyScrollWidth": 820,
+        "bodyClientWidth": 820,
+        "hasHorizontalOverflow": false,
+        "activeView": "view-mural",
+        "activeHeight": 614,
+        "overflowElements": [],
+        "smallTargets": []
+      },
+      "console": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        }
+      ],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\asn03\\Downloads\\Maestro\\System Maestro V12\\GitHub\\System_Maestro\\output\\playwright\\phase-4-9\\tablet-public-mural.png"
+    },
+    {
+      "name": "mobile-student-hub",
+      "viewport": "mobile",
+      "view": "view-aluno-menu",
+      "profile": "ESTUDANTE",
+      "route": "",
+      "status": "pass",
+      "error": "",
+      "bodyState": {
+        "shell": "student",
+        "profile": "estudante",
+        "view": "view-aluno-menu",
+        "qaError": ""
+      },
+      "layout": {
+        "view": "view-aluno-menu",
+        "profile": "ESTUDANTE",
+        "route": "",
+        "viewportWidth": 390,
+        "viewportHeight": 844,
+        "bodyScrollWidth": 390,
+        "bodyClientWidth": 390,
+        "hasHorizontalOverflow": false,
+        "activeView": "view-aluno-menu",
+        "activeHeight": 376,
+        "overflowElements": [],
+        "smallTargets": []
+      },
+      "console": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        }
+      ],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\asn03\\Downloads\\Maestro\\System Maestro V12\\GitHub\\System_Maestro\\output\\playwright\\phase-4-9\\mobile-student-hub.png"
+    },
+    {
+      "name": "tablet-student-inscricao",
+      "viewport": "tablet",
+      "view": "view-inscricao",
+      "profile": "ESTUDANTE",
+      "route": "",
+      "status": "pass",
+      "error": "",
+      "bodyState": {
+        "shell": "student",
+        "profile": "estudante",
+        "view": "view-inscricao",
+        "qaError": ""
+      },
+      "layout": {
+        "view": "view-inscricao",
+        "profile": "ESTUDANTE",
+        "route": "",
+        "viewportWidth": 820,
+        "viewportHeight": 1180,
+        "bodyScrollWidth": 820,
+        "bodyClientWidth": 820,
+        "hasHorizontalOverflow": false,
+        "activeView": "view-inscricao",
+        "activeHeight": 531,
+        "overflowElements": [],
+        "smallTargets": []
+      },
+      "console": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        }
+      ],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\asn03\\Downloads\\Maestro\\System Maestro V12\\GitHub\\System_Maestro\\output\\playwright\\phase-4-9\\tablet-student-inscricao.png"
+    },
+    {
+      "name": "mobile-student-wallet",
+      "viewport": "mobile",
+      "view": "view-wallet",
+      "profile": "ESTUDANTE",
+      "route": "wallet",
+      "status": "pass",
+      "error": "",
+      "bodyState": {
+        "shell": "student",
+        "profile": "estudante",
+        "view": "view-wallet",
+        "qaError": ""
+      },
+      "layout": {
+        "view": "view-wallet",
+        "profile": "ESTUDANTE",
+        "route": "wallet",
+        "viewportWidth": 390,
+        "viewportHeight": 844,
+        "bodyScrollWidth": 390,
+        "bodyClientWidth": 390,
+        "hasHorizontalOverflow": false,
+        "activeView": "view-wallet",
+        "activeHeight": 1297,
+        "overflowElements": [],
+        "smallTargets": []
+      },
+      "console": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        }
+      ],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\asn03\\Downloads\\Maestro\\System Maestro V12\\GitHub\\System_Maestro\\output\\playwright\\phase-4-9\\mobile-student-wallet.png"
+    },
+    {
+      "name": "desktop-admin-hub",
+      "viewport": "desktop",
+      "view": "view-admin-hub",
+      "profile": "MODERADOR",
+      "route": "",
+      "status": "pass",
+      "error": "",
+      "bodyState": {
+        "shell": "admin",
+        "profile": "anonimo",
+        "view": "view-admin-hub",
+        "qaError": ""
+      },
+      "layout": {
+        "view": "view-admin-hub",
+        "profile": "MODERADOR",
+        "route": "",
+        "viewportWidth": 1366,
+        "viewportHeight": 900,
+        "bodyScrollWidth": 1366,
+        "bodyClientWidth": 1366,
+        "hasHorizontalOverflow": false,
+        "activeView": "view-admin-hub",
+        "activeHeight": 121,
+        "overflowElements": [],
+        "smallTargets": []
+      },
+      "console": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        }
+      ],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\asn03\\Downloads\\Maestro\\System Maestro V12\\GitHub\\System_Maestro\\output\\playwright\\phase-4-9\\desktop-admin-hub.png"
+    },
+    {
+      "name": "desktop-admin-auditoria",
+      "viewport": "desktop",
+      "view": "view-auditoria",
+      "profile": "MODERADOR",
+      "route": "auditoria",
+      "status": "pass",
+      "error": "",
+      "bodyState": {
+        "shell": "admin",
+        "profile": "anonimo",
+        "view": "view-auditoria",
+        "qaError": ""
+      },
+      "layout": {
+        "view": "view-auditoria",
+        "profile": "MODERADOR",
+        "route": "auditoria",
+        "viewportWidth": 1366,
+        "viewportHeight": 900,
+        "bodyScrollWidth": 1366,
+        "bodyClientWidth": 1366,
+        "hasHorizontalOverflow": false,
+        "activeView": "view-auditoria",
+        "activeHeight": 885,
+        "overflowElements": [],
+        "smallTargets": []
+      },
+      "console": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        }
+      ],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\asn03\\Downloads\\Maestro\\System Maestro V12\\GitHub\\System_Maestro\\output\\playwright\\phase-4-9\\desktop-admin-auditoria.png"
+    },
+    {
+      "name": "tablet-admin-auditoria",
+      "viewport": "tablet",
+      "view": "view-auditoria",
+      "profile": "MODERADOR",
+      "route": "auditoria",
+      "status": "pass",
+      "error": "",
+      "bodyState": {
+        "shell": "admin",
+        "profile": "anonimo",
+        "view": "view-auditoria",
+        "qaError": ""
+      },
+      "layout": {
+        "view": "view-auditoria",
+        "profile": "MODERADOR",
+        "route": "auditoria",
+        "viewportWidth": 820,
+        "viewportHeight": 1180,
+        "bodyScrollWidth": 820,
+        "bodyClientWidth": 820,
+        "hasHorizontalOverflow": false,
+        "activeView": "view-auditoria",
+        "activeHeight": 986,
+        "overflowElements": [],
+        "smallTargets": [
+          {
+            "tag": "button",
+            "id": "",
+            "className": "btn-solid btn-auditoria-detalhar",
+            "text": "Detalhar",
+            "height": 38
+          }
+        ]
+      },
+      "console": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        }
+      ],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\asn03\\Downloads\\Maestro\\System Maestro V12\\GitHub\\System_Maestro\\output\\playwright\\phase-4-9\\tablet-admin-auditoria.png"
+    },
+    {
+      "name": "mobile-admin-semestres",
+      "viewport": "mobile",
+      "view": "view-semestres",
+      "profile": "SUPERVISOR",
+      "route": "semestres",
+      "status": "pass",
+      "error": "",
+      "bodyState": {
+        "shell": "admin",
+        "profile": "anonimo",
+        "view": "view-semestres",
+        "qaError": ""
+      },
+      "layout": {
+        "view": "view-semestres",
+        "profile": "SUPERVISOR",
+        "route": "semestres",
+        "viewportWidth": 390,
+        "viewportHeight": 844,
+        "bodyScrollWidth": 390,
+        "bodyClientWidth": 390,
+        "hasHorizontalOverflow": false,
+        "activeView": "view-semestres",
+        "activeHeight": 1581,
+        "overflowElements": [],
+        "smallTargets": [
+          {
+            "tag": "button",
+            "id": "",
+            "className": "btn-text",
+            "text": "Editar",
+            "height": 36
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "className": "btn-solid btn-semestre-atual",
+            "text": "Atual",
+            "height": 36
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "className": "btn-solid btn-semestre-passado",
+            "text": "Passado",
+            "height": 36
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "className": "btn-solid btn-semestre-arquivar",
+            "text": "Arquivar",
+            "height": 36
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "className": "btn-solid text-danger btn-semestre-excluir",
+            "text": "Excluir",
+            "height": 36
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "className": "btn-text",
+            "text": "Editar",
+            "height": 36
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "className": "btn-solid btn-semestre-atual",
+            "text": "Atual",
+            "height": 36
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "className": "btn-solid btn-semestre-passado",
+            "text": "Passado",
+            "height": 36
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "className": "btn-solid btn-semestre-arquivar",
+            "text": "Arquivar",
+            "height": 36
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "className": "btn-solid text-danger btn-semestre-excluir",
+            "text": "Excluir",
+            "height": 36
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "className": "btn-text",
+            "text": "Editar",
+            "height": 36
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "className": "btn-solid btn-semestre-atual",
+            "text": "Atual",
+            "height": 36
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "className": "btn-solid btn-semestre-passado",
+            "text": "Passado",
+            "height": 36
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "className": "btn-solid btn-semestre-arquivar",
+            "text": "Arquivar",
+            "height": 36
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "className": "btn-solid text-danger btn-semestre-excluir",
+            "text": "Excluir",
+            "height": 36
+          }
+        ]
+      },
+      "console": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        }
+      ],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\asn03\\Downloads\\Maestro\\System Maestro V12\\GitHub\\System_Maestro\\output\\playwright\\phase-4-9\\mobile-admin-semestres.png"
+    },
+    {
+      "name": "desktop-admin-dashboard",
+      "viewport": "desktop",
+      "view": "view-dashboard",
+      "profile": "MODERADOR",
+      "route": "dashboard",
+      "status": "pass",
+      "error": "",
+      "bodyState": {
+        "shell": "admin",
+        "profile": "anonimo",
+        "view": "view-dashboard",
+        "qaError": ""
+      },
+      "layout": {
+        "view": "view-dashboard",
+        "profile": "MODERADOR",
+        "route": "dashboard",
+        "viewportWidth": 1366,
+        "viewportHeight": 900,
+        "bodyScrollWidth": 1366,
+        "bodyClientWidth": 1366,
+        "hasHorizontalOverflow": false,
+        "activeView": "view-dashboard",
+        "activeHeight": 1584,
+        "overflowElements": [],
+        "smallTargets": []
+      },
+      "console": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        }
+      ],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\asn03\\Downloads\\Maestro\\System Maestro V12\\GitHub\\System_Maestro\\output\\playwright\\phase-4-9\\desktop-admin-dashboard.png"
+    },
+    {
+      "name": "mobile-fiscal-panel",
+      "viewport": "mobile",
+      "view": "view-fiscal",
+      "profile": "FISCAL",
+      "route": "",
+      "status": "pass",
+      "error": "",
+      "bodyState": {
+        "shell": "field",
+        "profile": "anonimo",
+        "view": "view-fiscal",
+        "qaError": ""
+      },
+      "layout": {
+        "view": "view-fiscal",
+        "profile": "FISCAL",
+        "route": "",
+        "viewportWidth": 390,
+        "viewportHeight": 844,
+        "bodyScrollWidth": 390,
+        "bodyClientWidth": 390,
+        "hasHorizontalOverflow": false,
+        "activeView": "view-fiscal",
+        "activeHeight": 772,
+        "overflowElements": [],
+        "smallTargets": []
+      },
+      "console": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        }
+      ],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\asn03\\Downloads\\Maestro\\System Maestro V12\\GitHub\\System_Maestro\\output\\playwright\\phase-4-9\\mobile-fiscal-panel.png"
+    },
+    {
+      "name": "mobile-driver-panel",
+      "viewport": "mobile",
+      "view": "view-painel-motorista",
+      "profile": "MOTORISTA",
+      "route": "",
+      "status": "pass",
+      "error": "",
+      "bodyState": {
+        "shell": "driver",
+        "profile": "anonimo",
+        "view": "view-painel-motorista",
+        "qaError": ""
+      },
+      "layout": {
+        "view": "view-painel-motorista",
+        "profile": "MOTORISTA",
+        "route": "",
+        "viewportWidth": 390,
+        "viewportHeight": 844,
+        "bodyScrollWidth": 390,
+        "bodyClientWidth": 390,
+        "hasHorizontalOverflow": false,
+        "activeView": "view-painel-motorista",
+        "activeHeight": 506,
+        "overflowElements": [],
+        "smallTargets": [
+          {
+            "tag": "a",
+            "id": "",
+            "className": "btn-text text-danger",
+            "text": "Sair do Sistema",
+            "height": 37
+          }
+        ]
+      },
+      "console": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        }
+      ],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\asn03\\Downloads\\Maestro\\System Maestro V12\\GitHub\\System_Maestro\\output\\playwright\\phase-4-9\\mobile-driver-panel.png"
+    },
+    {
+      "name": "mobile-radar",
+      "viewport": "mobile",
+      "view": "view-radar",
+      "profile": "ESTUDANTE",
+      "route": "",
+      "status": "pass",
+      "error": "",
+      "bodyState": {
+        "shell": "radar",
+        "profile": "estudante",
+        "view": "view-radar",
+        "qaError": ""
+      },
+      "layout": {
+        "view": "view-radar",
+        "profile": "ESTUDANTE",
+        "route": "",
+        "viewportWidth": 390,
+        "viewportHeight": 844,
+        "bodyScrollWidth": 390,
+        "bodyClientWidth": 390,
+        "hasHorizontalOverflow": false,
+        "activeView": "view-radar",
+        "activeHeight": 844,
+        "overflowElements": [],
+        "smallTargets": []
+      },
+      "console": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        }
+      ],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\asn03\\Downloads\\Maestro\\System Maestro V12\\GitHub\\System_Maestro\\output\\playwright\\phase-4-9\\mobile-radar.png"
+    },
+    {
+      "name": "desktop-radar",
+      "viewport": "desktop",
+      "view": "view-radar",
+      "profile": "ESTUDANTE",
+      "route": "",
+      "status": "pass",
+      "error": "",
+      "bodyState": {
+        "shell": "radar",
+        "profile": "estudante",
+        "view": "view-radar",
+        "qaError": ""
+      },
+      "layout": {
+        "view": "view-radar",
+        "profile": "ESTUDANTE",
+        "route": "",
+        "viewportWidth": 1366,
+        "viewportHeight": 900,
+        "bodyScrollWidth": 1366,
+        "bodyClientWidth": 1366,
+        "hasHorizontalOverflow": false,
+        "activeView": "view-radar",
+        "activeHeight": 876,
+        "overflowElements": [],
+        "smallTargets": []
+      },
+      "console": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED"
+        }
+      ],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\asn03\\Downloads\\Maestro\\System Maestro V12\\GitHub\\System_Maestro\\output\\playwright\\phase-4-9\\desktop-radar.png"
+    }
+  ],
+  "failures": []
+}
