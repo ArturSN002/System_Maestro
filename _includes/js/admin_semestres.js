@@ -60,6 +60,21 @@
     return true;
   }
 
+  function atualizarContextoPerfilSemestresMaestro() {
+    const context = byId("semestres-contexto-perfil");
+    if (!context) return;
+    const session = getOperatorSessionSafe();
+    const nivel = String(
+      session.nivel ||
+      session.perfil ||
+      localStorage.getItem("MAESTRO_OPERADOR_NIVEL") ||
+      "OPERADOR"
+    ).toUpperCase();
+    const podeGerir = ["MODERADOR", "SUPERVISOR"].includes(nivel);
+    context.textContent = "Perfil: " + nivel + " | " + (podeGerir ? "gestao liberada" : "sem permissao de gestao");
+    context.classList.toggle("semestre-context-note-warning", !podeGerir);
+  }
+
   function statusColor(status) {
     const normalized = String(status || "").toUpperCase();
     if (normalized === "ATUAL") return "#059669";
@@ -126,6 +141,7 @@
     const id = byId("semestres-atual-id");
     if (label) label.textContent = atual.id ? atual.label : "Nenhum semestre atual definido";
     if (id) id.textContent = atual.id ? atual.id : "Defina um semestre atual antes de auditar ou analisar dados.";
+    atualizarContextoPerfilSemestresMaestro();
   }
 
   function renderizarSemestresMaestro(res) {
@@ -137,7 +153,15 @@
 
     const atual = normalizarSemestreUI((res && res.semestreAtual) || lista.find(item => item.status === "ATUAL") || {});
     atualizarResumoAtual(atual);
-    if (atual.id) setSemesterContextSafe(atual);
+    if (atual.id) {
+      setSemesterContextSafe(atual);
+      if (typeof window.atualizarContextoAdminVisualMaestro === "function") {
+        window.atualizarContextoAdminVisualMaestro();
+      }
+      if (typeof window.atualizarContextoDashboardAdminMaestro === "function") {
+        window.atualizarContextoDashboardAdminMaestro();
+      }
+    }
 
     if (!lista.length) {
       container.innerHTML = '<div class="empty-state empty-state-semestres dynamic-state-box dynamic-empty-state">Nenhum semestre cadastrado.</div>';
@@ -264,6 +288,7 @@
   function abrirGestaoSemestres() {
     if (!operatorCanManageSemesters()) return;
     switchView("view-semestres");
+    atualizarContextoPerfilSemestresMaestro();
     carregarSemestresMaestro();
   }
 

@@ -69,6 +69,114 @@ function sanitizarUrlPWAMaestro(valor, fallback) {
   return String(valor || fallbackSeguro);
 }
 
+function atualizarIdentidadePublicaMaestro(themeConfig) {
+  const config = themeConfig && themeConfig.brand
+    ? themeConfig
+    : (window.MaestroData && window.MaestroData.contexts && window.MaestroData.contexts.theme
+      ? window.MaestroData.contexts.theme.get()
+      : {});
+  const brand = config.brand || {};
+  const contact = config.contact || {};
+  const pwa = config.pwa || {};
+  const logos = config.logos || {};
+  const nomePortal = pwa.name || brand.secretaria || window.PWA_NOME || "Portal Maestro";
+  const setor = brand.setor || "Acesso estudantil e mobilidade escolar";
+  const cidade = brand.cidade || "";
+  const contato = contact.email || "";
+  const logo = sanitizarUrlPWAMaestro(logos.emblem || logos.light || logos.appIcon || window.PWA_ICONE || "MGA.png", "MGA.png");
+
+  const setText = (id, value, hideWhenEmpty = false) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const text = String(value || "").trim();
+    if (text) {
+      el.innerText = text;
+      el.classList.remove("hidden");
+    } else if (hideWhenEmpty) {
+      el.classList.add("hidden");
+    }
+  };
+
+  setText("ui-gateway-nome", nomePortal);
+  setText("ui-gateway-setor", setor);
+  setText("ui-gateway-cidade", cidade, true);
+  setText("ui-gateway-contato", contato ? "Contato: " + contato : "", true);
+  setText("ui-hub-brand-name", nomePortal);
+  setText("ui-public-footer-brand", nomePortal);
+
+  const gatewayLogo = document.getElementById("ui-gateway-logo");
+  if (gatewayLogo) {
+    gatewayLogo.classList.remove("hidden");
+    gatewayLogo.src = logo;
+  }
+}
+
+function obterPreferenciaLocalEstagioMaestro() {
+  try {
+    const valor = localStorage.getItem("MAESTRO_ESTAGIO_VISIVEL");
+    if (valor === "true") return true;
+    if (valor === "false") return false;
+  } catch (error) { }
+  return null;
+}
+
+function maestroEstagioVisivel() {
+  const preferenciaLocal = obterPreferenciaLocalEstagioMaestro();
+  if (preferenciaLocal !== null) return preferenciaLocal;
+
+  try {
+    const theme = window.MaestroData && window.MaestroData.contexts && window.MaestroData.contexts.theme
+      ? window.MaestroData.contexts.theme.get()
+      : {};
+    const rules = theme && theme.rules ? theme.rules : {};
+    if (rules.estagioVisible === true || rules.estagioVisible === false) return rules.estagioVisible;
+  } catch (error) { }
+
+  return true;
+}
+
+function aplicarPoliticaEstagioMaestro() {
+  const visivel = maestroEstagioVisivel();
+  if (!document.body) return visivel;
+  document.body.setAttribute("data-maestro-estagio", visivel ? "visible" : "hidden");
+
+  document.querySelectorAll("[data-maestro-estagio-feature]").forEach(elemento => {
+    elemento.classList.toggle("maestro-estagio-hidden", !visivel);
+    elemento.setAttribute("aria-hidden", visivel ? "false" : "true");
+  });
+
+  const toggle = document.getElementById("toggle-estagio-visivel");
+  if (toggle) toggle.checked = visivel;
+
+  if (!visivel) {
+    const radioNao = document.querySelector('input[name="insc-estagio"][value="N\u00e3o"], input[name="insc-estagio"][value="Nao"]');
+    if (radioNao) radioNao.checked = true;
+    if (typeof toggleCondField === "function") toggleCondField("cond-estagio", false);
+
+    const chkResgate = document.getElementById("chk-resgate-estagio");
+    if (chkResgate) chkResgate.checked = false;
+    const boxResgate = document.getElementById("box-resgate-ESTAGIO");
+    if (boxResgate) boxResgate.classList.add("hidden");
+  }
+
+  return visivel;
+}
+
+function alterarVisibilidadeEstagioMaestro(visivel) {
+  try {
+    localStorage.setItem("MAESTRO_ESTAGIO_VISIVEL", visivel ? "true" : "false");
+  } catch (error) { }
+  aplicarPoliticaEstagioMaestro();
+  if (typeof showToast === "function") {
+    showToast(visivel ? "Conteudos de estagio visiveis neste dispositivo." : "Conteudos de estagio ocultos neste dispositivo.", "info");
+  }
+  return visivel;
+}
+
+window.maestroEstagioVisivel = maestroEstagioVisivel;
+window.aplicarPoliticaEstagioMaestro = aplicarPoliticaEstagioMaestro;
+window.alterarVisibilidadeEstagioMaestro = alterarVisibilidadeEstagioMaestro;
+
 function atualizarManifestDinamicoMaestro(themeConfig) {
   const theme = themeConfig || {};
   const brand = theme.brand || {};
@@ -157,6 +265,8 @@ function restaurarPWAOfflineMaestro() {
   if (elNome) elNome.innerText = window.PWA_NOME.toUpperCase();
   const elSetor = document.getElementById('ui-nome-setor');
   if (elSetor) elSetor.innerText = brand.setor || "Acesso Estudantil";
+  atualizarIdentidadePublicaMaestro(themeConfig);
+  aplicarPoliticaEstagioMaestro();
   const appleTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]');
   if (appleTitle) appleTitle.setAttribute("content", window.PWA_NOME);
   const appName = document.querySelector('meta[name="application-name"]');
@@ -207,6 +317,66 @@ function obterPerfilAtualMaestro() {
 
   const tokenEstudante = localStorage.getItem("MAESTRO_EST_TOKEN");
   return tokenEstudante ? "ESTUDANTE" : "ANONIMO";
+}
+
+function obterContextoAdminVisualMaestro() {
+  let operador = {};
+  let semestre = {};
+
+  try {
+    operador = window.MaestroData && window.MaestroData.contexts && window.MaestroData.contexts.operator
+      ? window.MaestroData.contexts.operator.get()
+      : {};
+  } catch (error) {
+    operador = {};
+  }
+
+  try {
+    semestre = window.MaestroData && window.MaestroData.contexts && window.MaestroData.contexts.semester
+      ? window.MaestroData.contexts.semester.get()
+      : {};
+  } catch (error) {
+    semestre = {};
+  }
+
+  const perfil = String(
+    operador.nivel ||
+    operador.perfil ||
+    localStorage.getItem("MAESTRO_OPERADOR_NIVEL") ||
+    obterPerfilAtualMaestro() ||
+    "ANONIMO"
+  ).toUpperCase();
+
+  return {
+    perfil: perfil,
+    nome: operador.nome || localStorage.getItem("MAESTRO_OPERADOR_NOME") || "",
+    email: operador.email || localStorage.getItem("MAESTRO_OPERADOR_EMAIL") || "",
+    semestreId: semestre.semestreId || semestre.semestreAtual || "",
+    semestreLabel: semestre.label || semestre.nome || semestre.semestreId || semestre.semestreAtual || ""
+  };
+}
+
+function atualizarContextoAdminVisualMaestro() {
+  const contexto = obterContextoAdminVisualMaestro();
+  const profileChip = document.getElementById("admin-hub-profile-chip");
+  const semesterChip = document.getElementById("admin-hub-semester-chip");
+
+  if (profileChip) {
+    const nome = contexto.nome ? " - " + contexto.nome : "";
+    profileChip.textContent = "Perfil: " + contexto.perfil + nome;
+  }
+
+  if (semesterChip) {
+    const semestreTexto = contexto.semestreLabel || contexto.semestreId || "nao definido";
+    semesterChip.textContent = "Semestre: " + semestreTexto;
+    semesterChip.classList.toggle("admin-context-chip-warning", !contexto.semestreId && !contexto.semestreLabel);
+  }
+
+  return contexto;
+}
+
+if (typeof window !== "undefined") {
+  window.atualizarContextoAdminVisualMaestro = atualizarContextoAdminVisualMaestro;
 }
 
 function resolverShellResponsivoMaestro(viewId, perfil) {
@@ -351,6 +521,10 @@ async function bootSystem(options = {}) {
         elCnpj.classList.remove('hidden');
       }
 
+      atualizarIdentidadePublicaMaestro(themeConfig);
+      aplicarPoliticaEstagioMaestro();
+      atualizarContextoAdminVisualMaestro();
+
       initPWA();
     } else {
       restaurarPWAOfflineMaestro();
@@ -371,6 +545,8 @@ async function bootSystem(options = {}) {
 
   ocultarSplashScreen();
   if (typeof window.atualizarContadorNotificacoes === 'function') window.atualizarContadorNotificacoes();
+  aplicarPoliticaEstagioMaestro();
+  atualizarContextoAdminVisualMaestro();
   if (
     window.MaestroData &&
     window.MaestroData.storage &&
@@ -569,6 +745,7 @@ function switchView(viewId) {
 
   aplicarAcessibilidadeBaseMaestro(target || document);
   aplicarShellResponsivoMaestro(viewId);
+  atualizarContextoAdminVisualMaestro();
 
   window.scrollTo(0, 0);
 
@@ -997,6 +1174,7 @@ function aplicarTemaAtual() {
   const logoAtual = (tokens && tokens.assets && tokens.assets.logo) || (legacyTheme && legacyTheme.logo);
   const logoEl = document.getElementById('ui-logo');
   const splashLogo = document.getElementById('splash-logo');
+  const gatewayLogo = document.getElementById('ui-gateway-logo');
   const sistemaNome = window.PWA_NOME || "SYSTEM MAESTRO";
 
   const configurarFallbackLogo = (imgEl, fallbackSrc, placeholderText) => {
@@ -1042,6 +1220,10 @@ function aplicarTemaAtual() {
       configurarFallbackLogo(splashLogo, "icone.png", sistemaNome);
       splashLogo.src = logoAtual;
     }
+    if (gatewayLogo) {
+      configurarFallbackLogo(gatewayLogo, "MGA.png", sistemaNome);
+      gatewayLogo.src = logoAtual;
+    }
   } else {
     if (logoEl) {
       configurarFallbackLogo(logoEl, "MGA.png", sistemaNome);
@@ -1050,6 +1232,10 @@ function aplicarTemaAtual() {
     if (splashLogo) {
       configurarFallbackLogo(splashLogo, "icone.png", sistemaNome);
       splashLogo.src = "icone.png";
+    }
+    if (gatewayLogo) {
+      configurarFallbackLogo(gatewayLogo, "MGA.png", sistemaNome);
+      gatewayLogo.src = "MGA.png";
     }
   }
 }
@@ -1903,6 +2089,7 @@ function iniciarGestorModaisMaestro() {
 document.addEventListener("DOMContentLoaded", () => {
   iniciarGestorModaisMaestro();
   aplicarAcessibilidadeBaseMaestro(document);
+  aplicarPoliticaEstagioMaestro();
 });
 setTimeout(iniciarGestorModaisMaestro, 1200);
 

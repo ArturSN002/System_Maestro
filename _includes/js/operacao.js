@@ -968,6 +968,7 @@ async function abrirPainelModerador() {
     if (typeof podeExecutarAcaoMaestro === 'function' && !podeExecutarAcaoMaestro("salaMaquinas", { notify: true })) return;
 
     switchView('view-moderador');
+    if (typeof aplicarPoliticaEstagioMaestro === "function") aplicarPoliticaEstagioMaestro();
     const loader = document.getElementById('loader-sincronizacao-motores');
     const contexto = obterContextoOperacaoMaestro();
 

@@ -1,82 +1,159 @@
-      <section id="view-gateway" class="view-section">
-        <div class="welcome-text">Bem-vindo ao Maestro</div>
-        <div class="form-card mt-20">
-          <div class="form-header">
-            <span class="card-icon-emoji">🏢</span>
-            <h2>Selecione o seu Município</h2>
-            <p>Escolha a sua instituição para carregar o sistema</p>
-          </div>
-          <select id="client-select" class="input-field mb-15"></select>
-          <button class="btn-solid" onclick="salvarCliente()">Acessar Sistema</button>
-        </div>
-      </section>
-
-      <section id="view-hub" class="view-section">
-        <div class="welcome-text">Selecione o seu perfil de acesso</div>
-        
-        <div id="pwa-install-banner" class="banner-pwa hidden" onclick="instalarPWA()">
-          <span class="icon">📲</span>
-          <div class="text">
-            <strong>Instalar Aplicativo</strong>
-            <span>Acesso direto e rápido no telemóvel</span>
-          </div>
-        </div>
-
-        <div class="grid-desktop">
-          <button class="menu-card primary-card" onclick="switchView('view-aluno-menu')">
-            <span class="icon">🎓</span>
-            <div class="info">
-              <strong>Acesso do Estudante</strong>
-              <span>Carteira Digital e Consulta de Status</span>
+      <section id="view-gateway" class="view-section public-view public-gateway-view">
+        <div class="public-gateway-shell" data-component="MaestroGateway">
+          <div class="public-gateway-layout">
+            <div class="public-brand-panel" aria-label="Identidade institucional do portal">
+              <div class="public-brand-mark">
+                <img id="ui-gateway-logo" class="app-emblem public-gateway-logo" src="./MGA.png" alt="Logo institucional do Portal Maestro">
+              </div>
+              <p class="public-eyebrow">Portal oficial</p>
+              <h2 id="ui-gateway-nome" class="public-brand-title">Maestro</h2>
+              <p id="ui-gateway-setor" class="public-brand-subtitle">Acesso estudantil e mobilidade escolar</p>
+              <div class="public-brand-meta">
+                <span id="ui-gateway-cidade" class="public-meta-chip hidden"></span>
+                <span class="public-meta-chip">PWA</span>
+                <span class="public-meta-chip">Firestore</span>
+              </div>
             </div>
-          </button>
 
-          <button class="menu-card outline-card" onclick="abrirMuralDaSemana()">
-            <span class="icon">🗣️</span>
-            <div class="info">
-              <strong>Voz da Comunidade</strong>
-              <span>Ver Mural da Semana</span>
+            <div class="public-entry-panel" data-component="TenantSelector">
+              <div class="form-header public-entry-header">
+                <span class="public-icon-badge" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m3 11 9-8 9 8"></path>
+                    <path d="M5 10v10h14V10"></path>
+                    <path d="M9 20v-6h6v6"></path>
+                  </svg>
+                </span>
+                <h2>Selecione o seu Munic&iacute;pio</h2>
+                <p>Escolha a institui&ccedil;&atilde;o para carregar tokens, tema, semestre e dados do portal.</p>
+              </div>
+
+              <label class="input-label" for="client-select">Institui&ccedil;&atilde;o / Cliente</label>
+              <select id="client-select" class="input-field public-client-select"></select>
+
+              <button class="btn-solid public-primary-action" onclick="salvarCliente()">
+                Acessar Sistema
+              </button>
+
+              <p id="ui-gateway-contato" class="public-support-note hidden"></p>
             </div>
-          </button>
+          </div>
         </div>
       </section>
 
-      <section id="view-validador" class="view-section">
-        <div class="form-card">
-          <div class="form-header mb-15">
-            <span class="card-icon-emoji-lg">🛡️</span>
-            <h2>Cartório Digital</h2>
-            <p>Verificação de Autenticidade Documental</p>
+      <section id="view-hub" class="view-section public-view public-hub-view">
+        <div class="public-hub-shell" data-component="PublicHub">
+          <div class="public-hub-header">
+            <p class="public-eyebrow">Escolha seu caminho</p>
+            <h2 id="ui-hub-brand-name" class="public-hub-title">Portal Maestro</h2>
+            <p class="public-hub-subtitle">Acesse servi&ccedil;os estudantis, avisos da comunidade e valida&ccedil;&atilde;o documental.</p>
           </div>
 
-          <label class="input-label">CÓDIGO DE VALIDAÇÃO</label>
-          <input type="text" id="input-hash-validador" class="input-field validador-hash-input mb-10" placeholder="Ex: SMEB-2026-A7KC3M">
-          
-          <button class="btn-solid btn-scanner-dark mb-15" id="btn-scanner-publico" onclick="iniciarScannerPublico()">📷 LER QR CODE</button>
-          
-          <div id="leitor-qr-publico-container" class="hidden qr-scanner-viewport mb-15">
-            <div id="leitor-qr-publico"></div>
-            <button class="btn-solid text-danger btn-cancel-scanner" onclick="fecharScannerPublico()">❌ CANCELAR CÂMARA</button>
+          <div id="pwa-install-banner" class="banner-pwa public-install-banner hidden" onclick="instalarPWA()">
+            <span class="icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="7" y="2" width="10" height="20" rx="2"></rect>
+                <path d="M11 18h2"></path>
+              </svg>
+            </span>
+            <div class="text">
+              <strong>Instalar Aplicativo</strong>
+              <span>Acesso direto e rapido no telemovel</span>
+            </div>
           </div>
 
-          <p class="validador-tip-text">Insira o código impresso no rodapé da Declaração de Vínculo ou leia o QR Code da Carteira Digital do Estudante</p>
+          <div class="public-action-grid">
+            <button class="menu-card public-action-card public-action-card-primary" onclick="switchView('view-aluno-menu')">
+              <span class="icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m22 10-10-5-10 5 10 5 10-5Z"></path>
+                  <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                  <path d="M22 10v6"></path>
+                </svg>
+              </span>
+              <div class="info">
+                <strong>Acesso do Estudante</strong>
+                <span>Carteira digital, inscri&ccedil;&atilde;o, consulta e resgate documental</span>
+              </div>
+            </button>
 
-          <button class="btn-solid btn-teal" onclick="verificarHashPublico()">VALIDAR DOCUMENTO</button>
+            <button class="menu-card public-action-card" onclick="abrirMuralDaSemana()">
+              <span class="icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m3 11 18-5v12L3 13Z"></path>
+                  <path d="M11.6 16.8A3 3 0 0 1 6 15"></path>
+                </svg>
+              </span>
+              <div class="info">
+                <strong>Voz da Comunidade</strong>
+                <span>Acompanhe avisos e publica&ccedil;&otilde;es da semana</span>
+              </div>
+            </button>
 
-          <div id="res-validador" class="mt-20"></div>
-
-          <button class="btn-text" onclick="switchView('view-hub')">⬅ Voltar ao Início</button>
+            <button class="menu-card public-action-card" onclick="switchView('view-validador')">
+              <span class="icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"></path>
+                  <path d="m9 12 2 2 4-4"></path>
+                </svg>
+              </span>
+              <div class="info">
+                <strong>Validar Documento</strong>
+                <span>Confirme autenticidade por codigo ou QR Code</span>
+              </div>
+            </button>
+          </div>
         </div>
       </section>
 
-      <section id="view-mural" class="view-section">
-        <div class="welcome-text mb-5">Mural da Semana</div>
-        <p class="mural-subtitle mb-20">Curadoria comunitária. As mensagens expiram após 7 dias.</p>
-        
-        <div id="mural-feed" class="grid-desktop">
-           <div class="loader mx-auto"></div>
-           <p class="text-center mt-10 mural-loading-text">A carregar a voz da comunidade...</p>
-        </div>
+      <section id="view-validador" class="view-section public-view public-validator-view">
+        <div class="public-utility-shell" data-component="PublicValidatorCard">
+          <div class="form-card public-utility-card">
+            <div class="form-header public-entry-header">
+              <span class="public-icon-badge" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"></path>
+                  <path d="m9 12 2 2 4-4"></path>
+                </svg>
+              </span>
+              <h2>Cart&oacute;rio Digital</h2>
+              <p>Verifica&ccedil;&atilde;o de autenticidade documental</p>
+            </div>
 
-        <button class="btn-text mt-20" onclick="switchView('view-hub')">⬅ Voltar ao Início</button>
+            <label class="input-label" for="input-hash-validador">C&oacute;digo de valida&ccedil;&atilde;o</label>
+            <input type="text" id="input-hash-validador" class="input-field validador-hash-input mb-10" placeholder="Ex: SMEB-2026-A7KC3M">
+            
+            <button class="btn-solid btn-scanner-dark mb-15" id="btn-scanner-publico" onclick="iniciarScannerPublico()">Ler QR Code</button>
+            
+            <div id="leitor-qr-publico-container" class="hidden qr-scanner-viewport mb-15">
+              <div id="leitor-qr-publico"></div>
+              <button class="btn-solid text-danger btn-cancel-scanner" onclick="fecharScannerPublico()">Cancelar camara</button>
+            </div>
+
+            <p class="validador-tip-text">Insira o c&oacute;digo impresso no rodap&eacute; da declara&ccedil;&atilde;o de v&iacute;nculo ou leia o QR Code da carteira digital do estudante.</p>
+
+            <button class="btn-solid btn-teal" onclick="verificarHashPublico()">Validar Documento</button>
+
+            <div id="res-validador" class="mt-20"></div>
+
+            <button class="btn-text" onclick="switchView('view-hub')">Voltar ao Inicio</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-mural" class="view-section public-view public-mural-view">
+        <div class="public-utility-shell" data-component="PublicNoticePreview">
+          <div class="public-hub-header">
+            <p class="public-eyebrow">Comunidade</p>
+            <h2 class="public-hub-title">Mural da Semana</h2>
+            <p class="public-hub-subtitle">Curadoria comunitaria. As mensagens expiram apos 7 dias.</p>
+          </div>
+          
+          <div id="mural-feed" class="grid-desktop public-mural-feed">
+             <div class="loader mx-auto"></div>
+             <p class="text-center mt-10 mural-loading-text">A carregar a voz da comunidade...</p>
+          </div>
+
+          <button class="btn-text mt-20" onclick="switchView('view-hub')">Voltar ao Inicio</button>
+        </div>
       </section>

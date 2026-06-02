@@ -54,6 +54,83 @@ function atualizarEstadoCacheDashboardMaestro(cache) {
     atualizarEstadoDashboardMaestro(tipo, mensagem, { updatedAt: updatedAt, className: "dashboard-state-banner" });
 }
 
+function obterContextoDashboardAdminMaestro() {
+    let semesterContext = {};
+    let operatorContext = {};
+
+    try {
+        semesterContext = window.MaestroData && window.MaestroData.contexts && window.MaestroData.contexts.semester
+            ? window.MaestroData.contexts.semester.get()
+            : {};
+    } catch (error) {
+        semesterContext = {};
+    }
+
+    try {
+        operatorContext = window.MaestroData && window.MaestroData.contexts && window.MaestroData.contexts.operator
+            ? window.MaestroData.contexts.operator.get()
+            : {};
+    } catch (error) {
+        operatorContext = {};
+    }
+
+    return {
+        semestreId: semesterContext.semestreId || semesterContext.semestreAtual || "",
+        semestreLabel: semesterContext.label || semesterContext.nome || semesterContext.semestreId || semesterContext.semestreAtual || "",
+        perfil: String(
+            operatorContext.nivel ||
+            operatorContext.perfil ||
+            localStorage.getItem("MAESTRO_OPERADOR_NIVEL") ||
+            "OPERADOR"
+        ).toUpperCase()
+    };
+}
+
+function formatarDataDashboardMaestro(value) {
+    if (!value) return "";
+    const date = new Date(value);
+    if (!Number.isFinite(date.getTime())) return String(value);
+    try {
+        return date.toLocaleString("pt-BR", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+    } catch (error) {
+        return String(value);
+    }
+}
+
+function atualizarContextoDashboardAdminMaestro(dashboardStats) {
+    const contexto = obterContextoDashboardAdminMaestro();
+    const stats = dashboardStats ? normalizarDashboardStatsMaestro(dashboardStats) : null;
+    const semestreLabel = document.getElementById("dashboard-semestre-label");
+    const operadorNivel = document.getElementById("dashboard-operador-nivel");
+    const atualizadoLabel = document.getElementById("dashboard-atualizado-label");
+
+    const semestreTexto = (stats && stats.semestreId) || contexto.semestreLabel || contexto.semestreId || "nao definido";
+    if (semestreLabel) {
+        semestreLabel.textContent = "Semestre: " + semestreTexto;
+        semestreLabel.classList.toggle("admin-context-chip-warning", !semestreTexto || semestreTexto === "nao definido");
+    }
+
+    if (operadorNivel) {
+        operadorNivel.textContent = "Perfil: " + contexto.perfil;
+    }
+
+    if (atualizadoLabel) {
+        const atualizadoEm = stats && stats.atualizadoEm ? formatarDataDashboardMaestro(stats.atualizadoEm) : "";
+        atualizadoLabel.textContent = atualizadoEm ? "Atualizado: " + atualizadoEm : "Aguardando sincronizacao";
+        atualizadoLabel.classList.toggle("admin-context-chip-muted", !atualizadoEm);
+    }
+}
+
+if (typeof window !== "undefined") {
+    window.atualizarContextoDashboardAdminMaestro = atualizarContextoDashboardAdminMaestro;
+}
+
 function normalizarDashboardStatsMaestro(payload) {
     const adapter = window.MaestroData &&
         window.MaestroData.adapters &&
@@ -221,6 +298,7 @@ function atualizarDashboardComStatsMaestro(dashboardStats, opcoes = {}) {
     window.dadosBI = Array.isArray(stats.dataMart) ? stats.dataMart : [];
     renderizarDashboardUI(stats);
     gerarChipsDinamicos();
+    atualizarContextoDashboardAdminMaestro(stats);
 
     if (opcoes.cache !== false) salvarCacheDashboardMaestro(stats);
 
@@ -236,6 +314,7 @@ async function carregarDashboard() {
     if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
     if (typeof podeExecutarAcaoMaestro === 'function' && !podeExecutarAcaoMaestro("dashboard", { notify: true })) return;
 
+    atualizarContextoDashboardAdminMaestro();
     const cachedStats = obterCacheDashboardMaestro();
 
     if (cachedStats) {

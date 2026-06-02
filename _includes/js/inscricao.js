@@ -31,9 +31,14 @@ function atualizarStatusArquivoInscricao(statusSpan, texto, estado = "idle") {
     statusSpan.classList.add(`is-${estado}`);
 }
 
+function estagioInscricaoVisivelMaestro() {
+    return typeof window.maestroEstagioVisivel === "function" ? window.maestroEstagioVisivel() : true;
+}
+
 // ----- Wrapper de Inicialização -----
 function abrirNovaInscricao() {
     switchView('view-inscricao');
+    if (typeof aplicarPoliticaEstagioMaestro === "function") aplicarPoliticaEstagioMaestro();
     carregarListasInscricao(); // Triggers the backend fetch immediately
 }
 
@@ -119,7 +124,8 @@ function stepperNext(current, next) {
     }
 
     if (current === 3) {
-        if (!getRadioValue('insc-23h') || !getRadioValue('insc-estagio') || !getRadioValue('insc-pcd') || !getRadioValue('insc-menor') || !getRadioValue('insc-criancas')) { 
+        const estagioVisivel = estagioInscricaoVisivelMaestro();
+        if (!getRadioValue('insc-23h') || (estagioVisivel && !getRadioValue('insc-estagio')) || !getRadioValue('insc-pcd') || !getRadioValue('insc-menor') || !getRadioValue('insc-criancas')) { 
             showToast("Por favor, responda a todas as perguntas de Sim/Não.", "error"); 
             return; 
         }
@@ -134,7 +140,7 @@ function stepperNext(current, next) {
         }
 
         const condEstagio = document.getElementById('cond-estagio');
-        if (condEstagio && condEstagio.classList.contains('cond-visible')) {
+        if (estagioVisivel && condEstagio && condEstagio.classList.contains('cond-visible')) {
             const tipoVinculo = getValorCampoInscricao('insc-tipo-vinculo-estagio');
             const inicioEstagio = getValorCampoInscricao('insc-inicio-estagio');
             const fimEstagio = getValorCampoInscricao('insc-fim-estagio');
@@ -320,7 +326,7 @@ async function verificarCPFInscricao() {
                 _selecionarOpcaoSelect(elRota, d.rota);
             }
 
-            if (d.estagio === 'Sim') {
+            if (estagioInscricaoVisivelMaestro() && d.estagio === 'Sim') {
                 const radioEstagio = document.querySelector('input[name="insc-estagio"][value="Sim"]');
                 if (radioEstagio) radioEstagio.checked = true;
                 toggleCondField('cond-estagio', true);
@@ -717,13 +723,14 @@ function prepararEnvioNativo() {
         return;
     }
 
-    const estagio = getRadioSimNao('insc-estagio');
-    const tipoVinculoEstagio = getValorCampoInscricao('insc-tipo-vinculo-estagio');
-    const inicioEstagio = getValorCampoInscricao('insc-inicio-estagio');
-    const fimEstagio = getValorCampoInscricao('insc-fim-estagio');
-    const empresaInstituicaoEstagio = getValorCampoInscricao('insc-empresa-estagio');
-    const paradaEstagio = getValorCampoInscricao('insc-parada-estagio');
-    const turnoEstagio = getValorCampoInscricao('insc-turno-estagio');
+    const estagioVisivel = estagioInscricaoVisivelMaestro();
+    const estagio = estagioVisivel ? getRadioSimNao('insc-estagio') : 'Não';
+    const tipoVinculoEstagio = estagio === 'Sim' ? getValorCampoInscricao('insc-tipo-vinculo-estagio') : "";
+    const inicioEstagio = estagio === 'Sim' ? getValorCampoInscricao('insc-inicio-estagio') : "";
+    const fimEstagio = estagio === 'Sim' ? getValorCampoInscricao('insc-fim-estagio') : "";
+    const empresaInstituicaoEstagio = estagio === 'Sim' ? getValorCampoInscricao('insc-empresa-estagio') : "";
+    const paradaEstagio = estagio === 'Sim' ? getValorCampoInscricao('insc-parada-estagio') : "";
+    const turnoEstagio = estagio === 'Sim' ? getValorCampoInscricao('insc-turno-estagio') : "";
 
     if (estagio === 'Sim') {
         const periodo = validarPeriodoEstagioInscricao(inicioEstagio, fimEstagio);
@@ -744,6 +751,7 @@ function prepararEnvioNativo() {
     const menorIdade = getRadioSimNao('insc-menor');
     const acompanhado = getRadioSimNao('insc-criancas');
     const arquivosPayload = Object.assign({}, inscricaoArquivos, { fotoBase64: fotoFinal });
+    if (!estagioVisivel) delete arquivosPayload.estagio;
     const semestreId = obterSemestreAtualInscricaoMaestro();
 
     const payloadNativo = {
@@ -777,7 +785,7 @@ function prepararEnvioNativo() {
         empresaInstituicaoEstagio: empresaInstituicaoEstagio,
         paradaEstagio: paradaEstagio,
         turnoEstagio: turnoEstagio,
-        declaracaoVinculoEstagio: inscricaoArquivos.estagio ? {
+        declaracaoVinculoEstagio: estagio === 'Sim' && inscricaoArquivos.estagio ? {
             tipo: inscricaoArquivos.estagio.tipo,
             nome: inscricaoArquivos.estagio.nome,
             anexada: true
@@ -925,6 +933,7 @@ function _resetarFormularioInscricao() {
     const step1 = document.getElementById('step-1');
     if (step1) step1.classList.add('step-visible');
     atualizarStepperUI(1);
+    if (typeof aplicarPoliticaEstagioMaestro === "function") aplicarPoliticaEstagioMaestro();
 
     // Carrega listas dinâmicas para dropdowns
     carregarListasInscricao();

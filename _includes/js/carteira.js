@@ -326,6 +326,10 @@ function carteiraEstaOffline(opcoes) {
         (typeof navigator !== 'undefined' && navigator.onLine === false);
 }
 
+function estagioCarteiraVisivelMaestro() {
+    return typeof window.maestroEstagioVisivel === "function" ? window.maestroEstagioVisivel() : true;
+}
+
 function obterFotoCarteiraHTML(dados, offline) {
     const foto = offline
         ? (dados.fotoBase64 || dados.fotoUrl || dados.fotoURL)
@@ -342,7 +346,16 @@ function atualizarEstadoVisualCarteiraDinamica() {
 
     const dados = window.MaestroWalletAtual.dados || {};
     const offline = window.MaestroWalletAtual.offline === true;
-    const visualState = obterStatusCarteiraVisual(dados, { offline: offline });
+    let visualState = obterStatusCarteiraVisual(dados, { offline: offline });
+    if (!estagioCarteiraVisivelMaestro() && visualState && visualState.stateClass === "wallet-state-estagio") {
+        visualState = Object.assign({}, visualState, {
+            isEstagioActive: false,
+            stateClass: "wallet-state-neutral",
+            backgroundToken: "wallet.neutral",
+            badgeLabel: "Carteira digital",
+            reason: "Estado visual padrao aplicado pela politica do portal."
+        });
+    }
     const classesEstado = [
         "wallet-state-neutral",
         "wallet-state-matutino",
@@ -375,7 +388,17 @@ function renderizarCarteira(dados, opcoes = {}) {
     if (!container || !dados) return;
 
     const offline = carteiraEstaOffline(opcoes);
-    const visualState = obterStatusCarteiraVisual(dados, { offline: offline });
+    const estagioVisivel = estagioCarteiraVisivelMaestro();
+    let visualState = obterStatusCarteiraVisual(dados, { offline: offline });
+    if (!estagioVisivel && visualState && visualState.stateClass === "wallet-state-estagio") {
+        visualState = Object.assign({}, visualState, {
+            isEstagioActive: false,
+            stateClass: "wallet-state-neutral",
+            backgroundToken: "wallet.neutral",
+            badgeLabel: "Carteira digital",
+            reason: "Estado visual padrao aplicado pela politica do portal."
+        });
+    }
     const nomeTratadoSeguro = escapeWallet(formatarNomeProprio(dados.nome || dados.nomeAluno || dados.NOME_ALUNO));
     const cpfMascarado = escapeWallet(dados.cpfMascarado || dados.cpf_mask || dados.CPF_MASCARADO || "***.***.***-**");
     const idCarteira = escapeWallet(dados.idCarteira || dados.id || dados.identificador || currentWalletId);
@@ -395,9 +418,22 @@ function renderizarCarteira(dados, opcoes = {}) {
     const documentoDisabled = offline ? "disabled" : "";
     const documentoClasses = offline ? "btn-solid dark-bg wallet-disabled-action" : "btn-solid dark-bg";
     const documentoLabel = offline ? "Documento indisponivel offline" : "Baixar Declaracao de Vinculo";
-    const resumoEstagio = obterResumoAtualizacaoEstagioCarteira(dados, offline);
+    const resumoEstagio = estagioVisivel
+        ? obterResumoAtualizacaoEstagioCarteira(dados, offline)
+        : {
+            podeAtualizar: false,
+            textoBotao: "Atualizacao de estagio indisponivel",
+            motivo: "Conteudos de estagio ocultos pela politica do portal."
+        };
     const botaoEstagioClasses = resumoEstagio.podeAtualizar ? "btn-solid wallet-stage-update-button" : "btn-solid wallet-disabled-action";
     const botaoEstagioDisabled = resumoEstagio.podeAtualizar ? "" : "disabled";
+    const acoesEstagioHTML = estagioVisivel ? `
+        <div data-maestro-estagio-feature="carteira">
+          <button id="btn-wallet-stage-update" class="${botaoEstagioClasses}" onclick="abrirFormularioAtualizacaoEstagioCarteira()" ${botaoEstagioDisabled}>${escapeWallet(resumoEstagio.textoBotao)}</button>
+          <div class="wallet-stage-limit-note">${escapeWallet(resumoEstagio.motivo)}</div>
+          <div id="wallet-stage-update-slot"></div>
+        </div>
+      ` : "";
 
     container.innerHTML = `
   <div class="wallet-card wallet-dynamic ${classEstado}${offlineClass}" data-wallet-state="${dataEstado}">
@@ -453,9 +489,7 @@ function renderizarCarteira(dados, opcoes = {}) {
            <button class="btn-solid wallet-action-button" onclick="abrirRadarMasterView()">Abrir Radar de Viagens</button>
            <button class="btn-solid dark-bg wallet-action-button" onclick="abrirMuralDaSemana()">Sugestoes / Forum</button>
         </div>
-        <button id="btn-wallet-stage-update" class="${botaoEstagioClasses}" onclick="abrirFormularioAtualizacaoEstagioCarteira()" ${botaoEstagioDisabled}>${escapeWallet(resumoEstagio.textoBotao)}</button>
-        <div class="wallet-stage-limit-note">${escapeWallet(resumoEstagio.motivo)}</div>
-        <div id="wallet-stage-update-slot"></div>
+        ${acoesEstagioHTML}
         <div class="wallet-action-close-row">
            <button class="btn-text text-danger wallet-close-button" onclick="sairCarteira()">Fechar Cofre Digital</button>
         </div>
@@ -484,6 +518,10 @@ function renderizarCarteiraOffline(dados) {
 }
 
 function abrirFormularioAtualizacaoEstagioCarteira() {
+    if (!estagioCarteiraVisivelMaestro()) {
+        showToast("Atualizacao de estagio indisponivel para este portal.", "warning");
+        return;
+    }
     const slot = document.getElementById('wallet-stage-update-slot');
     const estado = window.MaestroWalletAtual || {};
     const dados = estado.dados || {};
@@ -620,6 +658,10 @@ function obterValorCampoCarteira(id) {
 }
 
 async function enviarAtualizacaoEstagioCarteira() {
+    if (!estagioCarteiraVisivelMaestro()) {
+        showToast("Atualizacao de estagio indisponivel para este portal.", "warning");
+        return;
+    }
     const estado = window.MaestroWalletAtual || {};
     const dados = estado.dados || {};
     const resumo = obterResumoAtualizacaoEstagioCarteira(dados, estado.offline === true);

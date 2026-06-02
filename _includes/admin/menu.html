@@ -1,9 +1,20 @@
 <!-- COMPONENTE: MENUS OPERACIONAIS (ADMIN E MOTORISTA) -->
-<section id="view-admin-hub" class="view-section admin-view admin-hub-view">
-  <div class="welcome-text welcome-row admin-welcome-row">
-    <span>Bem-vindo, <span id="nome-operador-logado"
-        class="welcome-operator-name">Operador</span></span>
-  </div>
+<section id="view-admin-hub" class="view-section admin-view admin-hub-view" data-component="AdminHub">
+  <div class="admin-hub-shell">
+    <div class="admin-hub-header">
+      <div>
+        <p class="admin-hub-eyebrow">Secretaria</p>
+        <h2 class="admin-hub-title">Central administrativa</h2>
+        <div class="welcome-text welcome-row admin-welcome-row">
+          <span>Bem-vindo, <span id="nome-operador-logado"
+              class="welcome-operator-name">Operador</span></span>
+        </div>
+      </div>
+      <div class="admin-context-stack" aria-label="Contexto administrativo">
+        <span class="admin-context-chip" id="admin-hub-profile-chip">Perfil ativo</span>
+        <span class="admin-context-chip admin-context-chip-muted" id="admin-hub-semester-chip">Semestre atual</span>
+      </div>
+    </div>
 
   <div id="menu-grupo-campo" class="grid-desktop admin-action-grid admin-field-grid">
     <button class="menu-card dark-card admin-action-card admin-action-card-field" data-maestro-action="fiscalizar" onclick="switchView('view-fiscal')">
@@ -91,6 +102,7 @@
 
   <button class="btn-text text-danger mt-20"
     onclick="encerrarSessaoOperador()">Sair do Sistema</button>
+  </div>
 </section>
 
 <div id="view-painel-motorista" class="view-section operational-view driver-view hidden">

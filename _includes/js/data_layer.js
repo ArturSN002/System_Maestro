@@ -577,6 +577,14 @@
     return safeString(value);
   }
 
+  function toBoolean(value, fallback) {
+    if (value === true || value === false) return value;
+    const normalized = normalizeUpper(value);
+    if (["SIM", "S", "TRUE", "1", "YES", "ATIVO", "ATIVADO", "LIGADO", "VISIVEL", "VISIBLE"].includes(normalized)) return true;
+    if (["NAO", "N", "FALSE", "0", "NO", "INATIVO", "DESATIVADO", "DESLIGADO", "OCULTO", "HIDDEN"].includes(normalized)) return false;
+    return fallback;
+  }
+
   function normalizeAccessProfile(profile) {
     const normalized = normalizeUpper(profile);
     const aliases = {
@@ -1706,6 +1714,18 @@
         cepsValidos: toArray(pickFirst(config.CEPS_VALIDOS, ui.CEPS_VALIDOS, source.CEPS_VALIDOS)),
         docsValidityMonths: toNumber(pickFirst(config.MESES_VALIDADE_DOCS, source.MESES_VALIDADE_DOCS), null),
         lgpdRetentionMonths: toNumber(pickFirst(config.MESES_RETENCAO_LGPD, source.MESES_RETENCAO_LGPD), null),
+        estagioVisible: toBoolean(pickFirst(
+          config.EXIBIR_ESTAGIO,
+          config.HABILITAR_ESTAGIO,
+          config.HABILITAR_ESTAGIO_TRANSPORTE,
+          config.PERMITIR_ESTAGIO,
+          ui.EXIBIR_ESTAGIO,
+          ui.HABILITAR_ESTAGIO,
+          source.EXIBIR_ESTAGIO,
+          source.HABILITAR_ESTAGIO,
+          source.HABILITAR_ESTAGIO_TRANSPORTE,
+          source.PERMITIR_ESTAGIO
+        ), true),
         muralWeeklyPostLimit: BUSINESS_RULES.muralWeeklyPostLimit,
         stageUpdateLimitPerCycle: BUSINESS_RULES.stageUpdateLimitPerCycle
       },

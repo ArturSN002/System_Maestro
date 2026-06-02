@@ -220,14 +220,25 @@
 
     </main>
 
-    <footer class="app-footer" role="contentinfo">
+    <footer class="app-footer public-footer" role="contentinfo" data-component="PublicFooter">
+      <p id="ui-public-footer-brand" class="footer-brand-name">Portal Maestro</p>
       <p id="ui-endereco" class="hidden"></p>
       <p id="ui-email" class="hidden"></p>
       <p id="ui-cnpj" class="hidden"></p>
       
       <div class="footer-nav-grid">
         <a href="#" class="footer-link" onclick="abrirModalSobre(); return false;">📖 Sobre o Maestro</a>
-        <a href="mailto:teste@falso.com" class="footer-link">🎧 Suporte</a>
+        <a href="mailto:teste@falso.com" class="footer-link">
+          <span class="footer-link-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 14v-2a9 9 0 0 1 18 0v2"></path>
+              <path d="M21 19a2 2 0 0 1-2 2h-3"></path>
+              <rect x="3" y="13" width="4" height="6" rx="2"></rect>
+              <rect x="17" y="13" width="4" height="6" rx="2"></rect>
+            </svg>
+          </span>
+          Suporte
+        </a>
         <a href="#" class="footer-link">🔒 Privacidade</a>
         <a href="#" class="footer-link">📜 Termos de Uso</a>
       </div>
@@ -265,8 +276,19 @@
   <div id="ui-overlay" class="ui-overlay" onclick="closeAllSidebars()"></div>
 
   <!-- LEFT SIDEBAR: CONFIGS -->
-  <aside id="sidebar-left" class="sidebar-drawer sidebar-left" aria-label="Configurações e navegação auxiliar">
-    <h3 class="sidebar-title">⚙️ Configurações</h3>
+  <aside id="sidebar-left" class="sidebar-drawer sidebar-left maestro-admin-sidebar" aria-label="Configurações e navegação auxiliar" data-component="AdminSidebar">
+    <div class="sidebar-headline">
+      <span class="sidebar-headline-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"></path>
+          <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.1a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.6 1Z"></path>
+        </svg>
+      </span>
+      <div>
+        <h3 class="sidebar-title">Configuracoes</h3>
+        <p class="sidebar-subtitle">Preferencias, atalhos e contexto do portal.</p>
+      </div>
+    </div>
     <div class="prefs-group prefs-panel">
       <p class="input-label prefs-label">Preferências do Sistema</p>
       <div class="switch-row switch-item-row">
@@ -320,7 +342,39 @@
       </div>
     </button>
 
-    <div id="pwa-install-banner" class="banner-pwa install-banner-sidebar" onclick="instalarPWA()">
+    <div class="sidebar-admin-shortcuts" aria-label="Atalhos administrativos">
+      <span class="sidebar-section-label">Atalhos da secretaria</span>
+      <button class="menu-card outline-card sidebar-admin-link" data-maestro-action="auditoria" onclick="closeAllSidebars(); abrirMesaAuditoria()">
+        <span class="icon sidebar-menu-icon">📂</span>
+        <div class="info">
+          <strong class="sidebar-menu-title">Mesa de Auditoria</strong>
+          <span class="sidebar-menu-desc">Fila, filtros e raio-X do estudante</span>
+        </div>
+      </button>
+      <button class="menu-card outline-card sidebar-admin-link" data-maestro-action="dashboard" onclick="closeAllSidebars(); carregarDashboard()">
+        <span class="icon sidebar-menu-icon">📊</span>
+        <div class="info">
+          <strong class="sidebar-menu-title">Dashboard</strong>
+          <span class="sidebar-menu-desc">Indicadores do semestre atual</span>
+        </div>
+      </button>
+      <button class="menu-card outline-card sidebar-admin-link" data-maestro-action="semestres" onclick="closeAllSidebars(); abrirGestaoSemestres()">
+        <span class="icon sidebar-menu-icon">SEM</span>
+        <div class="info">
+          <strong class="sidebar-menu-title">Semestres</strong>
+          <span class="sidebar-menu-desc">Criar, arquivar e definir ciclo</span>
+        </div>
+      </button>
+      <button class="menu-card outline-card sidebar-admin-link" data-maestro-action="salaMaquinas" onclick="closeAllSidebars(); abrirPainelModerador()">
+        <span class="icon sidebar-menu-icon">⚙️</span>
+        <div class="info">
+          <strong class="sidebar-menu-title">Sala das Maquinas</strong>
+          <span class="sidebar-menu-desc">Motores, politicas e healthcheck</span>
+        </div>
+      </button>
+    </div>
+
+    <div id="pwa-install-banner-sidebar" class="banner-pwa install-banner-sidebar" onclick="instalarPWA()">
       <div class="icon">📱</div>
       <div class="text"><strong>Instalar Maestro</strong><span>Adicionar ao ecrã inicial</span></div>
     </div>

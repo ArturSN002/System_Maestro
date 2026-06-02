@@ -60,10 +60,12 @@
          <button class="btn-solid dark-bg mt-15" onclick="switchView('view-admin-hub')">Voltar ao Menu</button>
       </section>
 
-      <section id="view-semestres" class="view-section admin-view admin-semesters-view">
+      <section id="view-semestres" class="view-section admin-view admin-semesters-view" data-component="AdminSemesters">
+         <div class="admin-semesters-shell">
          <div class="form-card p-15-mb-10 admin-panel-card admin-semesters-editor">
             <div class="semestres-header-row admin-panel-header-row">
                <div>
+                  <p class="admin-panel-eyebrow">Ciclo letivo</p>
                   <h2 class="admin-section-title">GESTAO DE SEMESTRES</h2>
                   <p class="semestres-header-desc">Supervisor e moderador podem criar, atualizar, arquivar e definir o ciclo oficial usado por auditoria, dashboard e carteira.</p>
                </div>
@@ -74,6 +76,7 @@
                <span class="label-sm semestre-success-label">SEMESTRE ATUAL</span>
                <strong id="semestres-atual-label" class="semestre-atual-name">-</strong>
                <span id="semestres-atual-id" class="semestre-atual-id">-</span>
+               <span id="semestres-contexto-perfil" class="semestre-context-note">Permissao via perfil ativo</span>
             </div>
 
             <div class="grid-desktop semestre-fields-grid admin-semester-form-grid">
@@ -105,6 +108,7 @@
          </div>
 
          <button class="btn-solid dark-bg mt-15" onclick="switchView('view-admin-hub')">Voltar ao Menu</button>
+         </div>
       </section>
 
       <section id="view-moderador" class="view-section">
@@ -147,6 +151,20 @@
                  <span class="desc-xs">Fila de Envio de E-mails</span>
                  <label class="switch">
                    <input type="checkbox" id="toggle-motor-email" onchange="alterarMotor('EMAIL', this.checked)">
+                   <span class="slider"></span>
+                 </label>
+               </div>
+            </div>
+
+            <div class="motores-status-card machine-policy-card">
+               <span class="label-sm text-primary">POLITICAS VISUAIS DO PORTAL</span>
+               <div class="switch-row machine-policy-row">
+                 <div>
+                   <span class="desc-xs machine-policy-title">Conteudos de estagio</span>
+                   <p class="machine-policy-desc">Oculta ou exibe solicitacao de estagio na inscricao, resgate e carteira neste dispositivo. Para controle global, use a chave de configuracao da planilha/backend.</p>
+                 </div>
+                 <label class="switch">
+                   <input type="checkbox" id="toggle-estagio-visivel" onchange="alterarVisibilidadeEstagioMaestro(this.checked)">
                    <span class="slider"></span>
                  </label>
                </div>
@@ -197,11 +215,19 @@
         <div id="res-fiscal" class="result-container fiscal-result-panel"></div>
       </section>
 
-      <section id="view-dashboard" class="view-section admin-view admin-dashboard-view">
+      <section id="view-dashboard" class="view-section admin-view admin-dashboard-view" data-component="AdminDashboard">
         <div class="form-card dark-form p-15 admin-panel-card admin-dashboard-card">
-          <div class="form-header mb-20">
-            <h2 class="text-primary">📊 DASHBOARD</h2>
-            <p>Dados oficiais do semestre letivo</p>
+          <div class="form-header mb-20 admin-dashboard-header">
+            <div>
+              <p class="admin-panel-eyebrow">Inteligencia operacional</p>
+              <h2 class="text-primary admin-dashboard-title">DASHBOARD</h2>
+              <p>Dados oficiais do semestre letivo</p>
+            </div>
+            <div class="admin-dashboard-context" aria-label="Contexto do dashboard">
+              <span id="dashboard-semestre-label" class="admin-context-chip">Semestre atual</span>
+              <span id="dashboard-operador-nivel" class="admin-context-chip admin-context-chip-muted">Perfil ativo</span>
+              <span id="dashboard-atualizado-label" class="admin-context-chip admin-context-chip-muted">Aguardando sincronizacao</span>
+            </div>
           </div>
 
           <div class="dash-kpi-grid admin-dashboard-kpis">
@@ -212,17 +238,19 @@
           </div>
           <div id="dashboard-async-state" class="dashboard-async-state hidden" aria-live="polite"></div>
 
-          <div class="dash-box admin-dashboard-status-card dashboard-chart-card">
-            <h3>Status Global</h3>
-            <div class="chart-wrapper"><canvas id="chart-status"></canvas></div>
-          </div>
-
-          <div class="dash-box admin-dashboard-usage-card dashboard-usage-card">
-            <div class="flex-between-fs11-mb5">
-              <span class="text-light">Motor Gemini IA (Gasto/Limite OCR)</span>
-              <strong id="kpi-ia-text" class="text-accent">- / -</strong>
+          <div class="admin-dashboard-summary-grid">
+            <div class="dash-box admin-dashboard-status-card dashboard-chart-card">
+              <h3>Status Global</h3>
+              <div class="chart-wrapper"><canvas id="chart-status"></canvas></div>
             </div>
-            <div class="progress-track"><div id="bar-ia-usage" class="progress-fill"></div></div>
+
+            <div class="dash-box admin-dashboard-usage-card dashboard-usage-card">
+              <div class="flex-between-fs11-mb5">
+                <span class="text-light">Motor Gemini IA (Gasto/Limite OCR)</span>
+                <strong id="kpi-ia-text" class="text-accent">- / -</strong>
+              </div>
+              <div class="progress-track"><div id="bar-ia-usage" class="progress-fill"></div></div>
+            </div>
           </div>
 
           <div class="dash-tabs mb-10 admin-dashboard-tabs">

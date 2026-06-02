@@ -5272,6 +5272,17 @@ body.dark-theme .app-header-global.header-scrolled {
   width: 100%;
   box-sizing: border-box;
 }
+.footer-link-icon {
+  display: inline-flex;
+  width: 1.15em;
+  height: 1.15em;
+  margin-right: 0.35em;
+  vertical-align: -0.18em;
+}
+.footer-link-icon svg {
+  width: 100%;
+  height: 100%;
+}
 .footer-link:active {
   transform: scale(0.95);
   background: var(--bg-hover);
@@ -8798,5 +8809,967 @@ body {
 
   .operational-radar-view {
     min-height: 660px;
+  }
+}
+
+/* ======================================================================== */
+/* FASE 7.1: MaestroShell, Gateway e Hub publico inspirados no Stitch        */
+/* ======================================================================== */
+:root {
+  --maestro-public-max: 1120px;
+  --maestro-public-panel-radius: 8px;
+  --maestro-public-panel-border: color-mix(in srgb, var(--border) 78%, transparent);
+  --maestro-public-panel-bg: color-mix(in srgb, var(--bg-surface) 94%, transparent);
+}
+
+body[data-maestro-shell="public"] {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--primary) 7%, var(--bg-body)) 0%, var(--bg-body) 38%),
+    var(--bg-body);
+}
+
+body[data-maestro-shell="public"] .app-wrapper {
+  max-width: var(--maestro-public-max);
+  padding-left: var(--space-md);
+  padding-right: var(--space-md);
+}
+
+body[data-maestro-shell="public"] .app-header-global {
+  width: 100%;
+  max-width: var(--maestro-public-max);
+  margin: 0 auto var(--space-lg);
+  border: 1px solid var(--maestro-public-panel-border);
+  border-top: 0;
+  border-radius: 0 0 var(--maestro-public-panel-radius) var(--maestro-public-panel-radius);
+  background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  box-shadow: var(--maestro-shadow-soft);
+}
+
+body[data-maestro-shell="public"] .header-brand {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+}
+
+body[data-maestro-shell="public"] .brand-title {
+  max-width: min(54vw, 520px);
+  font-size: clamp(14px, 1.8vw, 18px) !important;
+  line-height: 1.15;
+}
+
+.public-view {
+  width: 100%;
+}
+
+.public-gateway-shell,
+.public-hub-shell,
+.public-utility-shell {
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.public-gateway-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-md);
+  align-items: stretch;
+}
+
+.public-brand-panel,
+.public-entry-panel,
+.public-hub-shell,
+.public-utility-card {
+  border: 1px solid var(--maestro-public-panel-border);
+  border-radius: var(--maestro-public-panel-radius);
+  background: var(--maestro-public-panel-bg);
+  box-shadow: var(--maestro-shadow-soft);
+}
+
+.public-brand-panel {
+  display: flex;
+  min-height: 310px;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+  overflow: hidden;
+  position: relative;
+}
+
+.public-brand-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 5px;
+  background: var(--accent);
+}
+
+.public-brand-mark {
+  width: 80px;
+  height: 80px;
+  display: grid;
+  place-items: center;
+  margin-bottom: auto;
+  border-radius: var(--maestro-public-panel-radius);
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 86%, var(--primary) 4%);
+}
+
+.public-gateway-logo {
+  width: 64px;
+  height: 64px;
+  max-width: 64px;
+  max-height: 64px;
+  object-fit: contain;
+  margin: 0;
+}
+
+.public-eyebrow {
+  margin: 0;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.public-brand-title,
+.public-hub-title {
+  margin: 0;
+  color: var(--text-main);
+  font-size: clamp(26px, 5vw, 42px);
+  font-weight: 800;
+  line-height: 1.06;
+  letter-spacing: 0;
+}
+
+.public-brand-subtitle,
+.public-hub-subtitle,
+.public-support-note {
+  margin: 0;
+  color: var(--text-sub);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.public-brand-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.public-meta-chip {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent);
+  background: color-mix(in srgb, var(--primary) 7%, var(--bg-surface));
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.public-entry-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--space-lg);
+}
+
+.public-entry-header {
+  text-align: left;
+}
+
+.public-entry-header h2 {
+  color: var(--primary);
+  font-size: clamp(20px, 3vw, 28px);
+  line-height: 1.12;
+  text-transform: none;
+}
+
+.public-entry-header p {
+  max-width: 52ch;
+  color: var(--text-sub);
+  font-size: 13px;
+}
+
+.public-icon-badge {
+  width: 48px;
+  height: 48px;
+  display: inline-grid;
+  place-items: center;
+  margin-bottom: var(--space-md);
+  border-radius: var(--maestro-public-panel-radius);
+  background: color-mix(in srgb, var(--primary) 10%, var(--bg-surface));
+  color: var(--primary);
+}
+
+.public-icon-badge svg,
+.public-action-card .icon svg,
+.public-install-banner .icon svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+.public-client-select {
+  min-height: 52px;
+  margin-bottom: var(--space-md);
+}
+
+.public-primary-action {
+  min-height: 52px;
+  margin-bottom: var(--space-sm);
+  background: var(--primary);
+}
+
+.public-support-note {
+  margin-top: var(--space-sm);
+  font-size: 12px;
+}
+
+.public-hub-shell {
+  padding: var(--space-lg);
+}
+
+.public-hub-header {
+  max-width: 680px;
+  margin: 0 auto var(--space-lg);
+  text-align: center;
+}
+
+.public-hub-title {
+  font-size: clamp(25px, 4vw, 38px);
+}
+
+.public-hub-subtitle {
+  margin-top: var(--space-sm);
+}
+
+.public-action-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-md);
+}
+
+.public-action-card {
+  min-height: 112px;
+  align-items: flex-start;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  margin: 0;
+  border-radius: var(--maestro-public-panel-radius);
+  border-color: var(--maestro-public-panel-border);
+  background: var(--bg-surface);
+}
+
+.public-action-card .icon {
+  width: 44px;
+  height: 44px;
+  display: inline-grid;
+  place-items: center;
+  margin: 0;
+  border-radius: var(--maestro-public-panel-radius);
+  background: color-mix(in srgb, var(--primary) 9%, transparent);
+  color: var(--primary);
+}
+
+.public-action-card-primary {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--border));
+  background: color-mix(in srgb, var(--accent) 7%, var(--bg-surface));
+}
+
+.public-action-card-primary .icon {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+}
+
+.public-action-card .info {
+  min-width: 0;
+}
+
+.public-action-card .info strong {
+  color: var(--text-main);
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.public-action-card .info span {
+  margin-top: 4px;
+  color: var(--text-sub);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.public-install-banner {
+  margin-bottom: var(--space-lg);
+  border-radius: var(--maestro-public-panel-radius);
+}
+
+.public-install-banner .icon {
+  width: 42px;
+  height: 42px;
+  display: inline-grid;
+  place-items: center;
+  margin-right: var(--space-md);
+  border-radius: var(--maestro-public-panel-radius);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.public-utility-shell {
+  max-width: 760px;
+}
+
+.public-utility-card {
+  padding: var(--space-lg);
+}
+
+.public-mural-feed {
+  margin-top: var(--space-md);
+}
+
+.public-footer {
+  width: 100%;
+  max-width: var(--maestro-public-max);
+  margin-left: auto;
+  margin-right: auto;
+  padding: var(--space-lg) 0 var(--space-md);
+  border-top-color: var(--maestro-public-panel-border);
+}
+
+.footer-brand-name {
+  margin: 0 0 var(--space-sm);
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+body.dark-theme .public-brand-panel,
+body.dark-theme .public-entry-panel,
+body.dark-theme .public-hub-shell,
+body.dark-theme .public-utility-card {
+  background: color-mix(in srgb, var(--bg-surface) 86%, #000 14%);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-theme .public-action-card {
+  background: color-mix(in srgb, var(--bg-surface) 88%, #000 12%);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-theme .public-meta-chip {
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+}
+
+@media (max-width: 767px) {
+  body[data-maestro-shell="public"] .app-wrapper {
+    max-width: 540px;
+  }
+
+  .public-brand-panel {
+    min-height: 250px;
+  }
+
+  .public-entry-panel,
+  .public-hub-shell,
+  .public-utility-card {
+    padding: var(--space-md);
+  }
+
+  .public-entry-header,
+  .public-hub-header {
+    text-align: left;
+  }
+
+  .public-action-card {
+    min-height: 96px;
+  }
+}
+
+@media (min-width: 768px) {
+  body[data-maestro-shell="public"] .app-wrapper {
+    padding-left: var(--space-lg);
+    padding-right: var(--space-lg);
+  }
+
+  .public-action-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 900px) {
+  .public-gateway-layout {
+    grid-template-columns: minmax(280px, 0.88fr) minmax(360px, 1.12fr);
+  }
+
+  .public-brand-panel,
+  .public-entry-panel {
+    min-height: 440px;
+  }
+}
+
+/* ======================================================================== */
+/* FASE 7.2: Hub do Estudante e Inscricao responsiva inspirados no Stitch    */
+/* ======================================================================== */
+.maestro-estagio-hidden {
+  display: none !important;
+}
+
+.student-hub-shell {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--space-lg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--primary) 8%, transparent), transparent 42%),
+    var(--bg-surface);
+  box-shadow: var(--maestro-shadow-soft);
+}
+
+.student-hub-hero {
+  display: grid;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-lg);
+}
+
+.student-hub-eyebrow {
+  margin: 0;
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.student-hub-heading {
+  max-width: 14ch;
+  margin: 0;
+  color: var(--text-main);
+  font-size: 28px;
+  line-height: 1.08;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.student-hub-copy {
+  max-width: 64ch;
+  margin: 0;
+  color: var(--text-sub);
+  font-size: 13px;
+  line-height: 1.48;
+}
+
+.student-action-icon svg,
+.student-form-icon svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+.student-hub-shell .student-action-grid {
+  gap: var(--space-sm);
+}
+
+.student-hub-shell .student-action-card {
+  min-height: 104px;
+  border-radius: 8px;
+  border-color: color-mix(in srgb, var(--primary) 14%, var(--border));
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.student-hub-shell .student-action-card .icon {
+  border-radius: 8px;
+}
+
+.student-hub-shell .student-action-card-new .icon {
+  color: var(--success);
+}
+
+.student-hub-shell .student-action-card-query .icon {
+  color: var(--primary);
+}
+
+.student-hub-shell .student-action-card-wallet .icon {
+  color: var(--accent);
+}
+
+.student-registration-card {
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.student-registration-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--space-md);
+  text-align: left;
+}
+
+.student-registration-header .student-form-icon {
+  width: 48px;
+  height: 48px;
+  display: inline-grid;
+  grid-row: span 3;
+  place-items: center;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  color: var(--primary);
+}
+
+.student-registration-header h2,
+.student-registration-header p {
+  margin-left: 0;
+}
+
+.student-registration-card .student-stepper-progress {
+  justify-content: stretch;
+  gap: 8px;
+  border: 1px solid color-mix(in srgb, var(--primary) 10%, var(--border));
+}
+
+.student-registration-card .step-dot {
+  width: 16px;
+  height: 16px;
+  border: 3px solid var(--bg-surface);
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.student-registration-card .step-dot.step-active {
+  background: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent);
+}
+
+.student-registration-card .step-dot.step-done {
+  background: var(--success);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--success) 40%, transparent);
+}
+
+.student-registration-card .step-connector {
+  flex: 1 1 auto;
+  min-width: 28px;
+}
+
+.student-stage-feature {
+  margin: var(--space-md) 0;
+  padding: var(--space-sm);
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 5%, var(--bg-surface));
+}
+
+.machine-policy-card {
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border));
+  background: color-mix(in srgb, var(--primary) 4%, var(--bg-surface));
+}
+
+.machine-policy-row {
+  align-items: flex-start;
+  gap: var(--space-md);
+}
+
+.machine-policy-title {
+  display: block;
+  color: var(--text-main);
+  font-weight: 800;
+}
+
+.machine-policy-desc {
+  max-width: 62ch;
+  margin: 4px 0 0;
+  color: var(--text-sub);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+body.dark-theme .student-hub-shell,
+body.dark-theme .student-stage-feature,
+body.dark-theme .machine-policy-card {
+  background: color-mix(in srgb, var(--bg-surface) 88%, #000 12%);
+  border-color: rgba(255, 255, 255, 0.09);
+}
+
+@media (max-width: 767px) {
+  .student-hub-shell {
+    padding: var(--space-md);
+  }
+
+  .student-hub-heading {
+    max-width: 100%;
+    font-size: 24px;
+  }
+
+  .student-registration-header {
+    grid-template-columns: 1fr;
+  }
+
+  .student-registration-header .student-form-icon {
+    grid-row: auto;
+    margin-bottom: var(--space-sm);
+  }
+
+  .student-stage-feature {
+    padding: var(--space-xs);
+  }
+
+  .machine-policy-row {
+    align-items: center;
+  }
+}
+
+@media (min-width: 768px) {
+  .student-hub-shell {
+    padding: var(--space-xl);
+  }
+
+  .student-hub-hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .student-hub-heading {
+    max-width: 18ch;
+    font-size: 36px;
+  }
+
+  .student-registration-card .student-stepper-progress {
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+  }
+}
+
+/* ======================================================================== */
+/* FASE 7.3: Dashboard, Semestres e Sidebar administrativa desktop-first     */
+/* ======================================================================== */
+.admin-hub-shell {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: var(--space-lg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--primary) 8%, transparent), transparent 46%),
+    var(--bg-surface);
+  box-shadow: var(--maestro-shadow-soft);
+}
+
+.admin-hub-header,
+.admin-dashboard-header {
+  display: grid;
+  gap: var(--space-md);
+  align-items: start;
+}
+
+.admin-hub-eyebrow,
+.admin-panel-eyebrow {
+  margin: 0 0 var(--space-xs);
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.admin-hub-title,
+.admin-dashboard-title {
+  margin: 0;
+  color: var(--text-main);
+  font-size: 28px;
+  line-height: 1.1;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.admin-welcome-row {
+  margin-top: var(--space-xs);
+  color: var(--text-sub);
+}
+
+.admin-context-stack,
+.admin-dashboard-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.admin-context-chip {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  max-width: 100%;
+  padding: 6px 12px;
+  border: 1px solid color-mix(in srgb, var(--primary) 24%, var(--border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 8%, var(--bg-surface));
+  color: var(--text-main);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.admin-context-chip-muted {
+  border-color: var(--border);
+  background: color-mix(in srgb, var(--bg-surface) 88%, transparent);
+  color: var(--text-sub);
+}
+
+.admin-context-chip-warning {
+  border-color: color-mix(in srgb, var(--warning) 45%, var(--border));
+  background: color-mix(in srgb, var(--warning) 9%, var(--bg-surface));
+  color: var(--text-main);
+}
+
+.maestro-admin-sidebar {
+  width: min(380px, 92vw);
+  padding: var(--space-lg);
+  border-right: 1px solid var(--border);
+  background: var(--bg-surface);
+}
+
+.sidebar-headline {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-headline-icon {
+  width: 42px;
+  height: 42px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--primary) 10%, var(--bg-surface));
+  color: var(--primary);
+}
+
+.sidebar-headline-icon svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+.sidebar-subtitle {
+  margin: 4px 0 0;
+  color: var(--text-sub);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.sidebar-admin-shortcuts {
+  display: grid;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px dashed var(--border);
+}
+
+.sidebar-section-label {
+  color: var(--text-sub);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sidebar-admin-link {
+  min-height: 78px;
+  border-radius: 8px !important;
+  background: color-mix(in srgb, var(--bg-surface) 92%, transparent) !important;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.sidebar-admin-link:hover,
+.sidebar-admin-link:focus-visible {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border)) !important;
+  box-shadow: var(--maestro-shadow-soft);
+}
+
+.admin-dashboard-card,
+.admin-semesters-shell {
+  width: 100%;
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.admin-dashboard-card {
+  border-radius: 8px !important;
+}
+
+.admin-dashboard-header {
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  text-align: left;
+}
+
+.admin-dashboard-summary-grid {
+  display: grid;
+  gap: var(--space-md);
+  margin: var(--space-md) 0;
+}
+
+.admin-dashboard-chart-grid {
+  gap: var(--space-md) !important;
+}
+
+.admin-dashboard-kpis .dashboard-kpi-card,
+.admin-dashboard-card .dashboard-chart-card,
+.admin-dashboard-card .dashboard-usage-card {
+  border-radius: 8px !important;
+  border: 1px solid var(--border) !important;
+  background: color-mix(in srgb, var(--bg-surface) 94%, transparent) !important;
+}
+
+.admin-dashboard-tabs {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.admin-dashboard-tabs .dash-tab {
+  white-space: nowrap;
+}
+
+.admin-semesters-shell {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.admin-semesters-editor,
+.admin-semesters-list .semester-dynamic-card {
+  border-radius: 8px !important;
+}
+
+.semestre-context-note {
+  display: inline-flex;
+  align-items: center;
+  margin-top: var(--space-xs);
+  color: var(--text-sub);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.semestre-context-note-warning {
+  color: var(--warning);
+}
+
+body.dark-theme .admin-hub-shell,
+body.dark-theme .maestro-admin-sidebar,
+body.dark-theme .admin-dashboard-card .dashboard-chart-card,
+body.dark-theme .admin-dashboard-card .dashboard-usage-card {
+  background: color-mix(in srgb, var(--bg-surface) 88%, #000 12%) !important;
+  border-color: rgba(255, 255, 255, 0.09) !important;
+}
+
+@media (min-width: 1024px) {
+  body[data-maestro-shell="admin"] .app-wrapper {
+    max-width: 1440px;
+  }
+
+  .admin-hub-shell {
+    max-width: 1220px;
+    padding: var(--space-xl);
+  }
+
+  .admin-hub-header,
+  .admin-dashboard-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .admin-context-stack,
+  .admin-dashboard-context {
+    justify-content: flex-end;
+    max-width: 520px;
+  }
+
+  .admin-hub-title,
+  .admin-dashboard-title {
+    font-size: 34px;
+  }
+
+  .admin-action-grid,
+  .admin-secretaria-group,
+  .admin-moderador-group {
+    max-width: 1120px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .admin-dashboard-summary-grid {
+    grid-template-columns: minmax(420px, 1fr) minmax(280px, 0.48fr);
+    align-items: stretch;
+  }
+
+  .admin-dashboard-status-card {
+    min-height: 360px;
+  }
+
+  .admin-dashboard-usage-card {
+    min-height: 160px;
+    align-self: start;
+  }
+
+  .admin-semesters-shell {
+    grid-template-columns: minmax(360px, 0.82fr) minmax(0, 1.18fr);
+    align-items: start;
+    gap: var(--space-lg);
+  }
+
+  .admin-semesters-editor {
+    position: sticky;
+    top: 88px;
+  }
+
+  body[data-maestro-shell="admin"] .admin-semesters-shell .admin-semesters-list {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: var(--space-md) !important;
+  }
+
+  .admin-semesters-shell > .btn-solid {
+    grid-column: 1 / -1;
+    justify-self: start;
+    min-width: 220px;
+  }
+}
+
+@media (min-width: 1320px) {
+  body[data-maestro-shell="admin"] .admin-semesters-shell .admin-semesters-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .admin-hub-shell,
+  .admin-dashboard-card,
+  .admin-semesters-shell {
+    padding-left: var(--space-md) !important;
+    padding-right: var(--space-md) !important;
+  }
+
+  .admin-hub-title,
+  .admin-dashboard-title {
+    font-size: 24px;
+  }
+
+  .admin-context-chip {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
   }
 }
