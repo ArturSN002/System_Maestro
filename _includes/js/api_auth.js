@@ -13,7 +13,7 @@ const IAM_STATE = {
 };
 
 const CLIENT_DIRECTORY = {
-  "Ceará-Mirim": "https://script.google.com/macros/s/AKfycbzCd37kAa5r-6hjAHOXvwSPRXdHUWiQzfHygKdS_HdUW60FOUZzr5KkR2x57nTJeBJ0PA/exec",
+  "Ceará-Mirim": "https://script.google.com/macros/s/AKfycbwZ1HVOTFh1TRENUNj3UKDlKClKnh8YQGUn_gqZ6m6rms7jaTvAXcUulwl6dIp6H77nnA/exec",
 };
 
 const MAESTRO_CLIENT_DIRECTORY_VERSION = "2026-05-26-cache-reset";
