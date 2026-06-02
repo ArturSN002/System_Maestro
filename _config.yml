@@ -1,0 +1,17 @@
+title: Maestro
+description: Portal Maestro
+lang: pt-BR
+
+url: "https://artursn002.github.io"
+baseurl: "/System_Maestro"
+
+encoding: utf-8
+markdown: kramdown
+safe: true
+
+exclude:
+  - output/
+  - .playwright-cli/
+  - docs/
+  - README.md
+  - "*.log"
