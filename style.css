@@ -7,12 +7,21 @@
   --maestro-color-primary: #0A3D6B;
   --maestro-color-secondary: #F8F9FA;
   --maestro-color-accent: #F29900;
+  --maestro-primary: var(--maestro-color-primary);
+  --maestro-secondary: var(--maestro-color-secondary);
+  --maestro-accent: var(--maestro-color-accent);
   --maestro-color-primary-light: #0A3D6B;
   --maestro-color-secondary-light: #F8F9FA;
   --maestro-color-accent-light: #F29900;
+  --maestro-primary-light: var(--maestro-color-primary-light);
+  --maestro-secondary-light: var(--maestro-color-secondary-light);
+  --maestro-accent-light: var(--maestro-color-accent-light);
   --maestro-color-primary-dark: #8AB4F8;
   --maestro-color-secondary-dark: #121212;
   --maestro-color-accent-dark: #F29900;
+  --maestro-primary-dark: var(--maestro-color-primary-dark);
+  --maestro-secondary-dark: var(--maestro-color-secondary-dark);
+  --maestro-accent-dark: var(--maestro-color-accent-dark);
   --maestro-color-success: #10B981;
   --maestro-color-warning: #F59E0B;
   --maestro-color-danger: #EF4444;
@@ -126,6 +135,71 @@ body, header, aside, main, footer, .form-card, .menu-card, .input-field, .btn-so
 /* UTILITÁRIOS */
 .hidden {
   display: none !important;
+}
+
+.maestro-icon {
+  width: 1.15em;
+  height: 1.15em;
+  flex: 0 0 auto;
+  vertical-align: -0.18em;
+  color: currentColor;
+  stroke: currentColor;
+}
+
+.maestro-icon-inline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25em;
+  height: 1.25em;
+  margin-right: 0.35em;
+  color: currentColor;
+  line-height: 1;
+  vertical-align: -0.2em;
+}
+
+.maestro-icon-inline:last-child {
+  margin-right: 0;
+}
+
+.icon .maestro-icon,
+.card-icon-emoji .maestro-icon,
+.card-icon-emoji-lg .maestro-icon,
+.login-badge-icon .maestro-icon,
+.scanner-button-icon .maestro-icon,
+.sidebar-menu-icon .maestro-icon {
+  width: 1.35em;
+  height: 1.35em;
+  margin: 0;
+}
+
+.menu-card .icon,
+.banner-pwa .icon,
+.card-icon-emoji,
+.card-icon-emoji-lg,
+.login-badge-icon,
+.scanner-button-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--maestro-color-accent);
+  outline: 3px solid color-mix(in srgb, var(--maestro-color-accent) 72%, transparent);
+  outline-offset: 3px;
+  box-shadow: var(--maestro-focus-ring);
+}
+
+button:disabled,
+button[aria-disabled="true"],
+.is-disabled {
+  cursor: not-allowed;
 }
 
 .skip-link {

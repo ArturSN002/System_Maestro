@@ -1176,6 +1176,15 @@
       cssVars: {
         "--maestro-font-family": VISUAL_TOKEN_DEFAULTS.fontFamily,
         "--font-main": VISUAL_TOKEN_DEFAULTS.fontFamily,
+        "--maestro-primary": active.primary,
+        "--maestro-secondary": active.secondary,
+        "--maestro-accent": active.accent,
+        "--maestro-primary-light": light.primary,
+        "--maestro-secondary-light": light.secondary,
+        "--maestro-accent-light": light.accent,
+        "--maestro-primary-dark": dark.primary,
+        "--maestro-secondary-dark": dark.secondary,
+        "--maestro-accent-dark": dark.accent,
         "--maestro-color-primary": active.primary,
         "--maestro-color-secondary": active.secondary,
         "--maestro-color-accent": active.accent,
@@ -1690,7 +1699,7 @@
       },
       contact: {
         email: pickFirst(contato.EMAIL_DE_CONTATO, contato.EMAIL, source.EMAIL_DE_CONTATO),
-        endereco: pickFirst(contato["ENDERECO_FISICO"], contato["ENDERECO_F\u00cdSICO"], contato.ENDERECO, source["ENDERECO_F\u00cdSICO"]),
+        endereco: pickFirst(contato["ENDERECO_FISICO"], contato["ENDERECO_F\u00cdSICO"], contato.ENDERECO, source.ENDERECO_FISICO, source["ENDERECO_F\u00cdSICO"]),
         cnpj: pickFirst(contato.CNPJ_SECRETARIA, contato.CNPJ, source.CNPJ_SECRETARIA)
       },
       rules: {

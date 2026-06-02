@@ -25,7 +25,7 @@
          <div class="form-card p-15-mb-10 admin-panel-card admin-panel-toolbar admin-audit-toolbar">
             <div class="flex-between-center-mb-15">
                <h2 class="admin-section-title">📂 MESA DE AUDITORIA</h2>
-               <button onclick="carregarFilaAuditoria()" class="btn-icon-refresh">🔄</button>
+               <button onclick="carregarFilaAuditoria()" class="btn-icon-refresh" aria-label="Atualizar mesa de auditoria">🔄</button>
             </div>
             
             <div class="auditoria-filters-row admin-filter-bar">
@@ -183,7 +183,7 @@
 
           <div id="leitor-qr-container" class="hidden qr-scanner-admin-viewport fiscal-scanner-box">
             <div id="leitor-qr"></div>
-            <button class="btn-solid text-danger btn-cancel-scanner" onclick="fecharScanner()">❌ CANCELAR CÂMARA</button>
+            <button class="btn-solid text-danger btn-cancel-scanner" onclick="fecharScanner()" aria-label="Cancelar câmera">❌ CANCELAR CÂMARA</button>
           </div>
 
           <div class="divider-text fiscal-manual-divider">OU DIGITE O ID MANUALMENTE</div>

@@ -6,6 +6,7 @@
 
 // 1. Core & Variáveis Globais
 {% include js/js_global.js %}
+{% include js/maestro_icons.js %}
 {% include js/main_core.js %}
 {% include js/api_auth.js %}
 {% include js/data_layer.js %}
