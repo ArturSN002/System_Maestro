@@ -7,6 +7,13 @@ let arrayAlunosAuditoriaFiltrado = [];
 let paginaAtualAuditoria = 1;     // NOVO: Guarda a página atual
 const ITENS_POR_PAGINA = 10;      // NOVO: Exibe 10 alunos por bloco
 
+let metaAuditoriaMaestro = {
+    totalBackend: 0,
+    limite: 0,
+    truncado: false,
+    semestreId: ""
+};
+
 function escapeHTMLAuditoria(valor) {
     if (typeof escapeHTMLMaestro === 'function') return escapeHTMLMaestro(valor);
     return String(valor ?? "")
@@ -51,6 +58,34 @@ function getSemestreRaioXAtual() {
     return input ? String(input.dataset.semestreId || "") : "";
 }
 
+function obterContextoOperacaoMaestro() {
+    const contexts = window.MaestroData && window.MaestroData.contexts ? window.MaestroData.contexts : {};
+    const tenant = contexts.tenant && typeof contexts.tenant.get === "function" ? contexts.tenant.get() : {};
+    const semester = contexts.semester && typeof contexts.semester.get === "function" ? contexts.semester.get() : {};
+    const operator = contexts.operator && typeof contexts.operator.get === "function" ? contexts.operator.get() : {};
+
+    return {
+        tenantId: primeiroValorAuditoria(
+            tenant.tenantId,
+            tenant.tenantID,
+            tenant.tenant_id,
+            localStorage.getItem("MAESTRO_TENANT_ID")
+        ),
+        semestreId: primeiroValorAuditoria(
+            semester.semestreId,
+            semester.semestreAtual,
+            semester.activeSemesterId,
+            localStorage.getItem("MAESTRO_SEMESTRE_ID")
+        ),
+        usuarioLogadoId: primeiroValorAuditoria(
+            operator.email,
+            operator.identificador,
+            localStorage.getItem("MAESTRO_OPERADOR_EMAIL"),
+            localStorage.getItem("MAESTRO_OPERADOR_NOME")
+        )
+    };
+}
+
 function primeiroValorAuditoria(...valores) {
     for (const valor of valores) {
         if (valor !== undefined && valor !== null && String(valor).trim() !== "") return valor;
@@ -67,6 +102,39 @@ function toArrayAuditoria(valor) {
 function textoTurnosAuditoria(turnos, fallback) {
     const lista = toArrayAuditoria(turnos);
     return lista.length ? lista.join(" + ") : String(fallback || "");
+}
+
+function normalizarTextoFiltroAuditoria(valor) {
+    const texto = String(valor || "").toLowerCase().trim();
+    try {
+        return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    } catch (e) {
+        return texto;
+    }
+}
+
+function statusEquivalentesAuditoria(status) {
+    const valor = String(status || "").toUpperCase().trim();
+    if (!valor) return [];
+    if (valor === "ATIVO") return ["ATIVO", "OK", "APROVADO", "APROVADO_IA", "APROVADO_MANUAL"];
+    if (valor === "PENDENTE") return ["PENDENTE", "AGUARDANDO", "EM_ANALISE"];
+    if (valor === "ANALISE_HUMANA") return ["ANALISE_HUMANA", "PENDENCIA", "RETIDO", "ERRO", "FALHA_ANEXO", "ALERTA_FRAUDE"];
+    if (valor === "CANCELADO") return ["CANCELADO", "SUSPENSO", "INATIVO"];
+    return [valor];
+}
+
+function valoresStatusAlunoAuditoria(aluno) {
+    return [
+        aluno.statusAuditoria,
+        aluno.statusValidacao,
+        aluno.STATUS_VALIDACAO,
+        aluno.statusAtividade,
+        aluno.STATUS_ATIVIDADE,
+        aluno.statusDocs,
+        aluno.STATUS_DOCS,
+        aluno.statusOCR,
+        aluno.STATUS_OCR
+    ].map(valor => String(valor || "").toUpperCase().trim()).filter(Boolean);
 }
 
 function adapterAuditStudentMaestro() {
@@ -309,23 +377,26 @@ function obterTtlOperacaoMaestro(domain, fallback) {
         : fallback;
 }
 
-function obterCacheAuditoriaMaestro(semestreId, permitirExpirado) {
+function obterCacheAuditoriaMaestro(semestreId, permitirExpirado, tenantId) {
     const storage = obterStorageOperacaoMaestro();
     if (!storage || typeof storage.getDomainCache !== "function") return null;
     const cache = storage.getDomainCache("audit", {
+        tenantId: tenantId || "",
         semestreId: semestreId || "",
         allowExpired: permitirExpirado === true
     });
     return cache && cache.hit && cache.data && Array.isArray(cache.data.lista) ? cache : null;
 }
 
-function salvarCacheAuditoriaMaestro(lista, semestreId) {
+function salvarCacheAuditoriaMaestro(lista, semestreId, tenantId, meta) {
     const storage = obterStorageOperacaoMaestro();
     if (!storage || typeof storage.setDomainCache !== "function" || !Array.isArray(lista)) return;
     storage.setDomainCache("audit", {
         lista: lista,
+        meta: meta || {},
         atualizadoEm: new Date().toISOString()
     }, {
+        tenantId: tenantId || "",
         semestreId: semestreId || "",
         source: "getListaAuditoria",
         ttlMs: obterTtlOperacaoMaestro("audit", 1000 * 60 * 5)
@@ -335,11 +406,87 @@ function salvarCacheAuditoriaMaestro(lista, semestreId) {
 function renderizarAuditoriaDoCacheMaestro(cache) {
     if (!cache || !cache.data || !Array.isArray(cache.data.lista)) return false;
     arrayAlunosAuditoria = cache.data.lista.map(normalizarAlunoAuditoria);
+    metaAuditoriaMaestro = Object.assign({}, cache.data.meta || {}, {
+        totalBackend: (cache.data.meta && cache.data.meta.totalBackend) || arrayAlunosAuditoria.length,
+        limite: (cache.data.meta && cache.data.meta.limite) || arrayAlunosAuditoria.length
+    });
+    atualizarOpcoesFiltrosAuditoria();
     aplicarFiltrosAuditoria();
     if ((cache.stale || cache.expired) && typeof showToast === "function") {
         showToast("Fila de auditoria exibida do cache local.", "warning");
     }
     return true;
+}
+
+function atualizarOpcoesSelectAuditoria(selectId, valores, rotuloTodos) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+    const valorAtual = select.value;
+    const unicos = Array.from(new Set((valores || []).map(valor => String(valor || "").trim()).filter(Boolean)))
+        .sort((a, b) => a.localeCompare(b, "pt-BR"));
+    const opcoes = [`<option value="">${escapeHTMLAuditoria(rotuloTodos)}</option>`].concat(
+        unicos.map(valor => `<option value="${escapeHTMLAuditoria(valor)}">${escapeHTMLAuditoria(valor)}</option>`)
+    );
+    select.innerHTML = opcoes.join("");
+    if (valorAtual && unicos.includes(valorAtual)) select.value = valorAtual;
+}
+
+function atualizarOpcoesFiltrosAuditoria() {
+    const instituicoes = [];
+    const turnos = [];
+    const status = ["ATIVO", "PENDENTE", "ANALISE_HUMANA", "CANCELADO"];
+
+    arrayAlunosAuditoria.forEach(aluno => {
+        instituicoes.push(aluno.instituicao || aluno.INSTITUICAO_ALUNO || "");
+        toArrayAuditoria(aluno.turnos).forEach(turno => turnos.push(turno));
+        toArrayAuditoria(aluno.turno || aluno.TURNOS_ALUNO).forEach(turno => turnos.push(turno));
+        valoresStatusAlunoAuditoria(aluno).forEach(valor => status.push(valor));
+    });
+
+    atualizarOpcoesSelectAuditoria("auditoria-status", status, "Status (Todos)");
+    atualizarOpcoesSelectAuditoria("auditoria-instituicao", instituicoes, "Instituicao (Todas)");
+    atualizarOpcoesSelectAuditoria("auditoria-turno", turnos, "Turno (Todos)");
+}
+
+function atualizarResumoAuditoriaMaestro() {
+    const resumo = document.getElementById("auditoria-status-resumo");
+    if (!resumo) return;
+    const totalCarregado = arrayAlunosAuditoria.length;
+    const totalFiltrado = arrayAlunosAuditoriaFiltrado.length;
+    const totalBackend = Number(metaAuditoriaMaestro.totalBackend || 0);
+    const partes = [`${totalFiltrado} de ${totalCarregado} estudantes exibidos`];
+    if (metaAuditoriaMaestro.semestreId) partes.push(`semestre ${metaAuditoriaMaestro.semestreId}`);
+    if (totalBackend && totalBackend > totalCarregado) partes.push(`backend informou ${totalBackend}`);
+    if (metaAuditoriaMaestro.truncado) partes.push("lista truncada pelo limite da API");
+    resumo.textContent = partes.join(" | ");
+}
+
+function renderizarErroAuditoriaMaestro(resposta, fallbackTitulo) {
+    const erro = resposta || {};
+    const codigo = String(erro.codigo || "");
+    let titulo = fallbackTitulo || "Erro ao carregar fila";
+    let mensagem = erro.erro || erro.message || "Nao foi possivel carregar a Mesa de Auditoria.";
+    let detalhes = erro.detalhes || "";
+
+    if (codigo === "FIRESTORE_INDEX_REQUIRED") {
+        titulo = "Indice Firestore ausente";
+        mensagem = "A consulta da Mesa de Auditoria precisa de um indice composto no Firestore.";
+    } else if (codigo === "API_TIMEOUT" || erro.status === 408) {
+        titulo = "Tempo limite excedido";
+        mensagem = "A Mesa de Auditoria demorou demais para responder. Verifique indices Firestore e execucao do GAS.";
+    } else if (codigo === "GAS_DEPLOY_DESATUALIZADO") {
+        titulo = "Backend desatualizado";
+    }
+
+    return `
+        <div class="error-state-box dynamic-state-box dynamic-error-state">
+            <span class="error-icon" aria-hidden="true">!</span>
+            <h3>${escapeHTMLAuditoria(titulo)}</h3>
+            <p>${escapeHTMLAuditoria(mensagem)}</p>
+            ${detalhes ? `<small>${escapeHTMLAuditoria(detalhes)}</small>` : ""}
+            <button class="btn-solid btn-auditoria-retry" onclick="carregarFilaAuditoria()">Tentar novamente</button>
+        </div>
+    `;
 }
 
 async function carregarFilaAuditoria(ehPesquisa = false) {
@@ -351,12 +498,10 @@ async function carregarFilaAuditoria(ehPesquisa = false) {
     // Sempre que carregar a lista ou pesquisar, volta à página 1
     paginaAtualAuditoria = 1;
 
-    const pesquisaAtual = ehPesquisa ? (document.getElementById('auditoria-pesquisa')?.value.trim() || "") : "";
-    const semesterContext = (window.MaestroData && window.MaestroData.contexts && window.MaestroData.contexts.semester)
-        ? window.MaestroData.contexts.semester.get()
-        : {};
-    const semestreId = semesterContext.semestreId || semesterContext.semestreAtual || "";
-    const cacheAuditoria = !pesquisaAtual ? obterCacheAuditoriaMaestro(semestreId, typeof navigator !== "undefined" && navigator.onLine === false) : null;
+    const contexto = obterContextoOperacaoMaestro();
+    const semestreId = contexto.semestreId || "";
+    const tenantId = contexto.tenantId || "";
+    const cacheAuditoria = obterCacheAuditoriaMaestro(semestreId, typeof navigator !== "undefined" && navigator.onLine === false, tenantId);
 
     if (cacheAuditoria) {
         renderizarAuditoriaDoCacheMaestro(cacheAuditoria);
@@ -370,72 +515,88 @@ async function carregarFilaAuditoria(ehPesquisa = false) {
 
     try {
         const res = await apiCall("getListaAuditoria", {
-            pesquisa: pesquisaAtual,
-            limite: 50,
-            semestreId: semestreId
-        });
+            pesquisa: "",
+            statusFiltro: "TODOS",
+            incluirTodos: true,
+            limite: 2000,
+            semestreId: semestreId,
+            tenantId: tenantId,
+            usuarioLogadoId: contexto.usuarioLogadoId,
+            permitirScanFallback: true
+        }, { timeoutMs: 90000 });
         if (res.sucesso) {
             arrayAlunosAuditoria = Array.isArray(res.lista) ? res.lista.map(normalizarAlunoAuditoria) : [];
-            if (!pesquisaAtual) salvarCacheAuditoriaMaestro(res.lista || [], semestreId);
+            metaAuditoriaMaestro = {
+                totalBackend: Number(res.total || arrayAlunosAuditoria.length),
+                limite: Number(res.limite || 2000),
+                truncado: res.truncado === true,
+                semestreId: res.semestreAlvo || res.semestreId || semestreId
+            };
+            if (metaAuditoriaMaestro.semestreId && window.MaestroData && window.MaestroData.contexts && window.MaestroData.contexts.semester) {
+                window.MaestroData.contexts.semester.set({
+                    semestreId: metaAuditoriaMaestro.semestreId,
+                    semestreAtual: metaAuditoriaMaestro.semestreId,
+                    source: "getListaAuditoria"
+                });
+            }
+            salvarCacheAuditoriaMaestro(res.lista || [], metaAuditoriaMaestro.semestreId || semestreId, tenantId, metaAuditoriaMaestro);
+            atualizarOpcoesFiltrosAuditoria();
             aplicarFiltrosAuditoria();
         } else {
-            const cacheFallback = !pesquisaAtual ? obterCacheAuditoriaMaestro(semestreId, true) : null;
+            const cacheFallback = obterCacheAuditoriaMaestro(semestreId, true, tenantId);
             if (cacheFallback && renderizarAuditoriaDoCacheMaestro(cacheFallback)) return;
-            container.innerHTML = `
-                <div class="error-state-box dynamic-state-box dynamic-error-state">
-                    <span class="error-icon">⚠️</span>
-                    <h3>Erro ao Carregar Fila</h3>
-                    <p>${escapeHTMLAuditoria(res.erro)}</p>
-                    ${res.detalhes ? `<small>${escapeHTMLAuditoria(res.detalhes)}</small>` : ""}
-                </div>
-            `;
+            container.innerHTML = renderizarErroAuditoriaMaestro(res, "Erro ao carregar fila");
         }
     } catch (e) {
-        const cacheFallback = !pesquisaAtual ? obterCacheAuditoriaMaestro(semestreId, true) : null;
+        const cacheFallback = obterCacheAuditoriaMaestro(semestreId, true, tenantId);
         if (cacheFallback && renderizarAuditoriaDoCacheMaestro(cacheFallback)) return;
-        container.innerHTML = `
-            <div class="error-state-box dynamic-state-box dynamic-error-state">
-                <span class="error-icon">📡</span>
-                <h3>Falha na Ligação</h3>
-                <p>Não foi possível conectar com o servidor: ${escapeHTMLAuditoria(e.message)}</p>
-            </div>
-        `;
+        container.innerHTML = renderizarErroAuditoriaMaestro({
+            erro: "Nao foi possivel conectar com o servidor.",
+            detalhes: e && e.message ? e.message : String(e),
+            codigo: "NETWORK_ERROR"
+        }, "Falha na ligacao");
     }
 }
 
 function aplicarFiltrosAuditoria() {
-    const termo = document.getElementById('auditoria-pesquisa')?.value.trim().toLowerCase() || "";
-    const status = (document.getElementById('auditoria-status')?.value || "").toLowerCase();
-    const instituicao = (document.getElementById('auditoria-instituicao')?.value || "").toLowerCase();
-    const turno = (document.getElementById('auditoria-turno')?.value || "").toLowerCase();
+    const termoOriginal = document.getElementById('auditoria-pesquisa')?.value.trim() || "";
+    const termo = normalizarTextoFiltroAuditoria(termoOriginal);
+    const termoCpf = termoOriginal.replace(/\D/g, "");
+    const status = (document.getElementById('auditoria-status')?.value || "").toUpperCase();
+    const instituicao = normalizarTextoFiltroAuditoria(document.getElementById('auditoria-instituicao')?.value || "");
+    const turno = normalizarTextoFiltroAuditoria(document.getElementById('auditoria-turno')?.value || "");
 
     arrayAlunosAuditoriaFiltrado = arrayAlunosAuditoria.filter(aluno => {
         let matchPesquisa = true;
         if (termo) {
-            const nomeStr = String(aluno.nome || aluno.NOME_ALUNO || "").toLowerCase();
-            const cpfStr = String(aluno.cpf || aluno.CPF_ALUNO || "").toLowerCase();
-            const emailStr = String(aluno.email || aluno.EMAIL_ALUNO || "").toLowerCase();
-            const matriculaStr = String(aluno.matricula || aluno.MATRICULA_ALUNO || "").toLowerCase();
-            matchPesquisa = nomeStr.includes(termo) || cpfStr.includes(termo) || emailStr.includes(termo) || matriculaStr.includes(termo);
+            const cpfStr = cpfSeguroAuditoria(aluno.cpf || aluno.CPF_ALUNO);
+            const alvoTexto = normalizarTextoFiltroAuditoria([
+                aluno.nome || aluno.NOME_ALUNO || "",
+                aluno.email || aluno.EMAIL_ALUNO || "",
+                aluno.matricula || aluno.MATRICULA_ALUNO || "",
+                aluno.instituicao || aluno.INSTITUICAO_ALUNO || "",
+                aluno.rota || aluno.ROTA_ALUNO || ""
+            ].join(" "));
+            matchPesquisa = alvoTexto.includes(termo) || (termoCpf && cpfStr.includes(termoCpf));
         }
 
         let matchStatus = true;
         if (status) {
-            const statusVal = String(aluno.statusAuditoria || aluno.statusValidacao || aluno.STATUS_VALIDACAO || "").toLowerCase();
-            const statusAtv = String(aluno.statusAtividade || aluno.STATUS_ATIVIDADE || "").toLowerCase();
-            matchStatus = (statusVal === status || statusAtv === status);
+            const equivalentes = statusEquivalentesAuditoria(status);
+            const statusAluno = valoresStatusAlunoAuditoria(aluno);
+            matchStatus = statusAluno.some(valor => equivalentes.includes(valor));
         }
 
         let matchInst = true;
         if (instituicao) {
-            const instVal = String(aluno.instituicao || aluno.INSTITUICAO_ALUNO || "").toLowerCase();
-            matchInst = (instVal === instituicao);
+            const instVal = normalizarTextoFiltroAuditoria(aluno.instituicao || aluno.INSTITUICAO_ALUNO || "");
+            matchInst = (instVal === instituicao || instVal.includes(instituicao));
         }
 
         let matchTurno = true;
         if (turno) {
-            const turnoVal = String(aluno.turno || aluno.TURNOS_ALUNO || "").toLowerCase();
-            const turnosVal = toArrayAuditoria(aluno.turnos).join(" ").toLowerCase();
+            const turnoVal = normalizarTextoFiltroAuditoria(aluno.turno || aluno.TURNOS_ALUNO || "");
+            const turnosVal = normalizarTextoFiltroAuditoria(toArrayAuditoria(aluno.turnos).join(" "));
             matchTurno = (turnoVal === turno || turnoVal.includes(turno) || turnosVal.includes(turno));
         }
 
@@ -443,6 +604,7 @@ function aplicarFiltrosAuditoria() {
     });
 
     paginaAtualAuditoria = 1;
+    atualizarResumoAuditoriaMaestro();
     renderizarListaAuditoria();
 }
 
@@ -738,52 +900,159 @@ document.addEventListener('keydown', (e) => {
 // 5. MÓDULO DO MODERADOR (SALA DAS MÁQUINAS V9.2.8)
 // ========================================================================
 
+function setEstadoSalaMaquinasMaestro(tipo, mensagem) {
+    const card = document.querySelector(".motores-status-card");
+    if (!card) return;
+    let box = document.getElementById("motores-status-feedback");
+    if (!box) {
+        box = document.createElement("p");
+        box.id = "motores-status-feedback";
+        box.className = "motores-status-feedback";
+        card.appendChild(box);
+    }
+    box.className = `motores-status-feedback motores-status-${tipo || "info"}`;
+    box.textContent = mensagem || "";
+}
+
+function normalizarEstadosMotoresMaestro(estados) {
+    const source = estados || {};
+    return {
+        ETL: source.ETL === true || source.etl === true || String(source.ETL || source.etl || "").toLowerCase() === "true",
+        OCR: source.OCR === true || source.ocr === true || String(source.OCR || source.ocr || "").toLowerCase() === "true",
+        DOCS: source.DOCS === true || source.docs === true || String(source.DOCS || source.docs || "").toLowerCase() === "true",
+        EMAIL: source.EMAIL === true || source.email === true || String(source.EMAIL || source.email || "").toLowerCase() === "true"
+    };
+}
+
+function obterBotaoMotorMaestro(motorId) {
+    return Array.from(document.querySelectorAll(".btn-motor-force, .btn-motor-force-last"))
+        .find(btn => String(btn.getAttribute("onclick") || "").indexOf(`'${motorId}'`) !== -1);
+}
+
+function resumirHealthcheckMaestro(res) {
+    const checks = res && res.checks && typeof res.checks === "object" ? res.checks : {};
+    const nomes = Object.keys(checks);
+    const falhas = nomes.filter(nome => !checks[nome] || checks[nome].ok !== true);
+    if (!nomes.length) return res && res.erro ? res.erro : "Healthcheck sem detalhes retornados.";
+    if (!falhas.length) return `Healthcheck OK: ${nomes.length} verificacoes aprovadas.`;
+    return `Healthcheck com atencao: ${falhas.length} de ${nomes.length} verificacoes falharam (${falhas.slice(0, 4).join(", ")}).`;
+}
+
+async function executarHealthcheckMaestroUI() {
+    const contexto = obterContextoOperacaoMaestro();
+    const btn = document.getElementById("btn-healthcheck-maestro");
+    if (btn) btn.disabled = true;
+    setEstadoSalaMaquinasMaestro("loading", "Validando backend, Firestore, Drive, FCM e configuracoes...");
+
+    try {
+        const res = await apiCall("healthcheckMaestro", {
+            tenantId: contexto.tenantId,
+            semestreId: contexto.semestreId,
+            usuarioLogadoId: contexto.usuarioLogadoId
+        }, { timeoutMs: 120000 });
+        const resumo = resumirHealthcheckMaestro(res);
+        const tipo = res && res.sucesso ? "success" : "error";
+        setEstadoSalaMaquinasMaestro(tipo, resumo);
+        showToast(resumo, tipo);
+    } catch (e) {
+        const msg = "Healthcheck falhou: " + (e && e.message ? e.message : String(e));
+        setEstadoSalaMaquinasMaestro("error", msg);
+        showToast(msg, "error");
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+
 async function abrirPainelModerador() {
     if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
     if (typeof podeExecutarAcaoMaestro === 'function' && !podeExecutarAcaoMaestro("salaMaquinas", { notify: true })) return;
 
     switchView('view-moderador');
     const loader = document.getElementById('loader-sincronizacao-motores');
+    const contexto = obterContextoOperacaoMaestro();
 
-    if (loader) loader.classList.remove('hidden');
+    if (loader) {
+        loader.classList.remove('hidden');
+        loader.setAttribute("aria-busy", "true");
+    }
+    setEstadoSalaMaquinasMaestro("loading", "Sincronizando estado dos motores...");
 
     try {
-        const res = await apiCall("getStatusMotores");
+        const res = await apiCall("getStatusMotores", {
+            tenantId: contexto.tenantId,
+            semestreId: contexto.semestreId,
+            usuarioLogadoId: contexto.usuarioLogadoId
+        }, { timeoutMs: 45000 });
         if (res.sucesso && res.estados) {
+            const estados = normalizarEstadosMotoresMaestro(res.estados);
             const toggleETL = document.getElementById('toggle-motor-etl');
             const toggleOCR = document.getElementById('toggle-motor-ocr');
             const toggleDOCS = document.getElementById('toggle-motor-docs');
             const toggleEMAIL = document.getElementById('toggle-motor-email');
 
-            if (toggleETL) toggleETL.checked = res.estados.ETL;
-            if (toggleOCR) toggleOCR.checked = res.estados.OCR;
-            if (toggleDOCS) toggleDOCS.checked = res.estados.DOCS;
-            if (toggleEMAIL) toggleEMAIL.checked = res.estados.EMAIL;
+            if (toggleETL) toggleETL.checked = estados.ETL;
+            if (toggleOCR) toggleOCR.checked = estados.OCR;
+            if (toggleDOCS) toggleDOCS.checked = estados.DOCS;
+            if (toggleEMAIL) toggleEMAIL.checked = estados.EMAIL;
+            setEstadoSalaMaquinasMaestro("success", "Motores sincronizados com o backend.");
+        } else {
+            setEstadoSalaMaquinasMaestro("error", res.erro || "Nao foi possivel ler o estado dos motores.");
+            showToast(res.erro || "Nao foi possivel ler o estado dos motores.", "error");
         }
     } catch (err) {
+        setEstadoSalaMaquinasMaestro("error", "Nao foi possivel ler o estado dos motores: " + err.message);
         showToast("Não foi possível ler o estado dos motores: " + err.message, "error");
     } finally {
-        if (loader) loader.classList.add('hidden');
+        if (loader) {
+            loader.classList.add('hidden');
+            loader.setAttribute("aria-busy", "false");
+        }
     }
 }
 
 async function forcarMotor(motorId) {
+    const contexto = obterContextoOperacaoMaestro();
+    const btn = obterBotaoMotorMaestro(motorId);
+    if (btn) btn.disabled = true;
     showToast(`A enviar sinal para o motor ${motorId}...`, "loading");
+    setEstadoSalaMaquinasMaestro("loading", `Executando motor ${motorId}...`);
     try {
-        const res = await apiCall("forcarExecucaoMotor", { motorId: motorId });
-        if (res.sucesso) showToast(res.msg, "success");
-        else showToast(res.erro, "error");
+        const res = await apiCall("forcarExecucaoMotor", {
+            motorId: motorId,
+            tenantId: contexto.tenantId,
+            semestreId: contexto.semestreId,
+            usuarioLogadoId: contexto.usuarioLogadoId
+        }, { timeoutMs: 180000 });
+        if (res.sucesso) {
+            const msg = res.msg || "Motor executado com sucesso.";
+            setEstadoSalaMaquinasMaestro("success", msg);
+            showToast(msg, "success");
+        } else {
+            const erro = res.erro || "Motor nao retornou sucesso.";
+            setEstadoSalaMaquinasMaestro("error", erro);
+            showToast(erro, "error");
+        }
     } catch (e) {
+        setEstadoSalaMaquinasMaestro("error", "Erro ao acionar motor: " + e.message);
         showToast("Ocorreu um erro ao acionar o motor: " + e.message, "error");
+    } finally {
+        if (btn) btn.disabled = false;
     }
 }
 
 async function alterarMotor(motorId, isLigado) {
+    const contexto = obterContextoOperacaoMaestro();
     showToast(`A alterar configurações de ${motorId}...`, "loading");
     try {
-        const res = await apiCall("alterarEstadoMotor", { motorId: motorId, ligado: isLigado });
-        if (res.sucesso) showToast(res.msg, "success");
-        else showToast(res.erro, "error");
+        const res = await apiCall("alterarEstadoMotor", {
+            motorId: motorId,
+            ligado: isLigado,
+            tenantId: contexto.tenantId,
+            semestreId: contexto.semestreId,
+            usuarioLogadoId: contexto.usuarioLogadoId
+        }, { timeoutMs: 45000 });
+        if (res.sucesso) showToast(res.msg || "Motor atualizado.", "success");
+        else showToast(res.erro || "Falha ao alterar motor.", "error");
     } catch (e) {
         showToast("Ocorreu um erro ao alterar o motor: " + e.message, "error");
     }

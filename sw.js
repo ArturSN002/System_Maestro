@@ -5,7 +5,7 @@
  * ============================================================================
  */
 
-const MAESTRO_SW_VERSION = "12.37.0-security-a11y";
+const MAESTRO_SW_VERSION = "12.38.0-qa-stabilization";
 const CACHE_NAME = "maestro-shell-" + MAESTRO_SW_VERSION;
 const DYNAMIC_CACHE = "maestro-runtime-" + MAESTRO_SW_VERSION;
 const MAP_TILES_CACHE = "maestro-map-tiles-v1";
@@ -22,9 +22,9 @@ const ASSETS_TO_CACHE = [
   "./index.html",
   "./404.html",
   "./style.css",
-  "./style.css?v=12.37",
+  "./style.css?v=12.38",
   "./app.js",
-  "./app.js?v=12.37",
+  "./app.js?v=12.38",
   "./icone.png",
   "./MGA.png",
   "./manifest.json",

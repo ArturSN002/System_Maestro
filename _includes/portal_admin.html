@@ -29,25 +29,26 @@
             </div>
             
             <div class="auditoria-filters-row admin-filter-bar">
-               <input type="text" id="auditoria-pesquisa" class="input-field auditoria-filter-search" placeholder="Pesquisar por Nome, CPF ou E-mail..." onkeyup="aplicarFiltrosAuditoria()">
-               <select id="auditoria-status" class="input-field auditoria-filter-select" onchange="aplicarFiltrosAuditoria()">
+               <input type="text" id="auditoria-pesquisa" class="input-field auditoria-filter-search" placeholder="Pesquisar por Nome, CPF ou E-mail..." oninput="aplicarFiltrosAuditoria()" onkeyup="aplicarFiltrosAuditoria()">
+               <select id="auditoria-status" class="input-field auditoria-filter-select" oninput="aplicarFiltrosAuditoria()" onchange="aplicarFiltrosAuditoria()">
                   <option value="">Status (Todos)</option>
                   <option value="ATIVO">Ativos</option>
                   <option value="PENDENTE">Pendentes</option>
                   <option value="ANALISE_HUMANA">Retidos</option>
                </select>
-               <select id="auditoria-instituicao" class="input-field auditoria-filter-select" onchange="aplicarFiltrosAuditoria()">
+               <select id="auditoria-instituicao" class="input-field auditoria-filter-select" oninput="aplicarFiltrosAuditoria()" onchange="aplicarFiltrosAuditoria()">
                   <option value="">Instituição (Todas)</option>
                   <option value="UFRN">UFRN</option>
                   <option value="IFRN">IFRN</option>
                   <option value="UERN">UERN</option>
                </select>
-               <select id="auditoria-turno" class="input-field auditoria-filter-select" onchange="aplicarFiltrosAuditoria()">
+               <select id="auditoria-turno" class="input-field auditoria-filter-select" oninput="aplicarFiltrosAuditoria()" onchange="aplicarFiltrosAuditoria()">
                   <option value="">Turno (Todos)</option>
                   <option value="MATUTINO">Matutino</option>
                   <option value="VESPERTINO">Vespertino</option>
                   <option value="NOTURNO">Noturno</option>
                </select>
+               <p id="auditoria-status-resumo" class="admin-tip-text auditoria-filter-summary">A mostrar os estudantes do semestre atual. Use os filtros para refinar a mesa.</p>
             </div>
             <p class="admin-tip-text">A mostrar os casos mais antigos na fila (FIFO). Use a pesquisa para encontrar um aluno específico.</p>
          </div>
@@ -115,7 +116,7 @@
             </div>
             
             <div class="motores-status-card">
-               <div id="loader-sincronizacao-motores" class="motores-loader-overlay">
+               <div id="loader-sincronizacao-motores" class="motores-loader-overlay hidden">
                    <div class="loader loader-small"></div>
                </div>
                
@@ -157,6 +158,7 @@
                <button class="btn-solid btn-motor-force" onclick="forcarMotor('OCR')">🔍 Auditar OCR</button>
                <button class="btn-solid btn-motor-force" onclick="forcarMotor('DOCS')">📄 Emitir PDFs</button>
                <button class="btn-solid btn-motor-force-last" onclick="forcarMotor('EMAIL')">📧 Fila de E-mails</button>
+               <button class="btn-solid btn-motor-force-last" id="btn-healthcheck-maestro" onclick="executarHealthcheckMaestroUI()">Validar backend</button>
             </div>
 
             <button class="btn-solid dark-bg" onclick="switchView('view-admin-hub')">Voltar ao Menu</button>

@@ -3,7 +3,7 @@
 // ========================================================================
 
 let deferredPrompt;
-const MAESTRO_PWA_VERSION = "12.37.0";
+const MAESTRO_PWA_VERSION = "12.38.0";
 window.MAESTRO_PWA_VERSION = MAESTRO_PWA_VERSION;
 window.MAESTRO_MANIFEST_URL = null;
 

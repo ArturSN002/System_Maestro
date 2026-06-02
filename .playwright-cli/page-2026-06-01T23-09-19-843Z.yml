@@ -1,0 +1,106 @@
+- generic [ref=e1]:
+  - link "Ir para o conteudo principal" [ref=e2] [cursor=pointer]:
+    - /url: "#app-content"
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - button "Voltar" [ref=e117] [cursor=pointer]: ⬅️
+      - generic [ref=e9]:
+        - img "Logo do Portal Maestro" [ref=e89]
+        - heading "MAESTRO - SMEB" [level=1] [ref=e90]
+        - paragraph [ref=e11]: Secretaria Municipal de Educação Básica
+      - button "Notificações" [ref=e12] [cursor=pointer]:
+        - img [ref=e13]
+    - main [ref=e15]:
+      - text: Posicione o rosto no oval
+      - generic [active] [ref=e225]:
+        - generic [ref=e226]:
+          - generic [ref=e227]:
+            - heading "📂 MESA DE AUDITORIA" [level=2] [ref=e228]
+            - button "🔄" [ref=e229] [cursor=pointer]
+          - generic [ref=e230]:
+            - textbox "Pesquisar por Nome, CPF ou E-mail..." [ref=e231]
+            - combobox [ref=e232]:
+              - option "Status (Todos)" [selected]
+              - option "Ativos"
+              - option "Pendentes"
+              - option "Retidos"
+            - combobox [ref=e233]:
+              - option "Instituição (Todas)" [selected]
+              - option "UFRN"
+              - option "IFRN"
+              - option "UERN"
+            - combobox [ref=e234]:
+              - option "Turno (Todos)" [selected]
+              - option "Matutino"
+              - option "Vespertino"
+              - option "Noturno"
+          - paragraph [ref=e235]: A mostrar os casos mais antigos na fila (FIFO). Use a pesquisa para encontrar um aluno específico.
+        - status [ref=e237]:
+          - paragraph [ref=e239]: A puxar a fila de trabalho...
+        - button "Voltar ao Menu" [ref=e240] [cursor=pointer]
+    - contentinfo [ref=e25]:
+      - paragraph [ref=e104]: "Rua Heraclito Vilar, nº 720 - Ceará-Mirim - CEP: 59570-000"
+      - paragraph [ref=e105]: seceduccearamirim@gmail.com
+      - paragraph [ref=e106]: "CNPJ: 06.075.383/0001-43"
+      - generic [ref=e26]:
+        - link "📖 Sobre o Maestro" [ref=e27] [cursor=pointer]:
+          - /url: "#"
+        - link "🎧 Suporte" [ref=e28] [cursor=pointer]:
+          - /url: mailto:teste@falso.com
+        - link "🔒 Privacidade" [ref=e29] [cursor=pointer]:
+          - /url: "#"
+        - link "📜 Termos de Uso" [ref=e30] [cursor=pointer]:
+          - /url: "#"
+      - generic [ref=e33]: Sistema Online
+      - generic [ref=e34]: ⚡ POWERED BY MAESTRO
+  - complementary "Configurações e navegação auxiliar" [ref=e35]:
+    - heading "⚙️ Configurações" [level=3] [ref=e36]
+    - generic [ref=e37]:
+      - paragraph [ref=e38]: Preferências do Sistema
+      - generic [ref=e39]:
+        - paragraph [ref=e40]: 🌗 Modo Escuro
+        - generic [ref=e41]:
+          - checkbox
+      - generic [ref=e43]:
+        - paragraph [ref=e44]: 🔔 Notificações
+        - generic [ref=e45]:
+          - checkbox
+      - generic [ref=e47]:
+        - paragraph [ref=e48]: 📍 Partilhar GPS
+        - generic [ref=e49]:
+          - checkbox
+      - generic [ref=e51]:
+        - paragraph [ref=e52]: 📷 Câmera
+        - generic [ref=e53]:
+          - checkbox
+      - generic [ref=e55]:
+        - paragraph [ref=e56]: ✈️ Forçar Offline
+        - generic [ref=e57]:
+          - checkbox
+    - button "🛡️ Validar Documento Verificar autenticidade de declaração" [ref=e59] [cursor=pointer]:
+      - generic [ref=e60]: 🛡️
+      - generic [ref=e61]:
+        - strong [ref=e62]: Validar Documento
+        - generic [ref=e63]: Verificar autenticidade de declaração
+    - button "📖 Sobre o Maestro Como funciona, cores e status" [ref=e64] [cursor=pointer]:
+      - generic [ref=e65]: 📖
+      - generic [ref=e66]:
+        - strong [ref=e67]: Sobre o Maestro
+        - generic [ref=e68]: Como funciona, cores e status
+    - button "🔐 Acesso da Secretaria Acesso Restrito" [ref=e69] [cursor=pointer]:
+      - generic [ref=e70]: 🔐
+      - generic [ref=e71]:
+        - strong [ref=e72]: Acesso da Secretaria
+        - generic [ref=e73]: Acesso Restrito
+    - generic [ref=e74] [cursor=pointer]:
+      - generic [ref=e75]: 📱
+      - generic [ref=e76]:
+        - strong [ref=e77]: Instalar Maestro
+        - generic [ref=e78]: Adicionar ao ecrã inicial
+    - generic [ref=e79]:
+      - button "⚠️ Limpar Dados do Aplicativo" [ref=e80] [cursor=pointer]
+      - paragraph [ref=e81]: Use esta opção se o portal apresentar lentidão ou para forçar a atualização do sistema. Exigirá novo login.
+  - complementary "Central de notificações" [ref=e82]:
+    - heading "🔔 Notificações" [level=3] [ref=e83]
+    - paragraph [ref=e84]: Histórico dos últimos 7 dias (Offline).
+    - button "Limpar Tudo" [ref=e88] [cursor=pointer]

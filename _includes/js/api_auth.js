@@ -293,13 +293,17 @@ function acaoApiUsaSemestreMaestro(action) {
     "encerrarRotaManual",
     "getFiltrosPush",
     "dispararPushLoteManual",
+    "publicarAvisoNotificacao",
     "getListaAuditoria",
     "verFicheiroBase64",
     "atualizarStatusAluno",
     "enviarParecerOperador",
     "getDashboardStats",
+    "getStatusMotores",
+    "alterarEstadoMotor",
     "forcarExecucaoMotor",
     "healthcheckMaestro",
+    "corrigirSemestresTenantFirestore",
     "atualizarEstagioCarteira"
   ].indexOf(String(action || "")) !== -1;
 }
@@ -325,9 +329,12 @@ function prepararPayloadApiMaestro(action, payload) {
 function obterTimeoutApiMaestro(action, options) {
   if (options && Number(options.timeoutMs) > 0) return Number(options.timeoutMs);
   const acao = String(action || "");
-  if (acao === "getListaAuditoria") return 10000;
+  if (acao === "getListaAuditoria") return 90000;
   if (acao === "submeterInscricaoNativa" || acao === "atualizarEstagioCarteira") return 120000;
   if (acao === "forcarExecucaoMotor") return 180000;
+  if (acao === "getStatusMotores" || acao === "alterarEstadoMotor") return 45000;
+  if (acao === "healthcheckMaestro" || acao === "corrigirSemestresTenantFirestore") return 120000;
+  if (acao === "dispararPushLoteManual" || acao === "publicarAvisoNotificacao") return 120000;
   if (acao === "getDashboardStats") return 45000;
   return 30000;
 }
@@ -369,7 +376,11 @@ async function apiCall(action, payload = {}, options = {}) {
   };
   const timeoutMs = obterTimeoutApiMaestro(action, options);
   const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
-  const timeoutId = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+  let timeoutDisparado = false;
+  const timeoutId = controller ? setTimeout(() => {
+    timeoutDisparado = true;
+    controller.abort();
+  }, timeoutMs) : null;
 
   try {
     const fetchOptions = {
@@ -423,7 +434,9 @@ async function apiCall(action, payload = {}, options = {}) {
       erro: abortado
         ? "Tempo limite excedido ao comunicar com o backend."
         : "Falha na ligacao ao servidor.",
-      detalhes: error && error.message ? error.message : String(error),
+      detalhes: abortado && timeoutDisparado
+        ? `A chamada ${action} excedeu ${Math.round(timeoutMs / 1000)}s. Tente novamente ou verifique indices/execucao no GAS.`
+        : (error && error.message ? error.message : String(error)),
       status: abortado ? 408 : 0,
       codigo: abortado ? "API_TIMEOUT" : "NETWORK_ERROR",
       action: action

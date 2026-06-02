@@ -2328,10 +2328,12 @@
 
   function buildAvisoPublicoPayload(payload) {
     const session = getOperatorSession();
+    const semester = getSemesterContext();
     const source = payload || {};
     const validadeAviso = source.validadeAviso || source.validade || source.ASSUNTO_VALIDADE || "";
 
     return mergeDefined(buildOperatorPayload(source), {
+      semestreId: source.semestreId || semester.semestreId,
       tipoAviso: safeText(source.tipoAviso || source.tipo, "Geral"),
       titulo: safeText(source.titulo, "").slice(0, 120),
       mensagem: safeText(source.mensagem, "").slice(0, 700),
@@ -2346,9 +2348,11 @@
 
   function buildPushSegmentadoPayload(payload) {
     const session = getOperatorSession();
+    const semester = getSemesterContext();
     const source = payload || {};
 
     return mergeDefined(buildOperatorPayload(source), {
+      semestreId: source.semestreId || semester.semestreId,
       titulo: safeText(source.titulo, "").slice(0, 120),
       mensagem: safeText(source.mensagem, "").slice(0, 700),
       rota: safeText(source.rota, "TODAS"),
