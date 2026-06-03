@@ -21,14 +21,45 @@
          <button class="btn-solid dark-bg mt-15" onclick="switchView('view-admin-hub')">Voltar ao Menu</button>
       </section>
 
-      <section id="view-auditoria" class="view-section admin-view admin-audit-view">
+      <section id="view-auditoria" class="view-section admin-view admin-audit-view" data-component="AdminAudit">
+         <div class="admin-audit-shell">
          <div class="form-card p-15-mb-10 admin-panel-card admin-panel-toolbar admin-audit-toolbar">
+            <div class="admin-audit-header">
+               <div>
+                  <p class="admin-panel-eyebrow">Auditoria documental</p>
+                  <h2 class="admin-section-title admin-audit-title">Mesa de Auditoria</h2>
+                  <p class="admin-tip-text">Fila completa do semestre atual, normalizada por auditStudent.</p>
+               </div>
+               <div class="admin-audit-toolbar-actions">
+                  <span id="auditoria-contexto-semestre" class="admin-context-chip admin-context-chip-muted">Semestre atual</span>
+                  <button onclick="carregarFilaAuditoria()" class="btn-icon-refresh" aria-label="Atualizar mesa de auditoria">Atualizar</button>
+               </div>
+            </div>
+
+            <div class="admin-audit-kpis" aria-label="Indicadores da mesa de auditoria">
+               <div class="admin-audit-kpi-card admin-audit-kpi-total">
+                  <span>Total carregado</span>
+                  <strong id="auditoria-kpi-total">0</strong>
+               </div>
+               <div class="admin-audit-kpi-card admin-audit-kpi-filtered">
+                  <span>Filtrados</span>
+                  <strong id="auditoria-kpi-filtrados">0</strong>
+               </div>
+               <div class="admin-audit-kpi-card admin-audit-kpi-pending">
+                  <span>Pendentes</span>
+                  <strong id="auditoria-kpi-pendentes">0</strong>
+               </div>
+               <div class="admin-audit-kpi-card admin-audit-kpi-review">
+                  <span>Retidos</span>
+                  <strong id="auditoria-kpi-retidos">0</strong>
+               </div>
+            </div>
             <div class="flex-between-center-mb-15">
                <h2 class="admin-section-title">📂 MESA DE AUDITORIA</h2>
                <button onclick="carregarFilaAuditoria()" class="btn-icon-refresh" aria-label="Atualizar mesa de auditoria">🔄</button>
             </div>
-            
-            <div class="auditoria-filters-row admin-filter-bar">
+
+            <div class="auditoria-filters-row admin-filter-bar admin-audit-filter-bar">
                <input type="text" id="auditoria-pesquisa" class="input-field auditoria-filter-search" placeholder="Pesquisar por Nome, CPF ou E-mail..." oninput="aplicarFiltrosAuditoria()" onkeyup="aplicarFiltrosAuditoria()">
                <select id="auditoria-status" class="input-field auditoria-filter-select" oninput="aplicarFiltrosAuditoria()" onchange="aplicarFiltrosAuditoria()">
                   <option value="">Status (Todos)</option>
@@ -48,16 +79,29 @@
                   <option value="VESPERTINO">Vespertino</option>
                   <option value="NOTURNO">Noturno</option>
                </select>
+               <button type="button" class="btn-text audit-filter-clear" onclick="limparFiltrosAuditoria()">Limpar filtros</button>
                <p id="auditoria-status-resumo" class="admin-tip-text auditoria-filter-summary">A mostrar os estudantes do semestre atual. Use os filtros para refinar a mesa.</p>
             </div>
             <p class="admin-tip-text">A mostrar os casos mais antigos na fila (FIFO). Use a pesquisa para encontrar um aluno específico.</p>
          </div>
          
-         <div id="auditoria-fila-container" class="grid-desktop admin-audit-results">
-            <div class="loading-state-box dynamic-state-box dynamic-loading-state"><div class="loader"></div><p>A puxar a fila de trabalho...</p></div>
+            <div class="admin-audit-workbench">
+               <div id="auditoria-fila-container" class="grid-desktop admin-audit-results">
+                  <div class="loading-state-box dynamic-state-box dynamic-loading-state"><div class="loader"></div><p>A puxar a fila de trabalho...</p></div>
+               </div>
+
+               <aside id="auditoria-raio-x-panel" class="admin-audit-side-panel" aria-live="polite" aria-label="Raio-X lateral do estudante">
+                  <div id="auditoria-raio-x-empty" class="admin-audit-side-empty">
+                     <span class="admin-panel-eyebrow">Raio-X lateral</span>
+                     <h3>Selecione um estudante</h3>
+                     <p>Use a fila para visualizar dados-chave antes de abrir o parecer completo.</p>
+                  </div>
+                  <div id="auditoria-raio-x-content" class="admin-audit-side-content hidden"></div>
+               </aside>
+            </div>
+
+            <button class="btn-solid dark-bg mt-15 admin-audit-back" onclick="switchView('view-admin-hub')">Voltar ao Menu</button>
          </div>
-         
-         <button class="btn-solid dark-bg mt-15" onclick="switchView('view-admin-hub')">Voltar ao Menu</button>
       </section>
 
       <section id="view-semestres" class="view-section admin-view admin-semesters-view" data-component="AdminSemesters">
@@ -183,11 +227,16 @@
          </div>
       </section>
 
-      <section id="view-fiscal" class="view-section operational-view fiscal-view">
+      <section id="view-fiscal" class="view-section operational-view fiscal-view" data-component="FiscalScanner">
+        <div class="fiscal-shell">
         <div class="form-card dark-form fiscal-panel-card" id="app-fiscal">
           <div class="form-header fiscal-panel-header">
             <h2>🛂 VALIDAÇÃO</h2>
             <p>Aponte a câmara para o QR Code do aluno</p>
+          </div>
+          <div class="fiscal-state-stack" aria-label="Estado operacional da fiscalizacao">
+            <span id="fiscal-camera-state" class="fiscal-state-chip">Camera</span>
+            <span id="fiscal-network-state" class="fiscal-state-chip">Rede</span>
           </div>
           
           <button class="btn-solid dark-bg btn-scanner-action mb-10 fiscal-primary-scan-button" id="btn-scanner" onclick="iniciarScanner()">
@@ -213,6 +262,7 @@
         </div>
         
         <div id="res-fiscal" class="result-container fiscal-result-panel"></div>
+        </div>
       </section>
 
       <section id="view-dashboard" class="view-section admin-view admin-dashboard-view" data-component="AdminDashboard">

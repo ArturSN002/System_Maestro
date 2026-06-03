@@ -415,6 +415,9 @@ function renderizarCarteira(dados, opcoes = {}) {
     const classEstado = escapeWallet(visualState.stateClass || "wallet-state-neutral");
     const dataEstado = escapeWallet(visualState.backgroundToken || "wallet.neutral");
     const offlineClass = offline ? " wallet-mode-offline" : "";
+    const criticalClass = (offline || visualState.isBlocked || visualState.isPending || visualState.canEmbark === false)
+        ? " wallet-critical-state"
+        : "";
     const documentoDisabled = offline ? "disabled" : "";
     const documentoClasses = offline ? "btn-solid dark-bg wallet-disabled-action" : "btn-solid dark-bg";
     const documentoLabel = offline ? "Documento indisponivel offline" : "Baixar Declaracao de Vinculo";
@@ -436,7 +439,7 @@ function renderizarCarteira(dados, opcoes = {}) {
       ` : "";
 
     container.innerHTML = `
-  <div class="wallet-card wallet-dynamic ${classEstado}${offlineClass}" data-wallet-state="${dataEstado}">
+  <div class="wallet-card wallet-dynamic wallet-operational-card ${classEstado}${offlineClass}${criticalClass}" data-wallet-state="${dataEstado}">
     <div class="wallet-header">IDENTIDADE UNIVERSITARIA</div>
     <div class="wallet-state-strip">
       <span id="wallet-state-badge" class="wallet-state-badge">${badgeLabel}</span>
@@ -477,6 +480,7 @@ function renderizarCarteira(dados, opcoes = {}) {
   </div>`;
 
     window.MaestroWalletAtual = { dados: dados, offline: offline };
+    if (typeof atualizarEstadoOperacionalMaestro === "function") atualizarEstadoOperacionalMaestro();
 
     if (actions) {
         actions.innerHTML = offline ? `

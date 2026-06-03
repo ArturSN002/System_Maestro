@@ -109,6 +109,7 @@ function atualizarIdentidadePublicaMaestro(themeConfig) {
     gatewayLogo.classList.remove("hidden");
     gatewayLogo.src = logo;
   }
+  atualizarEstadoOperacionalMaestro();
 }
 
 function obterPreferenciaLocalEstagioMaestro() {
@@ -414,6 +415,51 @@ function aplicarShellResponsivoMaestro(viewId) {
   if (header) {
     header.setAttribute("data-maestro-shell", shell);
   }
+}
+
+function atualizarEstadoOperacionalMaestro() {
+  const online = typeof navigator === "undefined" ? true : navigator.onLine !== false;
+  const gpsPermitido = localStorage.getItem("MAESTRO_PREF_GPS") !== "false";
+  const cameraPermitida = localStorage.getItem("MAESTRO_PREF_CAMERA") !== "false";
+  const viagemAtiva = !!(document.body && document.body.classList.contains("modo-viagem-ativo"));
+
+  const aplicarChip = (id, texto, ativo, warning) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = texto;
+    el.classList.toggle("admin-context-chip-muted", !ativo && !warning);
+    el.classList.toggle("admin-context-chip-warning", warning === true);
+    el.classList.toggle("operational-state-ok", ativo === true && warning !== true);
+    el.classList.toggle("operational-state-critical", warning === true);
+  };
+
+  aplicarChip("wallet-network-state", online ? "Online" : "Offline", online, !online);
+  aplicarChip("wallet-gps-state", gpsPermitido ? "GPS permitido" : "GPS bloqueado", gpsPermitido, !gpsPermitido);
+  aplicarChip("radar-network-state", online ? "Online" : "Offline", online, !online);
+  aplicarChip("radar-gps-state", gpsPermitido ? "GPS pronto" : "GPS bloqueado", gpsPermitido, !gpsPermitido);
+  aplicarChip("driver-network-state", online ? "Online" : "Offline", online, !online);
+  aplicarChip("driver-gps-state", gpsPermitido ? "GPS pronto" : "GPS bloqueado", gpsPermitido, !gpsPermitido);
+  aplicarChip("driver-trip-state", viagemAtiva ? "Viagem ativa" : "Sem viagem", viagemAtiva, false);
+
+  const cameraChip = document.getElementById("fiscal-camera-state");
+  if (cameraChip) {
+    cameraChip.textContent = cameraPermitida ? "Camera pronta" : "Camera bloqueada";
+    cameraChip.classList.toggle("is-ok", cameraPermitida);
+    cameraChip.classList.toggle("is-critical", !cameraPermitida);
+  }
+
+  const fiscalNetwork = document.getElementById("fiscal-network-state");
+  if (fiscalNetwork) {
+    fiscalNetwork.textContent = online ? "Online" : "Offline";
+    fiscalNetwork.classList.toggle("is-ok", online);
+    fiscalNetwork.classList.toggle("is-critical", !online);
+  }
+}
+
+if (typeof window !== "undefined") {
+  window.atualizarEstadoOperacionalMaestro = atualizarEstadoOperacionalMaestro;
+  window.addEventListener("online", atualizarEstadoOperacionalMaestro);
+  window.addEventListener("offline", atualizarEstadoOperacionalMaestro);
 }
 
 async function bootSystem(options = {}) {
@@ -746,6 +792,7 @@ function switchView(viewId) {
   aplicarAcessibilidadeBaseMaestro(target || document);
   aplicarShellResponsivoMaestro(viewId);
   atualizarContextoAdminVisualMaestro();
+  atualizarEstadoOperacionalMaestro();
 
   window.scrollTo(0, 0);
 
@@ -1417,6 +1464,7 @@ async function togglePref(tipo, elemento) {
       abrirTelaCofreOuEntrarDireto();
     }
   }
+  atualizarEstadoOperacionalMaestro();
 }
 
 function navegarPeloMenu(viewId) {
@@ -1471,6 +1519,7 @@ async function btnFinalizarRotaMotorista(idOnibus) {
 
 async function ativarModoViagemPWA(idOnibus, emailMotorista) {
   document.body.classList.add('modo-viagem-ativo');
+  atualizarEstadoOperacionalMaestro();
 
   try {
     if ('wakeLock' in navigator) {
@@ -1514,6 +1563,7 @@ async function ativarModoViagemPWA(idOnibus, emailMotorista) {
 
 function desativarModoViagemPWA() {
   document.body.classList.remove('modo-viagem-ativo');
+  atualizarEstadoOperacionalMaestro();
 
   if (watchIdMotorista !== null) {
     navigator.geolocation.clearWatch(watchIdMotorista);

@@ -1,8 +1,12 @@
-<section id="view-radar" class="view-section split-view-desktop radar-view-shell operational-view operational-radar-view">
+<section id="view-radar" class="view-section split-view-desktop radar-view-shell operational-view operational-radar-view" data-component="MobilityRadar">
     
     <div id="radar-lista-container" class="split-sidebar operational-radar-list">
         <div class="radar-list-header operational-radar-list-header">
             <h2 class="radar-list-title">Autocarros em Operação</h2>
+            <div class="radar-list-state-stack" aria-label="Estado do radar">
+                <span id="radar-network-state" class="admin-context-chip admin-context-chip-muted">Rede</span>
+                <span id="radar-gps-state" class="admin-context-chip admin-context-chip-muted">GPS</span>
+            </div>
         </div>
         <p class="radar-list-subtitle">Acompanhe os veículos e rotas em tempo real.</p>
         <div id="lista-viagens-cards" class="operational-radar-trips">

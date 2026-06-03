@@ -6,6 +6,8 @@ let arrayAlunosAuditoria = [];
 let arrayAlunosAuditoriaFiltrado = [];
 let paginaAtualAuditoria = 1;     // NOVO: Guarda a página atual
 const ITENS_POR_PAGINA = 10;      // NOVO: Exibe 10 alunos por bloco
+const AUDITORIA_FILTER_STORAGE_KEY = "MAESTRO_AUDITORIA_FILTROS_V1";
+let auditoriaRaioXSelecionado = null;
 
 let metaAuditoriaMaestro = {
     totalBackend: 0,
@@ -86,6 +88,61 @@ function obterContextoOperacaoMaestro() {
     };
 }
 
+function obterFiltrosAuditoriaUI() {
+    return {
+        pesquisa: document.getElementById('auditoria-pesquisa')?.value || "",
+        status: document.getElementById('auditoria-status')?.value || "",
+        instituicao: document.getElementById('auditoria-instituicao')?.value || "",
+        turno: document.getElementById('auditoria-turno')?.value || ""
+    };
+}
+
+function salvarFiltrosAuditoriaPersistentes() {
+    try {
+        localStorage.setItem(AUDITORIA_FILTER_STORAGE_KEY, JSON.stringify(obterFiltrosAuditoriaUI()));
+    } catch (error) { }
+}
+
+function restaurarFiltrosAuditoriaPersistentes() {
+    let filtros = {};
+    try {
+        filtros = JSON.parse(localStorage.getItem(AUDITORIA_FILTER_STORAGE_KEY) || "{}");
+    } catch (error) {
+        filtros = {};
+    }
+
+    const mapa = {
+        "auditoria-pesquisa": filtros.pesquisa,
+        "auditoria-status": filtros.status,
+        "auditoria-instituicao": filtros.instituicao,
+        "auditoria-turno": filtros.turno
+    };
+
+    Object.keys(mapa).forEach(id => {
+        const el = document.getElementById(id);
+        if (!el || mapa[id] === undefined || mapa[id] === null) return;
+        el.value = String(mapa[id] || "");
+    });
+}
+
+function limparFiltrosAuditoria() {
+    ["auditoria-pesquisa", "auditoria-status", "auditoria-instituicao", "auditoria-turno"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
+    });
+    salvarFiltrosAuditoriaPersistentes();
+    aplicarFiltrosAuditoria();
+}
+
+function atualizarContextoAuditoriaVisualMaestro() {
+    const contexto = obterContextoOperacaoMaestro();
+    const chip = document.getElementById("auditoria-contexto-semestre");
+    if (!chip) return;
+    const semestreTexto = metaAuditoriaMaestro.semestreId || contexto.semestreId || "nao definido";
+    chip.textContent = "Semestre: " + semestreTexto;
+    chip.classList.toggle("admin-context-chip-warning", !metaAuditoriaMaestro.semestreId && !contexto.semestreId);
+}
+
 function primeiroValorAuditoria(...valores) {
     for (const valor of valores) {
         if (valor !== undefined && valor !== null && String(valor).trim() !== "") return valor;
@@ -135,6 +192,52 @@ function valoresStatusAlunoAuditoria(aluno) {
         aluno.statusOCR,
         aluno.STATUS_OCR
     ].map(valor => String(valor || "").toUpperCase().trim()).filter(Boolean);
+}
+
+function alunoTemStatusAuditoria(aluno, statusBase) {
+    const equivalentes = statusEquivalentesAuditoria(statusBase);
+    const statusAluno = valoresStatusAlunoAuditoria(aluno);
+    return statusAluno.some(valor => equivalentes.includes(valor));
+}
+
+function calcularKpisAuditoria(lista) {
+    const origem = Array.isArray(lista) ? lista : [];
+    return origem.reduce((acc, aluno) => {
+        acc.total += 1;
+        if (alunoTemStatusAuditoria(aluno, "PENDENTE")) acc.pendentes += 1;
+        if (alunoTemStatusAuditoria(aluno, "ANALISE_HUMANA")) acc.retidos += 1;
+        if (alunoTemStatusAuditoria(aluno, "ATIVO")) acc.ativos += 1;
+        if (aluno.estagio && (aluno.estagio.ativo || aluno.estagio.tipoVinculo || aluno.estagio.statusValidacao)) acc.estagios += 1;
+        return acc;
+    }, {
+        total: 0,
+        pendentes: 0,
+        retidos: 0,
+        ativos: 0,
+        estagios: 0
+    });
+}
+
+function atualizarKpisAuditoriaMaestro() {
+    const kpisTotal = calcularKpisAuditoria(arrayAlunosAuditoria);
+    const kpisFiltrado = calcularKpisAuditoria(arrayAlunosAuditoriaFiltrado);
+    const setText = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = String(value);
+    };
+
+    setText("auditoria-kpi-total", kpisTotal.total);
+    setText("auditoria-kpi-filtrados", kpisFiltrado.total);
+    setText("auditoria-kpi-pendentes", kpisFiltrado.pendentes);
+    setText("auditoria-kpi-retidos", kpisFiltrado.retidos);
+}
+
+function resumoCurtoAlunoAuditoria(aluno) {
+    return [
+        aluno.instituicao || aluno.INSTITUICAO_ALUNO || "",
+        aluno.turno || aluno.TURNOS_ALUNO || "",
+        aluno.rota || aluno.ROTA_ALUNO || ""
+    ].filter(Boolean).join(" - ");
 }
 
 function adapterAuditStudentMaestro() {
@@ -268,6 +371,93 @@ function buscarAlunoAuditoria(cpf, semestreId = "") {
         arrayAlunosAuditoria.find(a => cpfSeguroAuditoria(a.cpf || a.CPF_ALUNO) === cpfLimpo);
 }
 
+function renderizarRaioXLateralAuditoria(aluno) {
+    const empty = document.getElementById("auditoria-raio-x-empty");
+    const content = document.getElementById("auditoria-raio-x-content");
+    if (!empty || !content) return;
+
+    if (!aluno) {
+        empty.classList.remove("hidden");
+        content.classList.add("hidden");
+        content.innerHTML = "";
+        return;
+    }
+
+    const cpfAluno = cpfSeguroAuditoria(aluno.cpf || aluno.CPF_ALUNO);
+    const semestreId = String(aluno.semestreId || aluno.semestreAtual || aluno.semestre || "");
+    const nome = formatarNomeProprio(aluno.nome || aluno.NOME_ALUNO);
+    const status = String(aluno.statusAuditoria || aluno.STATUS_VALIDACAO || aluno.statusAtividade || "PENDENTE").toUpperCase();
+    const estagio = aluno.estagio || {};
+    const temEstagio = estagio.ativo || estagio.tipoVinculo || estagio.statusValidacao || estagio.empresaInstituicao;
+    const estagioResumo = temEstagio
+        ? [
+            primeiroValorAuditoria(estagio.tipoVinculo, "Vinculo informado"),
+            primeiroValorAuditoria(estagio.statusValidacao, "PENDENTE")
+        ].filter(Boolean).join(" | ")
+        : "Sem dados de estagio";
+
+    auditoriaRaioXSelecionado = { cpf: cpfAluno, semestreId: semestreId };
+    empty.classList.add("hidden");
+    content.classList.remove("hidden");
+    content.innerHTML = `
+        <div class="admin-audit-side-header">
+            <span class="admin-panel-eyebrow">Raio-X lateral</span>
+            <h3>${escapeHTMLAuditoria(nome)}</h3>
+            <span class="auditoria-badge dynamic-status-badge">${escapeHTMLAuditoria(status)}</span>
+        </div>
+        <div class="admin-audit-side-grid">
+            <div><span>CPF</span><strong>${escapeHTMLAuditoria(cpfAluno || "-")}</strong></div>
+            <div><span>Semestre</span><strong>${escapeHTMLAuditoria(semestreId || "-")}</strong></div>
+            <div><span>Matricula</span><strong>${escapeHTMLAuditoria(aluno.matricula || aluno.MATRICULA_ALUNO || "-")}</strong></div>
+            <div><span>Email</span><strong>${escapeHTMLAuditoria(aluno.email || aluno.EMAIL_ALUNO || "-")}</strong></div>
+            <div class="admin-audit-side-span"><span>Logistica</span><strong>${escapeHTMLAuditoria(resumoCurtoAlunoAuditoria(aluno) || "-")}</strong></div>
+        </div>
+        <div class="admin-audit-side-stage ${temEstagio ? "" : "is-muted"}">
+            <span>Estagio</span>
+            <strong>${escapeHTMLAuditoria(estagioResumo)}</strong>
+            ${temEstagio && estagio.empresaInstituicao ? `<small>${escapeHTMLAuditoria(estagio.empresaInstituicao)}</small>` : ""}
+        </div>
+        <div class="admin-audit-side-actions">
+            <button class="btn-solid" data-cpf="${escapeHTMLAuditoria(cpfAluno)}" data-semestre-id="${escapeHTMLAuditoria(semestreId)}" onclick="abrirModalRaioX(this.dataset.cpf, this.dataset.semestreId)">Abrir parecer completo</button>
+            <button class="btn-text" data-cpf="${escapeHTMLAuditoria(cpfAluno)}" data-semestre-id="${escapeHTMLAuditoria(semestreId)}" onclick="abrirDocumentoSeguro(this.dataset.cpf, 'DOCUMENTO', this.dataset.semestreId)">Ver documento</button>
+        </div>
+    `;
+}
+
+function marcarLinhaSelecionadaAuditoria(cpf, semestreId) {
+    const cpfLimpo = cpfSeguroAuditoria(cpf);
+    const semestreSeguro = String(semestreId || "");
+    document.querySelectorAll(".auditoria-row").forEach(row => {
+        const match = cpfSeguroAuditoria(row.dataset.cpf || "") === cpfLimpo &&
+            (!semestreSeguro || String(row.dataset.semestreId || "") === semestreSeguro);
+        row.classList.toggle("auditoria-row-selected", match);
+    });
+}
+
+function selecionarAlunoAuditoria(cpf, semestreId = "") {
+    const aluno = buscarAlunoAuditoria(cpf, semestreId);
+    if (!aluno) return;
+    const cpfAluno = cpfSeguroAuditoria(aluno.cpf || aluno.CPF_ALUNO);
+    const semestreAluno = String(aluno.semestreId || aluno.semestreAtual || aluno.semestre || semestreId || "");
+    renderizarRaioXLateralAuditoria(aluno);
+    marcarLinhaSelecionadaAuditoria(cpfAluno, semestreAluno);
+
+    if (window.matchMedia && window.matchMedia("(max-width: 1023px)").matches) {
+        abrirModalRaioX(cpfAluno, semestreAluno);
+    }
+}
+
+function sincronizarRaioXLateralAuditoria() {
+    const selecionado = auditoriaRaioXSelecionado || {};
+    let aluno = selecionado.cpf ? buscarAlunoAuditoria(selecionado.cpf, selecionado.semestreId) : null;
+    if (aluno && !arrayAlunosAuditoriaFiltrado.some(item => cpfSeguroAuditoria(item.cpf || item.CPF_ALUNO) === cpfSeguroAuditoria(aluno.cpf || aluno.CPF_ALUNO))) {
+        aluno = null;
+    }
+    if (!aluno) aluno = arrayAlunosAuditoriaFiltrado[0] || null;
+    renderizarRaioXLateralAuditoria(aluno);
+    if (aluno) marcarLinhaSelecionadaAuditoria(aluno.cpf || aluno.CPF_ALUNO, aluno.semestreId || aluno.semestreAtual || "");
+}
+
 function encontrarIndiceAlunoAuditoria(cpf, semestreId = "") {
     const cpfLimpo = cpfSeguroAuditoria(cpf);
     const semestreSeguro = String(semestreId || "").trim();
@@ -354,6 +544,8 @@ function abrirMesaAuditoria() {
     if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
     if (typeof podeExecutarAcaoMaestro === 'function' && !podeExecutarAcaoMaestro("auditoria", { notify: true })) return;
 
+    restaurarFiltrosAuditoriaPersistentes();
+    atualizarContextoAuditoriaVisualMaestro();
     switchView('view-auditoria');
     carregarFilaAuditoria();
 }
@@ -411,6 +603,7 @@ function renderizarAuditoriaDoCacheMaestro(cache) {
         limite: (cache.data.meta && cache.data.meta.limite) || arrayAlunosAuditoria.length
     });
     atualizarOpcoesFiltrosAuditoria();
+    atualizarContextoAuditoriaVisualMaestro();
     aplicarFiltrosAuditoria();
     if ((cache.stale || cache.expired) && typeof showToast === "function") {
         showToast("Fila de auditoria exibida do cache local.", "warning");
@@ -450,7 +643,6 @@ function atualizarOpcoesFiltrosAuditoria() {
 
 function atualizarResumoAuditoriaMaestro() {
     const resumo = document.getElementById("auditoria-status-resumo");
-    if (!resumo) return;
     const totalCarregado = arrayAlunosAuditoria.length;
     const totalFiltrado = arrayAlunosAuditoriaFiltrado.length;
     const totalBackend = Number(metaAuditoriaMaestro.totalBackend || 0);
@@ -458,7 +650,9 @@ function atualizarResumoAuditoriaMaestro() {
     if (metaAuditoriaMaestro.semestreId) partes.push(`semestre ${metaAuditoriaMaestro.semestreId}`);
     if (totalBackend && totalBackend > totalCarregado) partes.push(`backend informou ${totalBackend}`);
     if (metaAuditoriaMaestro.truncado) partes.push("lista truncada pelo limite da API");
-    resumo.textContent = partes.join(" | ");
+    if (resumo) resumo.textContent = partes.join(" | ");
+    atualizarKpisAuditoriaMaestro();
+    atualizarContextoAuditoriaVisualMaestro();
 }
 
 function renderizarErroAuditoriaMaestro(resposta, fallbackTitulo) {
@@ -541,6 +735,7 @@ async function carregarFilaAuditoria(ehPesquisa = false) {
             }
             salvarCacheAuditoriaMaestro(res.lista || [], metaAuditoriaMaestro.semestreId || semestreId, tenantId, metaAuditoriaMaestro);
             atualizarOpcoesFiltrosAuditoria();
+            atualizarContextoAuditoriaVisualMaestro();
             aplicarFiltrosAuditoria();
         } else {
             const cacheFallback = obterCacheAuditoriaMaestro(semestreId, true, tenantId);
@@ -559,6 +754,7 @@ async function carregarFilaAuditoria(ehPesquisa = false) {
 }
 
 function aplicarFiltrosAuditoria() {
+    salvarFiltrosAuditoriaPersistentes();
     const termoOriginal = document.getElementById('auditoria-pesquisa')?.value.trim() || "";
     const termo = normalizarTextoFiltroAuditoria(termoOriginal);
     const termoCpf = termoOriginal.replace(/\D/g, "");
@@ -616,6 +812,7 @@ function renderizarListaAuditoria() {
             message: "Todos os pedidos foram atendidos ou nao ha resultados.",
             className: "empty-state-box admin-audit-empty"
         });
+        renderizarRaioXLateralAuditoria(null);
         return;
     }
 
@@ -667,7 +864,7 @@ function renderizarListaAuditoria() {
             : "";
 
         html += `
-        <tr class="auditoria-row dynamic-table-row">
+        <tr class="auditoria-row dynamic-table-row" data-cpf="${cpfAluno}" data-semestre-id="${semestreSeguro}">
             <td data-label="Estudante">
                 <div class="auditoria-student-info">
                     <strong class="auditoria-nome">${nomeTratado}</strong>
@@ -684,7 +881,7 @@ function renderizarListaAuditoria() {
                 ${badgeEstagio || '<span class="text-light">-</span>'}
             </td>
             <td data-label="Ações">
-                <button class="btn-solid btn-auditoria-detalhar" data-cpf="${cpfAluno}" data-semestre-id="${semestreSeguro}" onclick="abrirModalRaioX(this.dataset.cpf, this.dataset.semestreId)">Detalhar</button>
+                <button class="btn-solid btn-auditoria-detalhar" data-cpf="${cpfAluno}" data-semestre-id="${semestreSeguro}" onclick="selecionarAlunoAuditoria(this.dataset.cpf, this.dataset.semestreId)">Raio-X</button>
             </td>
         </tr>`;
     });
@@ -709,6 +906,7 @@ function renderizarListaAuditoria() {
     }
 
     container.innerHTML = html;
+    sincronizarRaioXLateralAuditoria();
 }
 
 // NOVA FUNÇÃO: Acionada pelas setas de paginação

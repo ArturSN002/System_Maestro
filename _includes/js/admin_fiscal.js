@@ -22,6 +22,7 @@ function iniciarScanner() {
     document.getElementById('leitor-qr-container').classList.remove('hidden');
     document.getElementById('btn-scanner').classList.add('hidden');
     document.getElementById('btn-scanner-nativo').classList.add('hidden');
+    if (typeof atualizarEstadoOperacionalMaestro === "function") atualizarEstadoOperacionalMaestro();
 
     if (html5QrcodeScanner) {
         html5QrcodeScanner.clear().catch(() => { });
@@ -39,6 +40,7 @@ function fecharScanner() {
     document.getElementById('leitor-qr-container').classList.add('hidden');
     document.getElementById('btn-scanner').classList.remove('hidden');
     document.getElementById('btn-scanner-nativo').classList.remove('hidden');
+    if (typeof atualizarEstadoOperacionalMaestro === "function") atualizarEstadoOperacionalMaestro();
 }
 
 function aoLerQRCode(textoLido) {
@@ -126,6 +128,7 @@ function abrirModoFiscalizacaoGlobal() {
 
 async function validarFiscal() {
     if (typeof temSessaoOperadorAtiva === 'function' && !temSessaoOperadorAtiva()) return;
+    if (typeof atualizarEstadoOperacionalMaestro === "function") atualizarEstadoOperacionalMaestro();
 
     const idCarteira = document.getElementById('id-fiscal').value.trim().toUpperCase();
     if (!idCarteira) return;

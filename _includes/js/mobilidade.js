@@ -194,6 +194,7 @@ function calcularETA(distanciaKm) {
 
 function abrirRadarMasterView() {
     switchView('view-radar');
+    if (typeof atualizarEstadoOperacionalMaestro === "function") atualizarEstadoOperacionalMaestro();
 
     if (typeof carregarViagensDisponiveisEstudante === 'function') {
         carregarViagensDisponiveisEstudante();
@@ -314,6 +315,7 @@ function fecharMapaVoltarLista() {
 }
 
 async function carregarViagensDisponiveisEstudante() {
+    if (typeof atualizarEstadoOperacionalMaestro === "function") atualizarEstadoOperacionalMaestro();
     if (typeof currentWalletId === 'undefined' || !currentWalletId) {
         showToast("Sessão inválida para aceder às viagens.", "error");
         return;
@@ -479,6 +481,7 @@ async function confirmarEmbarque(idOnibus) {
         if (res.sucesso) {
             showToast("Lugar Confirmado!", "success");
             onibusSelecionadoGPS = idOnibus;
+            if (typeof atualizarEstadoOperacionalMaestro === "function") atualizarEstadoOperacionalMaestro();
 
             const desktopActive = isDesktop();
 

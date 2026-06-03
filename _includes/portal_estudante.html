@@ -514,8 +514,19 @@
         </div>
       </section>
 
-      <section id="view-wallet" class="view-section student-view student-wallet-view">
-        <div class="wallet-wrapper student-wallet-wrapper">
+      <section id="view-wallet" class="view-section student-view student-wallet-view" data-component="StudentWallet">
+        <div class="wallet-wrapper student-wallet-wrapper wallet-operational-shell">
+          <div class="wallet-operational-header">
+            <div>
+              <p class="student-hub-eyebrow">Carteira digital</p>
+              <h2 class="wallet-operational-title">Identidade de embarque</h2>
+              <p class="wallet-operational-copy">QR seguro, radar de viagens e documentos ficam disponiveis conforme o status da carteira.</p>
+            </div>
+            <div class="wallet-operational-badges" aria-label="Estado da carteira">
+              <span id="wallet-network-state" class="admin-context-chip admin-context-chip-muted">Rede</span>
+              <span id="wallet-gps-state" class="admin-context-chip admin-context-chip-muted">GPS</span>
+            </div>
+          </div>
           <div id="wallet-container"></div>
           <div id="wallet-actions" class="hidden mt-15">
             <button class="btn-solid btn-radar-open" onclick="abrirRadarMasterView()">

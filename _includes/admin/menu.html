@@ -105,8 +105,22 @@
   </div>
 </section>
 
-<div id="view-painel-motorista" class="view-section operational-view driver-view hidden">
+<div id="view-painel-motorista" class="view-section operational-view driver-view hidden" data-component="DriverPanel">
   <div class="welcome-text">Central Logística do Motorista</div>
+
+  <div class="driver-shell">
+  <div class="driver-hero">
+    <div>
+      <p class="admin-panel-eyebrow">Operacao de rota</p>
+      <div class="welcome-text driver-title">Central Logistica do Motorista</div>
+      <p class="driver-subtitle">Inicie rotas, transmita GPS e acione fiscalizacao com baixa distracao.</p>
+    </div>
+    <div class="driver-state-stack" aria-label="Estado operacional do motorista">
+      <span id="driver-network-state" class="admin-context-chip admin-context-chip-muted">Rede</span>
+      <span id="driver-gps-state" class="admin-context-chip admin-context-chip-muted">GPS</span>
+      <span id="driver-trip-state" class="admin-context-chip admin-context-chip-muted">Viagem</span>
+    </div>
+  </div>
 
   <div class="grid-desktop driver-action-grid">
 
@@ -137,5 +151,6 @@
 
   <div class="text-center mt-20 mb-20 driver-logout-row">
     <a href="#" onclick="encerrarSessaoOperador()" class="btn-text text-danger">Sair do Sistema</a>
+  </div>
   </div>
 </div>
