@@ -173,8 +173,8 @@
             </div>
 
             <div class="stepper-nav">
-              <button class="btn-solid btn-back" onclick="stepperPrev(2, 1)">⬅ VOLTAR</button>
-              <button class="btn-solid" onclick="stepperNext(2, 3)">PRÓXIMO ➡</button>
+              <button class="btn-solid btn-back" onclick="stepperPrev(2, 1)"><span data-maestro-icon-slot="arrowLeft" aria-hidden="true"></span> VOLTAR</button>
+              <button class="btn-solid" onclick="stepperNext(2, 3)">PRÓXIMO <span data-maestro-icon-slot="arrowRight" aria-hidden="true"></span></button>
             </div>
           </div>
 
@@ -270,12 +270,12 @@
             <div class="cond-field" id="cond-menor">
               <div class="custom-file-upload mb-15">
                 <label class="input-label">DECLARAÇÃO DE RESPONSABILIDADE (PDF ou Imagem) *</label>
-                <label for="insc-file-menor" class="btn-file-custom" id="label-insc-menor">📎 Toque para selecionar o arquivo</label>
+                <label for="insc-file-menor" class="btn-file-custom" id="label-insc-menor"><span data-maestro-icon-slot="paperclip" aria-hidden="true"></span> Toque para selecionar o arquivo</label>
                 <input type="file" id="insc-file-menor" accept="application/pdf, image/jpeg, image/png" onchange="processarArquivoInscricao(this, 'menorIdade')">
                 <span class="file-name-display" id="status-insc-menorIdade">Nenhum arquivo selecionado</span>
               </div>
               <p class="menor-idade-info-text">
-                ⚠️ Para menores, é obrigatório anexar a Declaração de Responsabilidade assinada pelo responsável legal.
+                <span data-maestro-icon-slot="alert" aria-hidden="true"></span> Para menores, é obrigatório anexar a Declaração de Responsabilidade assinada pelo responsável legal.
                 <a href="#" id="link-declaracao-menor" target="_blank" class="link-text-highlight">Baixar modelo</a>.
               </p>
             </div>
@@ -288,46 +288,46 @@
             </div>
 
             <div class="stepper-nav">
-              <button class="btn-solid btn-back" onclick="stepperPrev(3, 2)">⬅ VOLTAR</button>
-              <button class="btn-solid" onclick="stepperNext(3, 4)">PRÓXIMO ➡</button>
+              <button class="btn-solid btn-back" onclick="stepperPrev(3, 2)"><span data-maestro-icon-slot="arrowLeft" aria-hidden="true"></span> VOLTAR</button>
+              <button class="btn-solid" onclick="stepperNext(3, 4)">PRÓXIMO <span data-maestro-icon-slot="arrowRight" aria-hidden="true"></span></button>
             </div>
           </div>
 
           <!-- ============ STEP 4: Cofre Digital / Uploads ============ -->
           <div class="step-container student-step-container" id="step-4">
-            <div class="step-section-title">📎 Documentos Obrigatórios</div>
+            <div class="step-section-title"><span data-maestro-icon-slot="paperclip" aria-hidden="true"></span> Documentos Obrigatórios</div>
 
             <div class="custom-file-upload mb-15">
               <label class="input-label">DOCUMENTO COM FOTO (RG ou CNH) *</label>
-              <label for="insc-file-documento" class="btn-file-custom" id="label-insc-documento">📎 Toque para selecionar o arquivo</label>
+              <label for="insc-file-documento" class="btn-file-custom" id="label-insc-documento"><span data-maestro-icon-slot="paperclip" aria-hidden="true"></span> Toque para selecionar o arquivo</label>
               <input type="file" id="insc-file-documento" accept="application/pdf, image/jpeg, image/png" onchange="processarArquivoInscricao(this, 'documento')">
               <span class="file-name-display" id="status-insc-documento">Nenhum arquivo selecionado</span>
             </div>
 
             <div class="custom-file-upload mb-15">
               <label class="input-label">COMPROVANTE DE RESIDÊNCIA (PDF ou Imagem)</label>
-              <label for="insc-file-residencia" class="btn-file-custom" id="label-insc-residencia">📎 Toque para selecionar o arquivo</label>
+              <label for="insc-file-residencia" class="btn-file-custom" id="label-insc-residencia"><span data-maestro-icon-slot="paperclip" aria-hidden="true"></span> Toque para selecionar o arquivo</label>
               <input type="file" id="insc-file-residencia" accept="application/pdf, image/jpeg, image/png" onchange="processarArquivoInscricao(this, 'residencia')">
               <span class="file-name-display" id="status-insc-residencia">Nenhum arquivo selecionado</span>
             </div>
 
             <div class="custom-file-upload mb-15">
               <label class="input-label">DECLARAÇÃO DE VÍNCULO ACADÊMICO (PDF ou Imagem)</label>
-              <label for="insc-file-vinculo" class="btn-file-custom" id="label-insc-vinculo">📎 Toque para selecionar o arquivo</label>
+              <label for="insc-file-vinculo" class="btn-file-custom" id="label-insc-vinculo"><span data-maestro-icon-slot="paperclip" aria-hidden="true"></span> Toque para selecionar o arquivo</label>
               <input type="file" id="insc-file-vinculo" accept="application/pdf, image/jpeg, image/png" onchange="processarArquivoInscricao(this, 'vinculo')">
               <span class="file-name-display" id="status-insc-vinculo">Nenhum arquivo selecionado</span>
             </div>
 
-            <div class="step-section-title">📷 Foto 3x4</div>
+            <div class="step-section-title"><span data-maestro-icon-slot="camera" aria-hidden="true"></span> Foto 3x4</div>
             <p class="foto-3x4-info-text">Envie uma foto usando a câmara frontal ou anexe um arquivo de imagem existente.</p>
 
             <!-- Toggle: Câmera vs Arquivo -->
             <div class="camera-upload-toggle-container">
               <button type="button" class="btn-solid btn-modo-ativo btn-camera-toggle-opt" id="btn-modo-camera" onclick="toggleModoFoto('camera')">
-                📷 Usar Câmera
+                <span data-maestro-icon-slot="camera" aria-hidden="true"></span> Usar Câmera
               </button>
               <button type="button" class="btn-solid btn-modo-inativo btn-camera-toggle-opt" id="btn-modo-upload" onclick="toggleModoFoto('upload')">
-                📎 Anexar Arquivo
+                <span data-maestro-icon-slot="paperclip" aria-hidden="true"></span> Anexar Arquivo
               </button>
             </div>
 
@@ -340,27 +340,27 @@
               </div>
 
               <button class="btn-solid btn-success-solid hidden" id="btn-capturar-foto" onclick="capturarFoto3x4()">
-                ✅ CAPTURAR FOTO
+                <span data-maestro-icon-slot="check" aria-hidden="true"></span> CAPTURAR FOTO
               </button>
 
               <canvas id="camera-canvas" class="hidden"></canvas>
               <img id="camera-preview" class="camera-preview-box hidden" alt="Pré-visualização da foto">
-              <button class="btn-text btn-success-solid hidden mt-0" id="btn-refazer-foto" onclick="iniciarCamera3x4()">🔄 Tirar outra foto</button>
+              <button class="btn-text btn-success-solid hidden mt-0" id="btn-refazer-foto" onclick="iniciarCamera3x4()"><span data-maestro-icon-slot="refresh" aria-hidden="true"></span> Tirar outra foto</button>
             </div>
 
             <!-- Modo: Upload de Arquivo (oculto por padrão) -->
             <div id="upload-3x4-area" class="hidden">
               <div class="custom-file-upload">
                 <label class="input-label">SELECIONAR IMAGEM DA GALERIA</label>
-                <label for="insc-file-foto3x4" class="btn-file-custom" id="label-insc-foto3x4">📷 Toque para selecionar uma foto</label>
+                <label for="insc-file-foto3x4" class="btn-file-custom" id="label-insc-foto3x4"><span data-maestro-icon-slot="camera" aria-hidden="true"></span> Toque para selecionar uma foto</label>
                 <input type="file" id="insc-file-foto3x4" accept="image/jpeg, image/png, image/webp" onchange="processarArquivoInscricao(this, 'foto3x4')">
                 <span class="file-name-display" id="status-insc-foto3x4">Nenhum arquivo selecionado</span>
               </div>
             </div>
 
             <div class="stepper-nav mt-25">
-              <button class="btn-solid btn-back" onclick="stepperPrev(4, 3)">⬅ VOLTAR</button>
-              <button class="btn-solid btn-success" id="btn-submeter-inscricao" onclick="prepararEnvioNativo()">📤 SUBMETER INSCRIÇÃO</button>
+              <button class="btn-solid btn-back" onclick="stepperPrev(4, 3)"><span data-maestro-icon-slot="arrowLeft" aria-hidden="true"></span> VOLTAR</button>
+              <button class="btn-solid btn-success" id="btn-submeter-inscricao" onclick="prepararEnvioNativo()"><span data-maestro-icon-slot="upload" aria-hidden="true"></span> SUBMETER INSCRIÇÃO</button>
             </div>
           </div>
 
@@ -389,13 +389,13 @@
       <section id="view-resgate" class="view-section student-view student-rescue-view">
          <div class="form-card form-card-accent student-flow-card student-rescue-card">
             <div class="form-header mb-15">
-               <span class="card-icon-emoji">📤</span>
+               <span class="card-icon-emoji" data-maestro-icon-slot="upload" aria-hidden="true"></span>
                <h2 class="text-accent">RESGATE DOCUMENTAL</h2>
                <p class="resgate-header-desc">Envie apenas os documentos solicitados pela Secretaria.</p>
             </div>
             
             <div class="alert-resgate-warn">
-               <p class="resgate-warn-title">⚠️ ATENÇÃO AOS FORMATOS:</p>
+               <p class="resgate-warn-title"><span data-maestro-icon-slot="alert" aria-hidden="true"></span> ATENÇÃO AOS FORMATOS:</p>
                <ul class="resgate-warn-list">
                   <li><strong>Foto 3x4:</strong> Apenas Imagem (JPEG/PNG).</li>
                   <li><strong>Outros Documentos:</strong> Apenas PDF.</li>
@@ -406,7 +406,7 @@
                <div class="resgate-field-row">
                   <label class="resgate-field-label">
                      <input type="checkbox" id="chk-resgate-foto" onchange="toggleBoxResgate('FOTO')" class="resgate-checkbox-input">
-                     📷 Enviar Foto 3x4 (Nova)
+                     <span data-maestro-icon-slot="camera" aria-hidden="true"></span> Enviar Foto 3x4 (Nova)
                   </label>
                   <div id="box-resgate-FOTO" class="hidden resgate-file-box">
                      <input type="file" id="file-resgate-FOTO" accept="image/jpeg, image/png" class="input-field resgate-file-input" onchange="processarArquivoResgate(this, 'FOTO')">
@@ -467,7 +467,7 @@
       <section id="view-login" class="view-section student-view student-login-view">
         <div class="form-card student-flow-card student-login-card">
           <div class="form-header">
-            <span class="card-icon-emoji">🔒</span>
+            <span class="card-icon-emoji" data-maestro-icon-slot="lock" aria-hidden="true"></span>
             <h2>Cofre Digital</h2>
             <p>Insira as credenciais da sua carteira</p>
           </div>
@@ -486,7 +486,7 @@
       <section id="view-nova-senha" class="view-section student-view student-password-view">
         <div class="form-card student-flow-card student-password-card">
           <div class="form-header">
-            <span class="card-icon-emoji">🔐</span>
+            <span class="card-icon-emoji" data-maestro-icon-slot="key" aria-hidden="true"></span>
             <h2>Definir Senha de Acesso</h2>
             <p>Crie uma senha forte para proteger a sua carteira digital</p>
           </div>
@@ -494,19 +494,19 @@
             <label class="input-label">Nova senha</label>
             <div class="pos-relative">
               <input type="password" id="nova-senha" class="input-field" placeholder="Digite a nova senha" autocomplete="new-password" oninput="if (typeof validarRegrasSenha === 'function') validarRegrasSenha(this.value);">
-              <button type="button" aria-label="Mostrar ou ocultar nova senha" onclick="const campo=document.getElementById('nova-senha'); campo.type=campo.type==='password'?'text':'password'; this.textContent='👁';" class="pwd-toggle-btn">👁</button>
+              <button type="button" aria-label="Mostrar ou ocultar nova senha" onclick="const campo=document.getElementById('nova-senha'); campo.type=campo.type==='password'?'text':'password'; this.setAttribute('aria-pressed', campo.type==='text'?'true':'false');" class="pwd-toggle-btn"><span data-maestro-icon-slot="eye" aria-hidden="true"></span></button>
             </div>
             <label class="input-label">Confirmar nova senha</label>
             <div class="pos-relative">
               <input type="password" id="confirmar-nova-senha" class="input-field" placeholder="Repita a nova senha" autocomplete="new-password">
-              <button type="button" aria-label="Mostrar ou ocultar confirmação de senha" onclick="const campo=document.getElementById('confirmar-nova-senha'); campo.type=campo.type==='password'?'text':'password'; this.textContent='👁';" class="pwd-toggle-btn">👁</button>
+              <button type="button" aria-label="Mostrar ou ocultar confirmação de senha" onclick="const campo=document.getElementById('confirmar-nova-senha'); campo.type=campo.type==='password'?'text':'password'; this.setAttribute('aria-pressed', campo.type==='text'?'true':'false');" class="pwd-toggle-btn"><span data-maestro-icon-slot="eye" aria-hidden="true"></span></button>
             </div>
             <ul id="senha-regras" class="pwd-rules-list">
-              <li id="regra-tam">❌ Mínimo de 8 caracteres</li>
-              <li id="regra-mai">❌ Pelo menos uma letra maiúscula</li>
-              <li id="regra-min">❌ Pelo menos uma letra minúscula</li>
-              <li id="regra-num">❌ Pelo menos um número</li>
-              <li id="regra-esp">❌ Pelo menos um caractere especial</li>
+              <li id="regra-tam"><span data-maestro-icon-slot="close" aria-hidden="true"></span> Mínimo de 8 caracteres</li>
+              <li id="regra-mai"><span data-maestro-icon-slot="close" aria-hidden="true"></span> Pelo menos uma letra maiúscula</li>
+              <li id="regra-min"><span data-maestro-icon-slot="close" aria-hidden="true"></span> Pelo menos uma letra minúscula</li>
+              <li id="regra-num"><span data-maestro-icon-slot="close" aria-hidden="true"></span> Pelo menos um número</li>
+              <li id="regra-esp"><span data-maestro-icon-slot="close" aria-hidden="true"></span> Pelo menos um caractere especial</li>
             </ul>
             <button type="submit" class="btn-solid" id="btn-salvar-nova-senha">Salvar e Entrar</button>
           </form>
@@ -530,7 +530,7 @@
           <div id="wallet-container"></div>
           <div id="wallet-actions" class="hidden mt-15">
             <button class="btn-solid btn-radar-open" onclick="abrirRadarMasterView()">
-              <span>🗺️</span> ABRIR RADAR DE VIAGENS
+              <span data-maestro-icon-slot="map" aria-hidden="true"></span> ABRIR RADAR DE VIAGENS
             </button>
           </div>
           <div id="wallet-privacy-card" class="form-card mt-15 student-wallet-privacy-card">
@@ -539,8 +539,8 @@
               <p class="wallet-privacy-desc">Acesse seus dados pessoais ou solicite a anonimização da sua conta.</p>
             </div>
             <div class="privacy-actions-box">
-              <button class="btn-solid btn-primary m-0" type="button" onclick="downloadDadosPessoais()">📥 Baixar Meus Dados (JSON)</button>
-              <button class="btn-solid btn-danger m-0" type="button" onclick="confirmarExclusaoConta()">⚠️ Solicitar Exclusão de Conta</button>
+              <button class="btn-solid btn-primary m-0" type="button" onclick="downloadDadosPessoais()"><span data-maestro-icon-slot="download" aria-hidden="true"></span> Baixar Meus Dados (JSON)</button>
+              <button class="btn-solid btn-danger m-0" type="button" onclick="confirmarExclusaoConta()"><span data-maestro-icon-slot="alert" aria-hidden="true"></span> Solicitar Exclusão de Conta</button>
             </div>
           </div>
         </div>

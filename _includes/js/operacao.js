@@ -514,7 +514,7 @@ function renderizarEstagioRaioX(aluno) {
 }
 
 window.forcarResetSenhaEstudante = async function(cpf) {
-    const alerta = window.confirm("⚠️ ATENÇÃO OPERADOR:\n\nIsto apagará a senha atual do estudante. A conta voltará ao estado de 'Primeiro Acesso' e a senha provisória será os 4 últimos dígitos do CPF.\n\nDeseja continuar?");
+    const alerta = window.confirm("ATENÇÃO OPERADOR:\n\nIsto apagará a senha atual do estudante. A conta voltará ao estado de 'Primeiro Acesso' e a senha provisória será os 4 últimos dígitos do CPF.\n\nDeseja continuar?");
     if (!alerta) return;
 
     showToast("A resetar credenciais...", "loading");
@@ -1673,10 +1673,10 @@ async function abrirMuralDaSemana() {
             const votosDownSeguro = escapeHTMLAuditoria(msg.votosDown || 0);
             msg.categoria = categoriaBruta;
 
-            let iconCat = '🗣️';
-            if (msg.categoria.indexOf('Sugestão') !== -1) iconCat = '💡';
-            if (msg.categoria.indexOf('Reclamação') !== -1) iconCat = '⚠️';
-            if (msg.categoria.indexOf('Achados') !== -1) iconCat = '🎒';
+            let iconCat = window.MaestroIcons && typeof window.MaestroIcons.svg === "function" ? window.MaestroIcons.svg("megaphone") : "";
+            if (msg.categoria.indexOf('Sugestão') !== -1) iconCat = window.MaestroIcons && typeof window.MaestroIcons.svg === "function" ? window.MaestroIcons.svg("lightbulb") : "";
+            if (msg.categoria.indexOf('Reclamação') !== -1) iconCat = window.MaestroIcons && typeof window.MaestroIcons.svg === "function" ? window.MaestroIcons.svg("alert") : "";
+            if (msg.categoria.indexOf('Achados') !== -1) iconCat = window.MaestroIcons && typeof window.MaestroIcons.svg === "function" ? window.MaestroIcons.svg("briefcase") : "";
 
             window.MaestroMuralIdMap = window.MaestroMuralIdMap || {};
             window.MaestroMuralIdMap[idElementoSeguro] = String(msg.id || "");

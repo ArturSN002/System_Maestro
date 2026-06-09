@@ -8,7 +8,7 @@
       <section id="view-notificacoes" class="view-section admin-view admin-notifications-view hidden">
          <div class="form-card p-15-mb-10 admin-panel-card admin-panel-toolbar">
             <div class="flex-between-center-mb-15">
-               <h2 class="admin-section-title">🔔 CAIXA DE MENSAGENS</h2>
+               <h2 class="admin-section-title"><span data-maestro-icon-slot="bell" aria-hidden="true"></span> CAIXA DE MENSAGENS</h2>
                <button onclick="limparInbox()" class="btn-clear-inbox">Limpar Tudo</button>
             </div>
             <p class="admin-tip-text">O seu histórico de mensagens dos últimos 7 dias guardado localmente (Offline).</p>
@@ -55,8 +55,8 @@
                </div>
             </div>
             <div class="flex-between-center-mb-15">
-               <h2 class="admin-section-title">📂 MESA DE AUDITORIA</h2>
-               <button onclick="carregarFilaAuditoria()" class="btn-icon-refresh" aria-label="Atualizar mesa de auditoria">🔄</button>
+               <h2 class="admin-section-title"><span data-maestro-icon-slot="file" aria-hidden="true"></span> MESA DE AUDITORIA</h2>
+               <button onclick="carregarFilaAuditoria()" class="btn-icon-refresh" aria-label="Atualizar mesa de auditoria"><span data-maestro-icon-slot="refresh" aria-hidden="true"></span></button>
             </div>
 
             <div class="auditoria-filters-row admin-filter-bar admin-audit-filter-bar">
@@ -113,7 +113,7 @@
                   <h2 class="admin-section-title">GESTAO DE SEMESTRES</h2>
                   <p class="semestres-header-desc">Supervisor e moderador podem criar, atualizar, arquivar e definir o ciclo oficial usado por auditoria, dashboard e carteira.</p>
                </div>
-               <button onclick="carregarSemestresMaestro()" class="btn-icon-refresh" aria-label="Atualizar semestres">🔄</button>
+               <button onclick="carregarSemestresMaestro()" class="btn-icon-refresh" aria-label="Atualizar semestres"><span data-maestro-icon-slot="refresh" aria-hidden="true"></span></button>
             </div>
 
             <div class="semestre-atual-card">
@@ -158,7 +158,7 @@
       <section id="view-moderador" class="view-section">
          <div class="form-card form-card-moderador">
             <div class="form-header mb-20">
-               <span class="card-icon-emoji">⚙️</span>
+               <span class="card-icon-emoji" data-maestro-icon-slot="settings" aria-hidden="true"></span>
                <h2 class="form-card-moderador-title">SALA DAS MÁQUINAS</h2>
                <p class="form-card-moderador-desc">Controlo de automações e estado do servidor.</p>
             </div>
@@ -216,10 +216,10 @@
 
             <div class="motores-acoes-card">
                <span class="label-sm">AÇÕES FORÇADAS MANUAIS</span>
-               <button class="btn-solid btn-motor-force" onclick="forcarMotor('ETL')">🔄 Sincronizar Forms</button>
-               <button class="btn-solid btn-motor-force" onclick="forcarMotor('OCR')">🔍 Auditar OCR</button>
-               <button class="btn-solid btn-motor-force" onclick="forcarMotor('DOCS')">📄 Emitir PDFs</button>
-               <button class="btn-solid btn-motor-force-last" onclick="forcarMotor('EMAIL')">📧 Fila de E-mails</button>
+               <button class="btn-solid btn-motor-force" onclick="forcarMotor('ETL')"><span data-maestro-icon-slot="refresh" aria-hidden="true"></span> Sincronizar Forms</button>
+               <button class="btn-solid btn-motor-force" onclick="forcarMotor('OCR')"><span data-maestro-icon-slot="gauge" aria-hidden="true"></span> Auditar OCR</button>
+               <button class="btn-solid btn-motor-force" onclick="forcarMotor('DOCS')"><span data-maestro-icon-slot="document" aria-hidden="true"></span> Emitir PDFs</button>
+               <button class="btn-solid btn-motor-force-last" onclick="forcarMotor('EMAIL')"><span data-maestro-icon-slot="mail" aria-hidden="true"></span> Fila de E-mails</button>
                <button class="btn-solid btn-motor-force-last" id="btn-healthcheck-maestro" onclick="executarHealthcheckMaestroUI()">Validar backend</button>
             </div>
 
@@ -231,7 +231,7 @@
         <div class="fiscal-shell">
         <div class="form-card dark-form fiscal-panel-card" id="app-fiscal">
           <div class="form-header fiscal-panel-header">
-            <h2>🛂 VALIDAÇÃO</h2>
+            <h2><span data-maestro-icon-slot="shield" aria-hidden="true"></span> VALIDAÇÃO</h2>
             <p>Aponte a câmara para o QR Code do aluno</p>
           </div>
           <div class="fiscal-state-stack" aria-label="Estado operacional da fiscalizacao">
@@ -240,17 +240,17 @@
           </div>
           
           <button class="btn-solid dark-bg btn-scanner-action mb-10 fiscal-primary-scan-button" id="btn-scanner" onclick="iniciarScanner()">
-            <span class="scanner-button-icon">📷</span> LER VÍDEO CONTÍNUO
+            <span class="scanner-button-icon" data-maestro-icon-slot="camera" aria-hidden="true"></span> LER VÍDEO CONTÍNUO
           </button>
           
           <button class="btn-solid accent-bg btn-scanner-action btn-scanner-native mb-15 fiscal-native-scan-button" id="btn-scanner-nativo" onclick="document.getElementById('input-qr-file').click()">
-            <span class="scanner-button-icon">📱</span> USAR CÂMARA NATIVA
+            <span class="scanner-button-icon" data-maestro-icon-slot="phone" aria-hidden="true"></span> USAR CÂMARA NATIVA
           </button>
           <input type="file" id="input-qr-file" accept="image/*" capture="environment" class="hidden" onchange="lerQRCodePorFoto(event)">
 
           <div id="leitor-qr-container" class="hidden qr-scanner-admin-viewport fiscal-scanner-box">
             <div id="leitor-qr"></div>
-            <button class="btn-solid text-danger btn-cancel-scanner" onclick="fecharScanner()" aria-label="Cancelar câmera">❌ CANCELAR CÂMARA</button>
+            <button class="btn-solid text-danger btn-cancel-scanner" onclick="fecharScanner()" aria-label="Cancelar câmera"><span class="scanner-button-icon" data-maestro-icon-slot="close" aria-hidden="true"></span> CANCELAR CÂMARA</button>
           </div>
 
           <div class="divider-text fiscal-manual-divider">OU DIGITE O ID MANUALMENTE</div>

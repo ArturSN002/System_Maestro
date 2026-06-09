@@ -2,7 +2,7 @@
 <section id="view-login-fiscal" class="view-section">
   <div class="form-card dark-form">
     <div class="form-header">
-      <span class="login-badge-icon">🛡️</span>
+      <span class="login-badge-icon" data-maestro-icon-slot="shield" aria-hidden="true"></span>
       <h2>Acesso Restrito</h2>
       <p>Identificação Operacional</p>
     </div>
@@ -20,7 +20,7 @@
 <section id="view-recuperar-senha" class="view-section hidden">
   <div class="form-card dark-form">
     <div class="form-header">
-      <span class="login-badge-icon">📧</span>
+      <span class="login-badge-icon" data-maestro-icon-slot="mail" aria-hidden="true"></span>
       <h2>Recuperação de Senha</h2>
       <p>Informe o e-mail cadastrado para receber o PIN de recuperação</p>
     </div>
@@ -33,7 +33,7 @@
 <section id="view-redefinir-senha" class="view-section hidden">
   <div class="form-card dark-form">
     <div class="form-header">
-      <span class="login-badge-icon">🔑</span>
+      <span class="login-badge-icon" data-maestro-icon-slot="key" aria-hidden="true"></span>
       <h2>Redefinir Senha</h2>
       <p>Insira o PIN recebido no e-mail e a sua nova senha</p>
     </div>
@@ -41,18 +41,18 @@
     <input type="text" id="redefinir-pin" class="input-field uppercase text-center" placeholder="PIN de 6 dígitos" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code">
     <div class="pos-relative">
       <input type="password" id="redefinir-nova-senha" class="input-field" placeholder="Nova senha" autocomplete="new-password">
-      <button type="button" aria-label="Mostrar ou ocultar nova senha" onclick="const campo=document.getElementById('redefinir-nova-senha'); campo.type=campo.type==='password'?'text':'password'; this.textContent='👁';" class="pwd-toggle-btn">👁</button>
+      <button type="button" aria-label="Mostrar ou ocultar nova senha" onclick="const campo=document.getElementById('redefinir-nova-senha'); campo.type=campo.type==='password'?'text':'password'; this.setAttribute('aria-pressed', campo.type==='text'?'true':'false');" class="pwd-toggle-btn"><span data-maestro-icon-slot="eye" aria-hidden="true"></span></button>
     </div>
     <div class="pos-relative">
       <input type="password" id="redefinir-confirmar-senha" class="input-field" placeholder="Confirmar nova senha" autocomplete="new-password">
-      <button type="button" aria-label="Mostrar ou ocultar confirmação de senha" onclick="const campo=document.getElementById('redefinir-confirmar-senha'); campo.type=campo.type==='password'?'text':'password'; this.textContent='👁';" class="pwd-toggle-btn">👁</button>
+      <button type="button" aria-label="Mostrar ou ocultar confirmação de senha" onclick="const campo=document.getElementById('redefinir-confirmar-senha'); campo.type=campo.type==='password'?'text':'password'; this.setAttribute('aria-pressed', campo.type==='text'?'true':'false');" class="pwd-toggle-btn"><span data-maestro-icon-slot="eye" aria-hidden="true"></span></button>
     </div>
     <ul id="senha-regras-recuperacao" class="pwd-rules-list">
-      <li id="regra-tam">❌ Mínimo de 8 caracteres</li>
-      <li id="regra-mai">❌ Pelo menos uma letra maiúscula</li>
-      <li id="regra-min">❌ Pelo menos uma letra minúscula</li>
-      <li id="regra-num">❌ Pelo menos um número</li>
-      <li id="regra-esp">❌ Pelo menos um caractere especial</li>
+      <li id="regra-tam"><span data-maestro-icon-slot="close" aria-hidden="true"></span> Mínimo de 8 caracteres</li>
+      <li id="regra-mai"><span data-maestro-icon-slot="close" aria-hidden="true"></span> Pelo menos uma letra maiúscula</li>
+      <li id="regra-min"><span data-maestro-icon-slot="close" aria-hidden="true"></span> Pelo menos uma letra minúscula</li>
+      <li id="regra-num"><span data-maestro-icon-slot="close" aria-hidden="true"></span> Pelo menos um número</li>
+      <li id="regra-esp"><span data-maestro-icon-slot="close" aria-hidden="true"></span> Pelo menos um caractere especial</li>
     </ul>
     <button type="submit" class="btn-solid accent-bg" id="btn-confirmar-redefinicao">REDEFINIR SENHA</button>
     </form>

@@ -1,0 +1,6 @@
+output/
+_site/
+.jekyll-cache/
+.sass-cache/
+.playwright-cli/
+*.log

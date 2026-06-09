@@ -15,7 +15,7 @@
         </div>
         <div id="radar-voltar-footer" class="operational-radar-footer">
             <button class="btn-voltar-red" onclick="switchView('view-wallet')">
-                <span>⬅</span> Voltar à Carteira Digital
+                <span data-maestro-icon-slot="arrowLeft" aria-hidden="true"></span> Voltar à Carteira Digital
             </button>
         </div>
     </div>
@@ -24,10 +24,10 @@
         
         <div class="radar-map-topbar operational-radar-topbar">
             <button class="hide-on-desktop radar-map-pill-button" onclick="fecharMapaVoltarLista()">
-                ⬅ Voltar à Lista
+                <span data-maestro-icon-slot="arrowLeft" aria-hidden="true"></span> Voltar à Lista
             </button>
             <button class="btn-voltar radar-map-pill-button radar-map-wallet-button" onclick="switchView('view-wallet')">
-                ⬅ Voltar
+                <span data-maestro-icon-slot="arrowLeft" aria-hidden="true"></span> Voltar
             </button>
             <div id="radar-status-bar" class="radar-status-bar">
                 <span id="radar-status-text">A carregar...</span>
@@ -36,7 +36,7 @@
 
         <div id="mapa-paradas-container" class="radar-leaflet-host"></div>
 
-        <button class="hide-on-desktop radar-locate-button operational-locate-button" onclick="centralizarMapaEmMim()" aria-label="Centralizar mapa na minha localização">🎯</button>
+        <button class="hide-on-desktop radar-locate-button operational-locate-button" onclick="centralizarMapaEmMim()" aria-label="Centralizar mapa na minha localização"><span data-maestro-icon-slot="locate" aria-hidden="true"></span></button>
         
         <div id="painel-viagem-ativa" class="hidden radar-active-trip-panel"></div>
     </div>

@@ -419,8 +419,8 @@ function aplicarShellResponsivoMaestro(viewId) {
 
 function atualizarEstadoOperacionalMaestro() {
   const online = typeof navigator === "undefined" ? true : navigator.onLine !== false;
-  const gpsPermitido = localStorage.getItem("MAESTRO_PREF_GPS") !== "false";
-  const cameraPermitida = localStorage.getItem("MAESTRO_PREF_CAMERA") !== "false";
+  const gpsPermitido = preferenciaPermissaoMaestro("MAESTRO_PREF_GPS");
+  const cameraPermitida = preferenciaPermissaoMaestro("MAESTRO_PREF_CAMERA");
   const viagemAtiva = !!(document.body && document.body.classList.contains("modo-viagem-ativo"));
 
   const aplicarChip = (id, texto, ativo, warning) => {
@@ -454,6 +454,11 @@ function atualizarEstadoOperacionalMaestro() {
     fiscalNetwork.classList.toggle("is-ok", online);
     fiscalNetwork.classList.toggle("is-critical", !online);
   }
+}
+
+function preferenciaPermissaoMaestro(chave) {
+  const valor = localStorage.getItem(chave);
+  return valor === null ? true : valor === "true";
 }
 
 if (typeof window !== "undefined") {
@@ -1092,7 +1097,7 @@ async function inicializarPushNotifications() {
         const notificationObj = payload.notification || payload.data || {};
         const titulo = notificationObj.title || "Novo Aviso";
         const corpo = notificationObj.body || "Você tem uma nova mensagem.";
-        showToast(`🔔 ${titulo}: ${corpo}`, "info");
+        showToast(`${titulo}: ${corpo}`, "info");
       });
 
       const opcoesToken = window.FIREBASE_VAPID_KEY ? { vapidKey: window.FIREBASE_VAPID_KEY } : {};
@@ -1364,8 +1369,8 @@ function toggleSidebar(side) {
         if (!pushPermitido) localStorage.removeItem('MAESTRO_PUSH_ATIVO');
       }
     }
-    document.getElementById('pref-gps').checked = localStorage.getItem('MAESTRO_PREF_GPS') === 'true';
-    document.getElementById('pref-camera').checked = localStorage.getItem('MAESTRO_PREF_CAMERA') === 'true';
+    document.getElementById('pref-gps').checked = preferenciaPermissaoMaestro('MAESTRO_PREF_GPS');
+    document.getElementById('pref-camera').checked = preferenciaPermissaoMaestro('MAESTRO_PREF_CAMERA');
     document.getElementById('pref-offline').checked = localStorage.getItem('MAESTRO_PREF_OFFLINE') === 'true';
   } else if (side === 'right') {
     sidebarRight.classList.add('active');

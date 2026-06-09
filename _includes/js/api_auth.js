@@ -654,7 +654,11 @@ function atualizarItemRegraSenhaIAM(id, valido, texto) {
 
   itens.forEach(item => {
     if (item) {
-      item.textContent = (valido ? "✅ " : "❌ ") + texto;
+      const textoSeguro = typeof escapeHTMLMaestro === "function"
+        ? escapeHTMLMaestro(texto)
+        : String(texto || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      item.innerHTML = `<span data-maestro-icon-slot="${valido ? "check" : "close"}" aria-hidden="true"></span> ${textoSeguro}`;
+      if (typeof decorateMaestroIcons === "function") decorateMaestroIcons(item);
       item.classList.add("password-rule-state");
       item.classList.toggle("is-valid", valido);
       item.classList.toggle("is-invalid", !valido);

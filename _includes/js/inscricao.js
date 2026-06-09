@@ -350,7 +350,8 @@ async function verificarCPFInscricao() {
             if (feedbackBox) {
                 feedbackBox.classList.remove('feedback-error', 'feedback-info');
                 feedbackBox.classList.add('feedback-success');
-                feedbackBox.innerHTML = "✅ Inscrição anterior encontrada! Os seus dados foram importados. Verifique-os na próxima etapa.";
+                feedbackBox.innerHTML = '<span data-maestro-icon-slot="check" aria-hidden="true"></span> Inscrição anterior encontrada! Os seus dados foram importados. Verifique-os na próxima etapa.';
+                if (typeof decorateMaestroIcons === "function") decorateMaestroIcons(feedbackBox);
                 feedbackBox.classList.remove('hidden');
             }
             triggerVibration(50);
@@ -360,7 +361,8 @@ async function verificarCPFInscricao() {
             if (feedbackBox) {
                 feedbackBox.classList.remove('feedback-error', 'feedback-success');
                 feedbackBox.classList.add('feedback-info');
-                feedbackBox.innerHTML = "✨ Novo Cadastro! Prossiga para preencher os seus dados.";
+                feedbackBox.innerHTML = '<span data-maestro-icon-slot="sparkles" aria-hidden="true"></span> Novo Cadastro! Prossiga para preencher os seus dados.';
+                if (typeof decorateMaestroIcons === "function") decorateMaestroIcons(feedbackBox);
                 feedbackBox.classList.remove('hidden');
             }
             triggerVibration(50);
@@ -437,7 +439,8 @@ function limparArquivoInscricao(tipoDoc) {
     }
     if (labelUpload) {
         labelUpload.classList.remove('file-attached');
-        labelUpload.innerHTML = "Toque para selecionar o arquivo";
+        labelUpload.innerHTML = '<span data-maestro-icon-slot="paperclip" aria-hidden="true"></span> Toque para selecionar o arquivo';
+        if (typeof decorateMaestroIcons === "function") decorateMaestroIcons(labelUpload);
     }
 }
 
@@ -468,13 +471,14 @@ function processarArquivoInscricao(inputElement, tipoDoc) {
             base64: e.target.result
         };
         if (statusSpan) {
-            statusSpan.innerText = `✅ ${file.name}`;
+            statusSpan.textContent = file.name;
             statusSpan.classList.remove('is-error', 'is-idle');
             statusSpan.classList.add('is-success');
         }
         if (labelUpload) {
             labelUpload.classList.add('file-attached');
-            labelUpload.innerHTML = "✅ Arquivo anexado";
+            labelUpload.innerHTML = '<span data-maestro-icon-slot="check" aria-hidden="true"></span> Arquivo anexado';
+            if (typeof decorateMaestroIcons === "function") decorateMaestroIcons(labelUpload);
         }
     };
     reader.onerror = function () {
@@ -816,7 +820,7 @@ function prepararEnvioNativo() {
     };
 
     // Feedback visual.
-    btn.innerHTML = "📤 A ENVIAR... ⏳";
+    btn.textContent = "A ENVIAR...";
     btn.disabled = true;
 
     // Desliga o hardware imediatamente antes do envio final.
@@ -840,7 +844,8 @@ function prepararEnvioNativo() {
             } else {
                 showToast(res.erro || "Erro ao submeter inscrição.", "error");
                 triggerVibration([100, 50, 100]);
-                btn.innerHTML = "📤 SUBMETER INSCRIÇÃO";
+                btn.innerHTML = '<span data-maestro-icon-slot="upload" aria-hidden="true"></span> SUBMETER INSCRIÇÃO';
+                if (typeof decorateMaestroIcons === "function") decorateMaestroIcons(btn);
                 btn.disabled = false;
             }
         })
@@ -848,7 +853,8 @@ function prepararEnvioNativo() {
             if (typeof logMaestroSafe === "function") logMaestroSafe("error", "Erro de rede na inscricao.", err);
             else console.error("Erro de rede na inscricao.");
             showToast("Falha de conexão. Verifique a internet e tente novamente.", "error");
-            btn.innerHTML = "📤 SUBMETER INSCRIÇÃO";
+            btn.innerHTML = '<span data-maestro-icon-slot="upload" aria-hidden="true"></span> SUBMETER INSCRIÇÃO';
+            if (typeof decorateMaestroIcons === "function") decorateMaestroIcons(btn);
             btn.disabled = false;
         });
 }

@@ -105,16 +105,16 @@
   <div id="modal-nova-mensagem" class="splash-overlay modal-overlay-backdrop maestro-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-mural-title" data-modal-profile="student" data-modal-tone="community" data-modal-initial-focus="#mural-mensagem">
     <div class="form-card form-card-modal maestro-modal-panel maestro-modal-panel-student" tabindex="-1">
       <div class="form-header form-header-modal maestro-modal-header">
-         <span>🗣️</span>
+         <span data-maestro-icon-slot="megaphone" aria-hidden="true"></span>
          <h2 id="modal-mural-title">A SUA VOZ</h2>
          <p>Contribua para a comunidade. Tem o limite de 4 mensagens por semana.</p>
       </div>
       
       <label class="input-label">CATEGORIA</label>
       <select id="mural-categoria" class="input-field">
-         <option value="Sugestão">💡 Sugestão / Ideia</option>
-         <option value="Reclamação">⚠️ Reclamação da Rota</option>
-         <option value="Achados e Perdidos">🎒 Achados e Perdidos</option>
+         <option value="Sugestão">Sugestão / Ideia</option>
+         <option value="Reclamação">Reclamação da Rota</option>
+         <option value="Achados e Perdidos">Achados e Perdidos</option>
          <option value="Dúvida Geral">❓ Dúvida Geral</option>
       </select>
       
@@ -132,7 +132,7 @@
     <div class="doc-viewer-frame maestro-modal-panel maestro-modal-panel-doc" tabindex="-1">
         <div class="doc-viewer-bar">
             <span id="doc-viewer-title">Documento Protegido</span>
-            <button class="maestro-modal-icon-close" onclick="fecharModalDocViewer()" aria-label="Fechar visualizador de documento">❌</button>
+            <button class="maestro-modal-icon-close" onclick="fecharModalDocViewer()" aria-label="Fechar visualizador de documento"><span data-maestro-icon-slot="close" aria-hidden="true"></span></button>
         </div>
         <div id="doc-viewer-content" class="doc-viewer-body">
             <div class="loader"></div>
@@ -182,16 +182,16 @@
                   
                   <div class="raio-x-action-row-reset">
                       <button class="btn-text text-danger" onclick="forcarResetSenhaEstudante(document.getElementById('rx-cpf').innerText)">
-                          🔑 Forçar Reset de Senha
+                          <span data-maestro-icon-slot="key" aria-hidden="true"></span> Forçar Reset de Senha
                       </button>
                   </div>
 
                   <label class="input-label">MUDAR STATUS PARA:</label>
                   <select id="rx-novo-status" class="input-field">
-                      <option value="ATIVO">✅ ATIVO (Aprovar Carteira)</option>
+                      <option value="ATIVO">ATIVO (Aprovar Carteira)</option>
                       <option value="PENDENTE">⏳ PENDENTE (Aguardar)</option>
-                      <option value="SUSPENSO">⚠️ SUSPENSO (Exige Correção)</option>
-                      <option value="CANCELADO">❌ CANCELADO (Rejeição Final)</option>
+                      <option value="SUSPENSO">SUSPENSO (Exige Correção)</option>
+                      <option value="CANCELADO">CANCELADO (Rejeição Final)</option>
                   </select>
 
                   <label class="input-label">DIÁRIO DE BORDO (NOTAS PARA O ALUNO E SISTEMA)</label>
@@ -211,7 +211,7 @@
   <div id="modal-sobre" class="splash-overlay modal-overlay-backdrop maestro-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-sobre-title" data-modal-profile="public" data-modal-tone="info" data-modal-initial-focus=".sobre-modal-actions .btn-solid">
     <div class="form-card form-card-modal maestro-modal-panel maestro-modal-panel-info" tabindex="-1">
       <div class="form-header form-header-modal maestro-modal-header">
-         <span>📖</span>
+         <span data-maestro-icon-slot="book" aria-hidden="true"></span>
          <h2 id="modal-sobre-title">SOBRE O MAESTRO</h2>
          <p>Guia de Cores, Turnos e Status Operacionais</p>
       </div>

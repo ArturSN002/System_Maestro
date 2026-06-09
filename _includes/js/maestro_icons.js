@@ -114,6 +114,19 @@
     return span;
   }
 
+  function hydrateIconSlots(root) {
+    const scope = root || document.body;
+    if (!scope || !scope.querySelectorAll) return;
+    const slots = scope.querySelectorAll("[data-maestro-icon-slot]");
+    slots.forEach(slot => {
+      const iconName = slot.getAttribute("data-maestro-icon-slot") || "sparkles";
+      const label = slot.getAttribute("aria-label") || "";
+      slot.innerHTML = svg(iconName, { label: label || null });
+      slot.setAttribute("data-maestro-icons-skip", "true");
+      if (!label) slot.setAttribute("aria-hidden", "true");
+    });
+  }
+
   function stripEmoji(text) {
     return String(text || "").replace(emojiPattern, "").replace(/\s{2,}/g, " ").trim();
   }
@@ -157,6 +170,7 @@
     const scope = root || document.body;
     if (!scope || (scope.matches && scope.matches(skipSelector))) return;
 
+    hydrateIconSlots(scope);
     decorateOptions(scope);
 
     const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT, {
@@ -194,6 +208,7 @@
   window.MaestroIcons = {
     svg,
     decorate,
+    hydrateIconSlots,
     stripEmoji,
     map: emojiLookup
   };

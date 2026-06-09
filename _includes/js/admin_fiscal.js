@@ -18,6 +18,12 @@ function safeLinesFiscal(valor) {
     return escapeFiscal(valor).replace(/\r?\n/g, "<br>");
 }
 
+function iconFiscal(nome, label) {
+    return window.MaestroIcons && typeof window.MaestroIcons.svg === "function"
+        ? window.MaestroIcons.svg(nome, { label: label || null, className: "maestro-icon-operational" })
+        : "";
+}
+
 function iniciarScanner() {
     document.getElementById('leitor-qr-container').classList.remove('hidden');
     document.getElementById('btn-scanner').classList.add('hidden');
@@ -65,7 +71,7 @@ function aoLerQRCode(textoLido) {
         <div class="wallet-card dark fiscal-security-card">
            <div class="wallet-header">ALERTA DE SEGURANCA</div>
            <div class="wallet-body text-center fiscal-security-body">
-              <span class="fiscal-security-icon">⚠️</span>
+              <span class="fiscal-security-icon">${iconFiscal("alert", "Alerta")}</span>
               <strong class="fiscal-security-title">QR CODE EXPIRADO/INVALIDO</strong>
               <p class="fiscal-security-text">O codigo lido nao corresponde ao dia de hoje. Peca ao estudante para fechar a App, ligar a internet e abrir novamente a Carteira Digital.</p>
            </div>
@@ -81,17 +87,17 @@ async function lerQRCodePorFoto(event) {
     if (!file) return;
 
     showToast("A processar imagem...", "loading");
-    document.getElementById('btn-scanner-nativo').innerHTML = `⏳ A LER...`;
+    document.getElementById('btn-scanner-nativo').textContent = "A LER...";
 
     const html5QrCode = new Html5Qrcode("leitor-qr");
 
     try {
         const textoLido = await html5QrCode.scanFile(file, true);
-        document.getElementById('btn-scanner-nativo').innerHTML = `<span class="scanner-button-icon">📱</span> USAR CAMARA NATIVA`;
+        document.getElementById('btn-scanner-nativo').innerHTML = `<span class="scanner-button-icon">${iconFiscal("phone")}</span> USAR CAMARA NATIVA`;
         aoLerQRCode(textoLido);
     } catch (err) {
         showToast("Erro ao processar imagem QR Code: " + err.message, "error");
-        document.getElementById('btn-scanner-nativo').innerHTML = `<span class="scanner-button-icon">📱</span> USAR CAMARA NATIVA`;
+        document.getElementById('btn-scanner-nativo').innerHTML = `<span class="scanner-button-icon">${iconFiscal("phone")}</span> USAR CAMARA NATIVA`;
     }
 
     event.target.value = '';

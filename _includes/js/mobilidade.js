@@ -6,6 +6,26 @@
 // Uses matchMedia for reliable CSS-synced breakpoint detection.
 const isDesktop = () => window.matchMedia('(min-width: 768px)').matches;
 
+function escapeMobilidade(valor) {
+    if (typeof escapeHTMLMaestro === "function") return escapeHTMLMaestro(valor);
+    return String(valor ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function attrMobilidade(valor) {
+    return escapeMobilidade(valor).replace(/`/g, "&#96;");
+}
+
+function iconMobilidade(nome, label) {
+    return window.MaestroIcons && typeof window.MaestroIcons.svg === "function"
+        ? window.MaestroIcons.svg(nome, { label: label || null, className: "maestro-icon-operational" })
+        : "";
+}
+
 let onibusSelecionadoGPS = null;
 let idIntervaloGPS = null;
 let idIntervaloRadar = null;
@@ -14,7 +34,7 @@ let wakeLockAtivo = null;
 let busMarker = null;
 const busIcon = L.divIcon({
     className: 'custom-bus-marker',
-    html: '<div class="bus-marker-dot">🚌</div>',
+    html: `<div class="bus-marker-dot">${iconMobilidade("bus", "Autocarro")}</div>`,
     iconSize: [30, 30],
     iconAnchor: [15, 15]
 });
@@ -112,6 +132,47 @@ function salvarCacheViagensMobilidade(idEstudante, resposta) {
     });
 }
 
+function renderizarCardViagemMobilidade(v, index) {
+    const vagas = Number(v && v.vagasRestantes);
+    const vagasSeguras = Number.isFinite(vagas) ? Math.max(0, vagas) : 0;
+    const idViagem = attrMobilidade(v && v.id);
+    const rota = escapeMobilidade((v && v.rota) || "Rota nao informada");
+    const horario = escapeMobilidade((v && v.horario) || "--:--");
+    let checkinArea = "";
+    let statusVagas = "";
+
+    if (v && v.estadoRadar === "EM_OPERACAO") {
+        const labelLota = vagasSeguras > 0
+            ? `<span class="mobility-seats is-available">${vagasSeguras} vagas livres</span>`
+            : `<span class="mobility-seats is-full">LOTADO</span>`;
+        const btnDisable = vagasSeguras <= 0 ? "disabled" : "";
+        const btnState = vagasSeguras <= 0 ? " is-disabled" : "";
+        statusVagas = labelLota;
+        checkinArea = `<button class="hide-on-desktop mobility-checkin-button${btnState}" ${btnDisable} data-id-viagem="${idViagem}" onclick="confirmarEmbarque(this.dataset.idViagem)">FAZER CHECK-IN</button>`;
+    } else {
+        statusVagas = `<span class="mobility-seats is-closed">Embarque fechado (Capacidade: ${vagasSeguras})</span>`;
+        checkinArea = `<button class="hide-on-desktop mobility-checkin-button is-disabled" disabled>AGUARDE...</button>`;
+    }
+
+    const cardState = index === 0 ? " is-primary" : " is-secondary";
+    return `
+<div class="mobility-trip-card${cardState}">
+  <div class="mobility-trip-header">
+     <strong class="mobility-trip-title">${iconMobilidade("bus")} ${rota}</strong>
+     <span class="mobility-trip-time">${horario}</span>
+  </div>
+  <div class="mobility-trip-status">${statusVagas}</div>
+  <div class="mobility-trip-actions">
+     <button class="btn-solid mobility-map-button" data-id-viagem="${idViagem}" onclick="abrirMapaDaViagem(this.dataset.idViagem)">${iconMobilidade("map")} VER MAPA</button>
+     ${checkinArea}
+  </div>
+</div>`;
+}
+
+function renderizarListaViagensMobilidade(viagens) {
+    return viagens.map((v, index) => renderizarCardViagemMobilidade(v, index)).join("");
+}
+
 function renderizarViagensCacheMobilidade(res, containerLista, opcoes) {
     if (!res || !containerLista) return false;
     const viagens = normalizarArrayMobilidade(res.viagens);
@@ -127,35 +188,9 @@ function renderizarViagensCacheMobilidade(res, containerLista, opcoes) {
     html += `<p class="mobility-list-hint">Selecione o seu autocarro para garantir lugar:</p>`;
 
     window.lastViagens = viagens;
-    viagens.forEach((v, index) => {
-        let checkinArea = "";
-        let statusVagas = "";
-        if (v.estadoRadar === "EM_OPERACAO") {
-            const labelLota = v.vagasRestantes > 0 ? `<span class="mobility-seats is-available">${v.vagasRestantes} vagas livres</span>` : `<span class="mobility-seats is-full">LOTADO</span>`;
-            const btnDisable = v.vagasRestantes <= 0 ? "disabled" : "";
-            const btnState = v.vagasRestantes <= 0 ? " is-disabled" : "";
-            statusVagas = labelLota;
-            checkinArea = `<button class="hide-on-desktop mobility-checkin-button${btnState}" ${btnDisable} onclick="confirmarEmbarque('${v.id}')">FAZER CHECK-IN</button>`;
-        } else {
-            statusVagas = `<span class="mobility-seats is-closed">Embarque fechado (Capacidade: ${v.vagasRestantes})</span>`;
-            checkinArea = `<button class="hide-on-desktop mobility-checkin-button is-disabled" disabled>AGUARDE...</button>`;
-        }
-
-        const cardState = index === 0 ? " is-primary" : " is-secondary";
-        html += `
-<div class="mobility-trip-card${cardState}">
-  <div class="mobility-trip-header">
-     <strong class="mobility-trip-title">${v.rota}</strong>
-     <span class="mobility-trip-time">${v.horario}</span>
-  </div>
-  <div class="mobility-trip-status">${statusVagas}</div>
-  <div class="mobility-trip-actions">
-     <button class="btn-solid mobility-map-button" onclick="abrirMapaDaViagem('${v.id}')">VER MAPA</button>
-     ${checkinArea}
-  </div>
-</div>`;
-    });
+    html += renderizarListaViagensMobilidade(viagens);
     containerLista.innerHTML = html;
+    if (typeof decorateMaestroIcons === "function") decorateMaestroIcons(containerLista);
     containerLista.classList.remove('hidden');
     return true;
 }
@@ -243,7 +278,7 @@ function _inicializarMapaDesktopStandby() {
     if (statusBar && statusText) {
         statusBar.classList.remove('is-preparing', 'is-live', 'is-offline');
         statusBar.classList.add('is-standby');
-        statusText.textContent = '🗺️ Selecione uma viagem na lista';
+        statusText.textContent = 'Selecione uma viagem na lista';
     }
 
     setTimeout(() => {
@@ -384,39 +419,10 @@ async function carregarViagensDisponiveisEstudante() {
 
         // Armazenar na window para acesso no check-in
         window.lastViagens = viagens;
-
-        viagens.forEach((v, index) => {
-            let checkinArea = "";
-            let statusVagas = "";
-
-            if (v.estadoRadar === "EM_OPERACAO") {
-                const labelLota = v.vagasRestantes > 0 ? `<span class="mobility-seats is-available">${v.vagasRestantes} vagas livres</span>` : `<span class="mobility-seats is-full">LOTADO</span>`;
-                const btnDisable = v.vagasRestantes <= 0 ? "disabled" : "";
-                const btnState = v.vagasRestantes <= 0 ? " is-disabled" : "";
-                statusVagas = labelLota;
-                checkinArea = `<button class="hide-on-desktop mobility-checkin-button${btnState}" ${btnDisable} onclick="confirmarEmbarque('${v.id}')">FAZER CHECK-IN</button>`;
-            } else {
-                statusVagas = `<span class="mobility-seats is-closed">Embarque fechado (Capacidade: ${v.vagasRestantes})</span>`;
-                checkinArea = `<button class="hide-on-desktop mobility-checkin-button is-disabled" disabled>AGUARDE...</button>`;
-            }
-
-            const cardState = index === 0 ? " is-primary" : " is-secondary";
-
-            html += `
-<div class="mobility-trip-card${cardState}">
-  <div class="mobility-trip-header">
-     <strong class="mobility-trip-title">🚌 ${v.rota}</strong>
-     <span class="mobility-trip-time">${v.horario}</span>
-  </div>
-  <div class="mobility-trip-status">${statusVagas}</div>
-  <div class="mobility-trip-actions">
-     <button class="btn-solid mobility-map-button" onclick="abrirMapaDaViagem('${v.id}')">VER MAPA 🗺️</button>
-     ${checkinArea}
-  </div>
-</div>`;
-        });
+        html += renderizarListaViagensMobilidade(viagens);
 
         if (containerLista) containerLista.innerHTML = html;
+        if (containerLista && typeof decorateMaestroIcons === "function") decorateMaestroIcons(containerLista);
 
     } catch (e) {
         const cacheFallback = obterCacheViagensMobilidade(currentWalletId, true);
@@ -529,7 +535,7 @@ function abrirPainelViagem() {
 
     painelSucesso.innerHTML = `
       <div class="radar-trip-confirmed">
-         <h3 class="radar-trip-title">✅ Check-in Confirmado</h3>
+         <h3 class="radar-trip-title">${iconMobilidade("check")} Check-in Confirmado</h3>
          <p class="radar-trip-text">O seu lugar está garantido. Acompanhe a viagem no radar abaixo.</p>
          <div id="radar-dinamico-conteudo" class="radar-dynamic-box">
             <div class="loader radar-inline-loader"></div>
@@ -562,10 +568,10 @@ async function atualizarRadarDinamico() {
         if (res.isGuia) {
             boxRadar.innerHTML = `
                 <div class="radar-guide-card">
-                   <div class="radar-guide-icon">📡</div>
+                   <div class="radar-guide-icon">${iconMobilidade("gauge")}</div>
                    <h4 class="radar-guide-title">Transmissão Ativa</h4>
                    <p class="radar-guide-text">O seu GPS está a guiar os seus colegas.</p>
-                   <span class="radar-guide-count">${res.totalGuias || 1} guia(s) conectado(s)</span>
+                   <span class="radar-guide-count">${escapeMobilidade(res.totalGuias || 1)} guia(s) conectado(s)</span>
                    <button onclick="abdicarSerGuia()" class="btn-solid radar-stop-guide-button">Ajudando a comunidade (Parar)</button>
                 </div>
             `;
@@ -577,13 +583,13 @@ async function atualizarRadarDinamico() {
             boxRadar.innerHTML = `
                 <div class="radar-live-card">
                    <div class="radar-live-header">
-                      <strong class="radar-live-title"><span class="radar-live-pin">📍</span> Radar ao Vivo</strong>
-                      <span class="radar-guide-badge">${res.totalGuias || 1} guia(s)</span>
+                      <strong class="radar-live-title"><span class="radar-live-pin">${iconMobilidade("mapPin")}</span> Radar ao Vivo</strong>
+                      <span class="radar-guide-badge">${escapeMobilidade(res.totalGuias || 1)} guia(s)</span>
                    </div>
                    <div id="radar-eta-slot" class="radar-eta-slot">
                       <div><div class="loader radar-eta-loader"></div><p class="radar-eta-loading-text">A calcular ETA...</p></div>
                    </div>
-                   <button onclick="atualizarRadarDinamico()" class="btn-text radar-refresh-button">🔄 Atualizar Agora</button>
+                   <button onclick="atualizarRadarDinamico()" class="btn-text radar-refresh-button">${iconMobilidade("refresh")} Atualizar Agora</button>
                 </div>
             `;
 
@@ -596,7 +602,7 @@ async function atualizarRadarDinamico() {
 
             boxRadar.innerHTML = `
                 <div class="radar-inactive-card">
-                   <div class="radar-inactive-icon">📡</div>
+                   <div class="radar-inactive-icon">${iconMobilidade("gauge")}</div>
                    <h4 class="radar-inactive-title">Radar Inativo</h4>
                    <p class="radar-inactive-text">A tentar ligar ao radar comunitário...</p>
                    <button onclick="solicitarSerGuia()" class="btn-solid radar-start-guide-button">Seja o Guia (Ligar GPS)</button>
@@ -661,12 +667,14 @@ function _renderizarETANoSlot(slot, distKm, etaTexto, metodo, tsBus) {
     const tempoAtras = calcularTempoRelativo(tsBus);
     let badgeHTML = '';
     if (metodo === 'MAPS_API' || metodo === 'MAPS_CACHE') {
-        badgeHTML = '<span class="eta-method-badge is-google">⚡ Tempo Real (Google)</span>';
+        badgeHTML = `<span class="eta-method-badge is-google">${iconMobilidade("zap")} Tempo Real (Google)</span>`;
     } else {
-        badgeHTML = '<span class="eta-method-badge is-math">📍 Estimativa Matemática</span>';
+        badgeHTML = `<span class="eta-method-badge is-math">${iconMobilidade("mapPin")} Estimativa Matemática</span>`;
     }
 
-    const distFormatada = typeof distKm === 'number' ? distKm.toFixed(1) : distKm;
+    const distFormatada = escapeMobilidade(typeof distKm === 'number' ? distKm.toFixed(1) : distKm);
+    const etaSeguro = escapeMobilidade(etaTexto);
+    const tempoSeguro = escapeMobilidade(tempoAtras);
 
     slot.innerHTML = `
         <div class="eta-box">
@@ -676,11 +684,11 @@ function _renderizarETANoSlot(slot, distKm, etaTexto, metodo, tsBus) {
            </div>
            <div class="eta-row eta-row-main">
               <span class="eta-label">Chega em:</span>
-              <strong class="eta-value eta-value-accent">${etaTexto}</strong>
+              <strong class="eta-value eta-value-accent">${etaSeguro}</strong>
            </div>
            <div class="eta-row">
               ${badgeHTML}
-              <span class="eta-updated">Atualizado: ${tempoAtras}</span>
+              <span class="eta-updated">Atualizado: ${tempoSeguro}</span>
            </div>
         </div>
     `;
@@ -693,11 +701,12 @@ function _renderizarETAFallbackSemGPS(slot, coordenadasBus) {
     const coordsBus = normalizarCoordenadasRadar(coordenadasBus);
     if (!coordsBus) return;
     const tempoAtras = calcularTempoRelativo(coordsBus.ts);
+    const tempoSeguro = escapeMobilidade(tempoAtras);
     slot.innerHTML = `
         <div class="eta-fallback">
-           <h4 class="eta-fallback-title">📍 Autocarro em Movimento</h4>
+           <h4 class="eta-fallback-title">${iconMobilidade("mapPin")} Autocarro em Movimento</h4>
            <p class="eta-fallback-text">Ative a localização para ver distância e ETA.</p>
-           <span class="eta-updated">Último sinal: ${tempoAtras}</span>
+           <span class="eta-updated">Último sinal: ${tempoSeguro}</span>
         </div>
     `;
 }
@@ -863,11 +872,11 @@ async function inicializarMapaMobilidade(dadosViagem) {
         } else if (estado === "PREPARANDO") {
             statusBar.classList.remove('is-standby', 'is-live', 'is-offline');
             statusBar.classList.add('is-preparing');
-            statusText.textContent = "⚙️ Autocarros em Preparação";
+            statusText.textContent = "Autocarros em Preparação";
         } else if (estado === "EM_OPERACAO") {
             statusBar.classList.remove('is-standby', 'is-preparing', 'is-offline');
             statusBar.classList.add('is-live');
-            statusText.textContent = "🚌 Operação em Tempo Real";
+            statusText.textContent = "Operação em Tempo Real";
         } else {
             statusBar.classList.remove('is-standby', 'is-preparing', 'is-live');
             statusBar.classList.add('is-offline');

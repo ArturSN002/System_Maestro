@@ -199,7 +199,7 @@
         }
         container.innerHTML = `
           <div class="error-state-box dynamic-state-box dynamic-error-state">
-            <span class="error-icon">⚠️</span>
+            <span class="error-icon" data-maestro-icon-slot="alert" aria-hidden="true"></span>
             <h3>Erro ao Carregar Semestres</h3>
             <p>${escapeHTML(e.message)}</p>
           </div>

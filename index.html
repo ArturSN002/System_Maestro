@@ -227,7 +227,7 @@
       <p id="ui-cnpj" class="hidden"></p>
       
       <div class="footer-nav-grid">
-        <a href="#" class="footer-link" onclick="abrirModalSobre(); return false;">📖 Sobre o Maestro</a>
+        <a href="#" class="footer-link" onclick="abrirModalSobre(); return false;"><span data-maestro-icon-slot="book" aria-hidden="true"></span> Sobre o Maestro</a>
         <a href="mailto:teste@falso.com" class="footer-link">
           <span class="footer-link-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -239,8 +239,8 @@
           </span>
           Suporte
         </a>
-        <a href="#" class="footer-link">🔒 Privacidade</a>
-        <a href="#" class="footer-link">📜 Termos de Uso</a>
+        <a href="#" class="footer-link"><span data-maestro-icon-slot="lock" aria-hidden="true"></span> Privacidade</a>
+        <a href="#" class="footer-link"><span data-maestro-icon-slot="file" aria-hidden="true"></span> Termos de Uso</a>
       </div>
       
       <div class="footer-status-indicator" id="footer-status-indicator">
@@ -248,7 +248,7 @@
         <span id="footer-status-text">Sistema Online</span>
       </div>
       
-      <div class="watermark footer-watermark">⚡ POWERED BY MAESTRO</div>
+      <div class="watermark footer-watermark"><span data-maestro-icon-slot="zap" aria-hidden="true"></span> POWERED BY MAESTRO</div>
     </footer>
   </div>
 
@@ -261,7 +261,7 @@
       <label class="input-label">VEÍCULO / ROTA:</label>
       <select id="select-frota-motorista" class="input-field"></select>
       <div class="maestro-modal-actions">
-        <button onclick="uiIniciarRota()" class="btn-solid route-start-button maestro-modal-primary">▶ INICIAR ROTA</button>
+        <button onclick="uiIniciarRota()" class="btn-solid route-start-button maestro-modal-primary"><span data-maestro-icon-slot="arrowRight" aria-hidden="true"></span> INICIAR ROTA</button>
         <button onclick="fecharModalSelecaoRota()" class="btn-text maestro-modal-secondary">Cancelar</button>
       </div>
     </div>
@@ -292,34 +292,34 @@
     <div class="prefs-group prefs-panel">
       <p class="input-label prefs-label">Preferências do Sistema</p>
       <div class="switch-row switch-item-row">
-        <p class="desc-xs switch-desc">🌗 Modo Escuro</p>
+        <p class="desc-xs switch-desc"><span data-maestro-icon-slot="moon" aria-hidden="true"></span> Modo Escuro</p>
         <label class="switch"><input type="checkbox" id="pref-dark" onchange="toggleDarkMode()"><span
             class="slider"></span></label>
       </div>
       <div class="switch-row switch-item-row">
-        <p class="desc-xs switch-desc">🔔 Notificações</p>
+        <p class="desc-xs switch-desc"><span data-maestro-icon-slot="bell" aria-hidden="true"></span> Notificações</p>
         <label class="switch"><input type="checkbox" id="pref-push" onchange="togglePref('push', this)"><span
             class="slider"></span></label>
       </div>
       <div class="switch-row switch-item-row">
-        <p class="desc-xs switch-desc">📍 Partilhar GPS</p>
+        <p class="desc-xs switch-desc"><span data-maestro-icon-slot="mapPin" aria-hidden="true"></span> Partilhar GPS</p>
         <label class="switch"><input type="checkbox" id="pref-gps" onchange="togglePref('gps', this)"><span
             class="slider"></span></label>
       </div>
       <div class="switch-row switch-item-row">
-        <p class="desc-xs switch-desc">📷 Câmera</p>
+        <p class="desc-xs switch-desc"><span data-maestro-icon-slot="camera" aria-hidden="true"></span> Câmera</p>
         <label class="switch"><input type="checkbox" id="pref-camera" onchange="togglePref('camera', this)"><span
             class="slider"></span></label>
       </div>
       <div class="switch-row switch-item-row switch-item-row-last">
-        <p class="desc-xs switch-desc-highlight">✈️ Forçar Offline</p>
+        <p class="desc-xs switch-desc-highlight"><span data-maestro-icon-slot="map" aria-hidden="true"></span> Forçar Offline</p>
         <label class="switch"><input type="checkbox" id="pref-offline" onchange="togglePref('offline', this)"><span
             class="slider"></span></label>
       </div>
     </div>
 
     <button class="menu-card outline-card menu-card-validador" onclick="closeAllSidebars(); navegarPeloMenu('view-validador')">
-      <span class="icon sidebar-menu-icon">🛡️</span>
+      <span class="icon sidebar-menu-icon" data-maestro-icon-slot="shield" aria-hidden="true"></span>
       <div class="info">
         <strong class="menu-card-validador-title">Validar Documento</strong>
         <span class="sidebar-menu-desc">Verificar autenticidade de declaração</span>
@@ -327,7 +327,7 @@
     </button>
 
     <button class="menu-card outline-card" onclick="closeAllSidebars(); abrirModalSobre()">
-      <span class="icon sidebar-menu-icon">📖</span>
+      <span class="icon sidebar-menu-icon" data-maestro-icon-slot="book" aria-hidden="true"></span>
       <div class="info">
         <strong class="sidebar-menu-title">Sobre o Maestro</strong>
         <span class="sidebar-menu-desc">Como funciona, cores e status</span>
@@ -335,7 +335,7 @@
     </button>
 
     <button class="menu-card dark-card menu-card-restrito" onclick="closeAllSidebars(); navegarPeloMenu('view-login-fiscal')">
-      <span class="icon sidebar-menu-icon">🔐</span>
+      <span class="icon sidebar-menu-icon" data-maestro-icon-slot="key" aria-hidden="true"></span>
       <div class="info">
         <strong class="sidebar-menu-title">Acesso da Secretaria</strong>
         <span class="sidebar-menu-desc">Acesso Restrito</span>
@@ -345,14 +345,14 @@
     <div class="sidebar-admin-shortcuts" aria-label="Atalhos administrativos">
       <span class="sidebar-section-label">Atalhos da secretaria</span>
       <button class="menu-card outline-card sidebar-admin-link" data-maestro-action="auditoria" onclick="closeAllSidebars(); abrirMesaAuditoria()">
-        <span class="icon sidebar-menu-icon">📂</span>
+        <span class="icon sidebar-menu-icon" data-maestro-icon-slot="file" aria-hidden="true"></span>
         <div class="info">
           <strong class="sidebar-menu-title">Mesa de Auditoria</strong>
           <span class="sidebar-menu-desc">Fila, filtros e raio-X do estudante</span>
         </div>
       </button>
       <button class="menu-card outline-card sidebar-admin-link" data-maestro-action="dashboard" onclick="closeAllSidebars(); carregarDashboard()">
-        <span class="icon sidebar-menu-icon">📊</span>
+        <span class="icon sidebar-menu-icon" data-maestro-icon-slot="dashboard" aria-hidden="true"></span>
         <div class="info">
           <strong class="sidebar-menu-title">Dashboard</strong>
           <span class="sidebar-menu-desc">Indicadores do semestre atual</span>
@@ -366,7 +366,7 @@
         </div>
       </button>
       <button class="menu-card outline-card sidebar-admin-link" data-maestro-action="salaMaquinas" onclick="closeAllSidebars(); abrirPainelModerador()">
-        <span class="icon sidebar-menu-icon">⚙️</span>
+        <span class="icon sidebar-menu-icon" data-maestro-icon-slot="settings" aria-hidden="true"></span>
         <div class="info">
           <strong class="sidebar-menu-title">Sala das Maquinas</strong>
           <span class="sidebar-menu-desc">Motores, politicas e healthcheck</span>
@@ -375,12 +375,12 @@
     </div>
 
     <div id="pwa-install-banner-sidebar" class="banner-pwa install-banner-sidebar" onclick="instalarPWA()">
-      <div class="icon">📱</div>
+      <div class="icon" data-maestro-icon-slot="phone" aria-hidden="true"></div>
       <div class="text"><strong>Instalar Maestro</strong><span>Adicionar ao ecrã inicial</span></div>
     </div>
     <div class="sidebar-footer-box">
       <button class="btn-text text-danger btn-sidebar-reset" onclick="hardResetPWA()">
-        <span class="sidebar-alert-icon">⚠️</span> Limpar Dados do Aplicativo
+        <span class="sidebar-alert-icon" data-maestro-icon-slot="alert" aria-hidden="true"></span> Limpar Dados do Aplicativo
       </button>
       <p class="sidebar-reset-desc">Use esta opção se o portal
         apresentar lentidão ou para forçar a atualização do sistema. Exigirá novo login.</p>
@@ -389,7 +389,7 @@
 
   <!-- RIGHT SIDEBAR: INBOX -->
   <aside id="sidebar-right" class="sidebar-drawer sidebar-right" aria-label="Central de notificações">
-    <h3 class="sidebar-title">🔔 Notificações</h3>
+    <h3 class="sidebar-title"><span data-maestro-icon-slot="bell" aria-hidden="true"></span> Notificações</h3>
     <p class="sidebar-right-desc">Histórico dos últimos 7 dias (Offline).</p>
     <div class="inbox-container">
       <div class="text-center inbox-loading-container">

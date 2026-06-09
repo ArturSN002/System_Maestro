@@ -810,7 +810,7 @@ async function baixarDocumento(tipo, tentativa = 1) {
     const textoOriginal = btn.getAttribute('data-original-text') || btn.innerHTML;
     if (tentativa === 1) btn.setAttribute('data-original-text', textoOriginal);
 
-    btn.innerHTML = tentativa === 1 ? `⏳ A transferir...` : `🔄 Tentativa ${tentativa}/${MAX_TENTATIVAS}...`;
+    btn.textContent = tentativa === 1 ? "A transferir..." : `Tentativa ${tentativa}/${MAX_TENTATIVAS}...`;
     btn.disabled = true;
 
     try {
@@ -829,7 +829,7 @@ async function baixarDocumento(tipo, tentativa = 1) {
             document.body.removeChild(link);
 
             showToast(`Download de ${tipo} concluído!`, "success");
-            btn.innerHTML = `⏳ Aguarde...`;
+            btn.textContent = "Aguarde...";
             setTimeout(() => { btn.innerHTML = textoOriginal; btn.disabled = false; }, 10000);
         }
     } catch (err) {
