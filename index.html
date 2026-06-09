@@ -186,7 +186,7 @@
           </svg>
         </button>
         <button id="btn-header-back" class="icon-btn header-btn header-back-btn hidden" onclick="voltarNavegacao()" title="Voltar" aria-label="Voltar">
-          ⬅️
+          <span data-maestro-icon-slot="arrowLeft" aria-hidden="true"></span>
         </button>
       </div>
 
@@ -207,7 +207,7 @@
 
     <main class="app-content" id="app-content" tabindex="-1">
 
-      <div id="mural-avisos-header" class="section-title hidden">📌 AVISOS DA SEMANA</div>
+      <div id="mural-avisos-header" class="section-title hidden"><span data-maestro-icon-slot="pin" aria-hidden="true"></span> AVISOS DA SEMANA</div>
       <div id="mural-avisos" class="avisos-container hidden"></div>
 
       {% include portal_publico.html %}

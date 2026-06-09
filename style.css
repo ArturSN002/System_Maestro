@@ -9219,6 +9219,332 @@ body.dark-theme .public-meta-chip {
 }
 
 /* ======================================================================== */
+/* FASE 8.1: Gateway moderno Maestro inspirado no Stitch                     */
+/* ======================================================================== */
+.gateway-v8-shell {
+  max-width: 1160px;
+}
+
+.gateway-v8-layout {
+  gap: clamp(16px, 3vw, 28px);
+}
+
+.gateway-v8-brand-panel,
+.gateway-v8-entry-panel {
+  position: relative;
+  isolation: isolate;
+  border-radius: 8px;
+}
+
+.gateway-v8-brand-panel {
+  min-height: 360px;
+  padding: clamp(20px, 4vw, 40px);
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--primary) 13%, transparent) 0%, transparent 42%),
+    linear-gradient(180deg, color-mix(in srgb, var(--bg-surface) 96%, var(--primary) 4%) 0%, var(--bg-surface) 100%);
+}
+
+.gateway-v8-brand-panel::before {
+  inset: 0 auto 0 0;
+  width: 6px;
+  height: auto;
+  background: var(--accent);
+}
+
+.gateway-v8-status-strip {
+  position: absolute;
+  top: var(--space-md);
+  right: var(--space-md);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 7px 10px;
+  border: 1px solid color-mix(in srgb, var(--success) 28%, var(--border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--success) 9%, var(--bg-surface));
+  color: color-mix(in srgb, var(--success) 72%, var(--text-main));
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.gateway-v8-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--success);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--success) 18%, transparent);
+}
+
+.gateway-v8-brand-main {
+  display: grid;
+  gap: var(--space-lg);
+  min-width: 0;
+  margin-top: 42px;
+}
+
+.gateway-v8-brand-mark {
+  width: 92px;
+  height: 92px;
+  margin: 0;
+  border-color: color-mix(in srgb, var(--primary) 22%, var(--border));
+  background: color-mix(in srgb, var(--bg-surface) 88%, var(--primary) 8%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bg-surface) 80%, transparent);
+}
+
+.gateway-v8-logo {
+  width: 72px;
+  height: 72px;
+  max-width: 72px;
+  max-height: 72px;
+}
+
+.gateway-v8-brand-copy {
+  display: grid;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+.gateway-v8-eyebrow,
+.gateway-v8-entry-eyebrow {
+  color: var(--accent);
+}
+
+.gateway-v8-title {
+  max-width: 12ch;
+  font-size: clamp(34px, 7vw, 58px);
+  line-height: 0.98;
+}
+
+.gateway-v8-subtitle {
+  max-width: 48ch;
+  font-size: clamp(14px, 1.5vw, 16px);
+}
+
+.gateway-v8-meta {
+  margin-top: var(--space-lg);
+}
+
+.gateway-v8-chip {
+  min-height: 34px;
+  gap: 7px;
+  border-radius: 999px;
+  color: color-mix(in srgb, var(--primary) 84%, var(--text-main));
+}
+
+.gateway-v8-chip .maestro-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.gateway-v8-signal-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-sm);
+  margin-top: auto;
+  padding-top: var(--space-lg);
+  border-top: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+}
+
+.gateway-v8-signal-list span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--text-sub);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.gateway-v8-signal-list .maestro-icon {
+  width: 17px;
+  height: 17px;
+  color: var(--primary);
+}
+
+.gateway-v8-entry-panel {
+  gap: var(--space-lg);
+  min-height: 360px;
+  padding: clamp(20px, 4vw, 40px);
+}
+
+.gateway-v8-entry-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 5px;
+  border-radius: 8px 8px 0 0;
+  background: var(--primary);
+}
+
+.gateway-v8-entry-header {
+  display: grid;
+  gap: var(--space-sm);
+  margin-bottom: 0;
+}
+
+.gateway-v8-entry-header h2 {
+  max-width: 13ch;
+  margin: 0;
+  color: var(--text-main);
+  font-size: clamp(25px, 4vw, 40px);
+  line-height: 1.02;
+}
+
+.gateway-v8-entry-header p:not(.public-eyebrow) {
+  margin: 0;
+  font-size: 14px;
+}
+
+.gateway-v8-icon-badge {
+  margin-bottom: var(--space-sm);
+  background: color-mix(in srgb, var(--primary) 12%, var(--bg-surface));
+  color: var(--primary);
+}
+
+.gateway-v8-icon-badge .maestro-icon {
+  width: 25px;
+  height: 25px;
+}
+
+.gateway-v8-field-group {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.gateway-v8-client-select {
+  width: 100%;
+  margin-bottom: 0;
+  border-color: color-mix(in srgb, var(--primary) 16%, var(--border));
+  background-color: var(--bg-surface);
+}
+
+.gateway-v8-primary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 56px;
+  margin: 0;
+  border-radius: 8px;
+  box-shadow: 0 16px 28px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
+.gateway-v8-primary-action .maestro-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.gateway-v8-support-note {
+  padding-top: var(--space-sm);
+  border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+body.dark-theme .gateway-v8-brand-panel {
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--primary) 18%, transparent) 0%, transparent 44%),
+    color-mix(in srgb, var(--bg-surface) 84%, #000 16%);
+}
+
+body.dark-theme .gateway-v8-entry-panel {
+  background: color-mix(in srgb, var(--bg-surface) 86%, #000 14%);
+}
+
+body.dark-theme .gateway-v8-status-strip {
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+}
+
+@media (max-width: 767px) {
+  .gateway-v8-brand-panel {
+    min-height: auto;
+    padding: var(--space-md);
+  }
+
+  .gateway-v8-entry-panel {
+    min-height: auto;
+    gap: var(--space-md);
+  }
+
+  .gateway-v8-status-strip {
+    position: static;
+    justify-self: flex-start;
+    min-height: 30px;
+    margin-bottom: var(--space-sm);
+  }
+
+  .gateway-v8-brand-main {
+    margin-top: 0;
+    gap: var(--space-sm);
+  }
+
+  .gateway-v8-brand-mark {
+    width: 68px;
+    height: 68px;
+  }
+
+  .gateway-v8-logo {
+    width: 54px;
+    height: 54px;
+    max-width: 54px;
+    max-height: 54px;
+  }
+
+  .gateway-v8-title {
+    max-width: 10ch;
+    font-size: 32px;
+  }
+
+  .gateway-v8-subtitle {
+    font-size: 13px;
+  }
+
+  .gateway-v8-meta {
+    margin-top: var(--space-md);
+  }
+
+  .gateway-v8-signal-list {
+    display: none;
+  }
+
+  .gateway-v8-entry-header h2 {
+    max-width: 12ch;
+    font-size: 27px;
+  }
+
+  .gateway-v8-icon-badge {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 0;
+  }
+
+  .gateway-v8-client-select,
+  .gateway-v8-primary-action {
+    min-height: 52px;
+  }
+}
+
+@media (min-width: 768px) {
+  .gateway-v8-signal-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 900px) {
+  .gateway-v8-layout {
+    grid-template-columns: minmax(420px, 1.12fr) minmax(340px, 0.88fr);
+  }
+
+  .gateway-v8-brand-panel,
+  .gateway-v8-entry-panel {
+    min-height: min(62dvh, 560px);
+  }
+}
+
+/* ======================================================================== */
 /* FASE 7.2: Hub do Estudante e Inscricao responsiva inspirados no Stitch    */
 /* ======================================================================== */
 .maestro-estagio-hidden {

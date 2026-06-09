@@ -1,41 +1,56 @@
       <section id="view-gateway" class="view-section public-view public-gateway-view">
-        <div class="public-gateway-shell" data-component="MaestroGateway">
-          <div class="public-gateway-layout">
-            <div class="public-brand-panel" aria-label="Identidade institucional do portal">
-              <div class="public-brand-mark">
-                <img id="ui-gateway-logo" class="app-emblem public-gateway-logo" src="./MGA.png" alt="Logo institucional do Portal Maestro">
+        <div class="public-gateway-shell gateway-v8-shell" data-component="MaestroGateway">
+          <div class="public-gateway-layout gateway-v8-layout">
+            <div class="public-brand-panel gateway-v8-brand-panel" aria-label="Identidade institucional do portal">
+              <div class="gateway-v8-status-strip" aria-hidden="true">
+                <span class="gateway-v8-status-dot"></span>
+                <span>Portal oficial</span>
               </div>
-              <p class="public-eyebrow">Portal oficial</p>
-              <h2 id="ui-gateway-nome" class="public-brand-title">Maestro</h2>
-              <p id="ui-gateway-setor" class="public-brand-subtitle">Acesso estudantil e mobilidade escolar</p>
-              <div class="public-brand-meta">
-                <span id="ui-gateway-cidade" class="public-meta-chip hidden"></span>
-                <span class="public-meta-chip">PWA</span>
-                <span class="public-meta-chip">Firestore</span>
+
+              <div class="gateway-v8-brand-main">
+                <div class="public-brand-mark gateway-v8-brand-mark">
+                  <img id="ui-gateway-logo" class="app-emblem public-gateway-logo gateway-v8-logo" src="./MGA.png" alt="Logo institucional do Portal Maestro">
+                </div>
+
+                <div class="gateway-v8-brand-copy">
+                  <p class="public-eyebrow gateway-v8-eyebrow">Transporte escolar</p>
+                  <h2 id="ui-gateway-nome" class="public-brand-title gateway-v8-title">Maestro</h2>
+                  <p id="ui-gateway-setor" class="public-brand-subtitle gateway-v8-subtitle">Acesso estudantil e mobilidade escolar</p>
+                </div>
+              </div>
+
+              <div class="public-brand-meta gateway-v8-meta" aria-label="Contexto do portal">
+                <span id="ui-gateway-cidade" class="public-meta-chip gateway-v8-chip hidden"></span>
+                <span class="public-meta-chip gateway-v8-chip"><span data-maestro-icon-slot="shield" aria-hidden="true"></span> Seguro</span>
+                <span class="public-meta-chip gateway-v8-chip"><span data-maestro-icon-slot="phone" aria-hidden="true"></span> PWA</span>
+              </div>
+
+              <div class="gateway-v8-signal-list" aria-hidden="true">
+                <span><span data-maestro-icon-slot="wallet" aria-hidden="true"></span> Carteira digital</span>
+                <span><span data-maestro-icon-slot="mapPin" aria-hidden="true"></span> Mobilidade</span>
+                <span><span data-maestro-icon-slot="document" aria-hidden="true"></span> Documentos</span>
               </div>
             </div>
 
-            <div class="public-entry-panel" data-component="TenantSelector">
-              <div class="form-header public-entry-header">
-                <span class="public-icon-badge" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="m3 11 9-8 9 8"></path>
-                    <path d="M5 10v10h14V10"></path>
-                    <path d="M9 20v-6h6v6"></path>
-                  </svg>
-                </span>
-                <h2>Selecione o seu Munic&iacute;pio</h2>
-                <p>Escolha a institui&ccedil;&atilde;o para carregar tokens, tema, semestre e dados do portal.</p>
+            <div class="public-entry-panel gateway-v8-entry-panel" data-component="TenantSelector">
+              <div class="form-header public-entry-header gateway-v8-entry-header">
+                <span class="public-icon-badge gateway-v8-icon-badge" data-maestro-icon-slot="home" aria-hidden="true"></span>
+                <p class="public-eyebrow gateway-v8-entry-eyebrow">Entrada do sistema</p>
+                <h2>Selecione sua institui&ccedil;&atilde;o</h2>
+                <p>Escolha o munic&iacute;pio para continuar.</p>
               </div>
 
-              <label class="input-label" for="client-select">Institui&ccedil;&atilde;o / Cliente</label>
-              <select id="client-select" class="input-field public-client-select"></select>
+              <div class="gateway-v8-field-group">
+                <label class="input-label" for="client-select">Institui&ccedil;&atilde;o / Cliente</label>
+                <select id="client-select" class="input-field public-client-select gateway-v8-client-select"></select>
+              </div>
 
-              <button class="btn-solid public-primary-action" onclick="salvarCliente()">
+              <button class="btn-solid public-primary-action gateway-v8-primary-action" onclick="salvarCliente()">
+                <span data-maestro-icon-slot="arrowRight" aria-hidden="true"></span>
                 Acessar Sistema
               </button>
 
-              <p id="ui-gateway-contato" class="public-support-note hidden"></p>
+              <p id="ui-gateway-contato" class="public-support-note gateway-v8-support-note hidden"></p>
             </div>
           </div>
         </div>
