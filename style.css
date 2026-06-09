@@ -9776,6 +9776,544 @@ body.dark-theme .machine-policy-card {
 }
 
 /* ======================================================================== */
+/* FASE 8.2: Portal Estudante mobile-first inspirado no Stitch               */
+/* ======================================================================== */
+.student-v8-hub-shell {
+  max-width: 1040px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.student-v8-hub-hero {
+  display: grid;
+  gap: var(--space-md);
+  align-items: start;
+  margin-bottom: var(--space-lg);
+  padding: 0 0 var(--space-md);
+  border-bottom: 1px solid var(--border);
+}
+
+.student-v8-hub-hero .student-hub-heading {
+  max-width: 16ch;
+  font-size: clamp(28px, 9vw, 44px);
+}
+
+.student-v8-hub-hero .student-hub-copy {
+  max-width: 48ch;
+  font-size: 14px;
+}
+
+.student-v8-hub-status {
+  width: max-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 7px 11px;
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 7%, var(--bg-surface));
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.student-v8-hub-status .maestro-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.student-v8-action-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-sm);
+}
+
+.student-v8-action-card {
+  min-height: 92px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  border-radius: 8px;
+  text-align: left;
+}
+
+.student-v8-action-card .icon {
+  width: 46px;
+  height: 46px;
+  margin: 0;
+  border-radius: 8px;
+}
+
+.student-v8-action-card .info {
+  min-width: 0;
+}
+
+.student-v8-action-card .info strong,
+.student-v8-action-card .info span {
+  overflow-wrap: anywhere;
+}
+
+.student-action-card-rescue {
+  border-color: color-mix(in srgb, var(--accent) 36%, var(--border));
+}
+
+.student-action-card-rescue .icon {
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg-surface));
+  color: var(--accent);
+}
+
+.student-v8-flow-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-sm) var(--space-md);
+  text-align: left;
+}
+
+.student-v8-flow-header .student-hub-eyebrow,
+.student-v8-flow-header h2,
+.student-v8-flow-header p:not(.student-hub-eyebrow) {
+  grid-column: 2;
+  margin: 0;
+}
+
+.student-v8-flow-icon,
+.student-v8-flow-header .card-icon-emoji {
+  width: 48px;
+  height: 48px;
+  display: inline-grid;
+  grid-row: span 3;
+  place-items: center;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--primary) 10%, var(--bg-surface));
+  color: var(--primary);
+}
+
+.student-v8-flow-icon .maestro-icon,
+.student-v8-flow-header .card-icon-emoji .maestro-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.student-registration-card {
+  border-radius: 8px;
+}
+
+.student-registration-card .step-container {
+  padding-top: var(--space-xs);
+}
+
+.student-registration-card .input-field,
+.student-rescue-card .input-field,
+.student-v8-auth-card .input-field {
+  border-radius: 8px;
+}
+
+.student-registration-card .btn-file-custom,
+.student-registration-card .insc-check-label,
+.student-registration-card .insc-radio-label,
+.student-v8-inline-toggle,
+.student-rescue-card .resgate-field-row {
+  border-radius: 8px !important;
+}
+
+.student-registration-card .stepper-nav .btn-solid,
+.student-v8-primary-button,
+.student-rescue-card #btn-enviar-resgate,
+.student-v8-auth-card .btn-solid {
+  min-height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 8px;
+}
+
+.student-v8-consult-card {
+  max-width: 680px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.student-v8-inline-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  margin: var(--space-md) 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--primary) 4%, var(--bg-surface));
+  color: var(--text-sub);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.student-v8-inline-toggle input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+}
+
+.student-v8-inline-toggle .maestro-icon {
+  width: 17px;
+  height: 17px;
+  color: var(--primary);
+}
+
+.student-consult-view .result-container {
+  max-width: 680px;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 8px;
+}
+
+.student-v8-rescue-card {
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.student-v8-rescue-list {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.student-v8-rescue-card .resgate-field-row,
+.student-v8-rescue-card #container-inputs-resgate > .mb-15 {
+  margin-bottom: 0 !important;
+}
+
+.student-v8-rescue-card .resgate-field-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.student-v8-rescue-card .resgate-field-label .maestro-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--primary);
+}
+
+.student-v8-rescue-card .resgate-checkbox-input {
+  flex: 0 0 auto;
+  accent-color: var(--primary);
+}
+
+.student-v8-auth-card {
+  border-radius: 8px;
+}
+
+.student-v8-wallet-shell {
+  width: 100%;
+}
+
+.student-v8-wallet-shell .wallet-operational-header,
+.student-v8-wallet-shell #wallet-privacy-card {
+  border-radius: 8px;
+}
+
+.student-v8-radar-view {
+  gap: var(--space-md);
+}
+
+.student-v8-radar-list {
+  border-radius: 8px;
+}
+
+.student-v8-radar-header {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+}
+
+.student-v8-radar-header .radar-list-title {
+  margin: 0;
+}
+
+.student-v8-radar-header .radar-list-state-stack {
+  grid-column: 1 / -1;
+}
+
+.student-v8-radar-map {
+  border-radius: 8px;
+}
+
+body.dark-theme .student-v8-hub-status,
+body.dark-theme .student-v8-inline-toggle {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 767px) {
+  .student-view {
+    scroll-margin-top: 72px;
+  }
+
+  .student-v8-hub-hero {
+    margin-bottom: var(--space-md);
+  }
+
+  .student-v8-action-card {
+    min-height: 86px;
+  }
+
+  .student-registration-card,
+  .student-v8-consult-card,
+  .student-v8-rescue-card,
+  .student-v8-auth-card {
+    padding: var(--space-md);
+  }
+
+  .student-v8-flow-header {
+    grid-template-columns: 1fr;
+  }
+
+  .student-v8-flow-header .student-hub-eyebrow,
+  .student-v8-flow-header h2,
+  .student-v8-flow-header p:not(.student-hub-eyebrow) {
+    grid-column: 1;
+  }
+
+  .student-v8-flow-icon,
+  .student-v8-flow-header .card-icon-emoji {
+    grid-row: auto;
+  }
+
+  .student-registration-card .stepper-nav {
+    border-radius: 8px 8px 0 0;
+  }
+
+  .student-v8-radar-view {
+    min-height: calc(100dvh - 88px);
+  }
+
+  .student-v8-radar-list {
+    min-height: calc(100dvh - 120px);
+  }
+}
+
+@media (min-width: 768px) {
+  .student-v8-hub-hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .student-v8-action-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .student-v8-action-card {
+    min-height: 112px;
+  }
+
+  .student-v8-radar-header .radar-list-state-stack {
+    grid-column: 2;
+    justify-content: flex-end;
+  }
+}
+
+@media (min-width: 1080px) {
+  .student-v8-action-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* ======================================================================== */
+/* FASE 8.3: Inscricao e renovacao em stepper responsivo                     */
+/* ======================================================================== */
+.student-registration-card {
+  max-width: 980px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.student-v83-stepper-progress {
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--primary) 8%, transparent);
+}
+
+.student-v83-step-map {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-xs);
+  margin: -8px 0 var(--space-md);
+  color: var(--text-sub);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.15;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.student-v83-step-map span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.student-v83-guidance-card,
+.student-v83-review-card {
+  display: grid;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+  padding: var(--space-md);
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--primary) 5%, var(--bg-surface));
+}
+
+.student-v83-guidance-card {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+}
+
+.student-v83-guidance-card > .maestro-icon,
+.student-v83-review-header > .maestro-icon,
+.student-v83-stage-header > .maestro-icon {
+  width: 22px;
+  height: 22px;
+  color: var(--primary);
+}
+
+.student-v83-guidance-card strong,
+.student-v83-review-card strong,
+.student-v83-stage-header strong {
+  display: block;
+  color: var(--text-main);
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.student-v83-guidance-card p,
+.student-v83-review-card p,
+.student-v83-stage-header p {
+  margin: 4px 0 0;
+  color: var(--text-sub);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.student-v83-stage-header,
+.student-v83-review-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-sm);
+  align-items: start;
+}
+
+.student-registration-card .student-stage-feature {
+  padding: var(--space-md);
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--border));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 8%, transparent), transparent 52%),
+    var(--bg-surface);
+}
+
+.student-registration-card .cond-field {
+  border-radius: 8px;
+}
+
+.student-registration-card .custom-file-upload {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.student-registration-card .file-name-display {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  color: var(--text-sub);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.student-registration-card .file-name-display.is-success {
+  color: var(--success);
+}
+
+.student-registration-card .file-name-display.is-error {
+  color: var(--danger);
+}
+
+.student-v83-review-card {
+  margin-top: var(--space-lg);
+  background: color-mix(in srgb, var(--success) 6%, var(--bg-surface));
+  border-color: color-mix(in srgb, var(--success) 26%, var(--border));
+}
+
+.student-v83-review-header > .maestro-icon {
+  color: var(--success);
+}
+
+.student-v83-review-list {
+  display: grid;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.student-v83-review-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--text-sub);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.student-v83-review-list .maestro-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--success);
+}
+
+body.dark-theme .student-v83-guidance-card,
+body.dark-theme .student-v83-review-card,
+body.dark-theme .student-registration-card .student-stage-feature {
+  background: color-mix(in srgb, var(--bg-surface) 88%, #000 12%);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 767px) {
+  .student-v83-step-map {
+    font-size: 9px;
+  }
+
+  .student-registration-card .stepper-nav {
+    display: grid;
+    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+    gap: var(--space-sm);
+  }
+
+  .student-registration-card .stepper-nav .btn-solid {
+    width: 100%;
+    min-width: 0;
+    padding-left: 10px;
+    padding-right: 10px;
+    font-size: 12px;
+  }
+}
+
+@media (min-width: 900px) {
+  .student-registration-card .step-container.step-visible {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .student-v83-review-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ======================================================================== */
 /* FASE 7.3: Dashboard, Semestres e Sidebar administrativa desktop-first     */
 /* ======================================================================== */
 .admin-hub-shell {
@@ -10699,5 +11237,279 @@ body.dark-theme .driver-shell {
   .radar-list-state-stack .admin-context-chip {
     flex: 1 1 120px;
     justify-content: center;
+  }
+}
+
+/* ======================================================================== */
+/* FASE 8.4: UX administrativa desktop-first inspirada no Stitch             */
+/* ======================================================================== */
+.admin-v84-login-card {
+  max-width: 460px;
+  border-radius: 8px !important;
+  box-shadow: var(--maestro-shadow-raised);
+}
+
+body[data-maestro-shell="admin"] .app-wrapper {
+  width: min(100%, 1480px);
+}
+
+body[data-maestro-shell="admin"] .maestro-admin-sidebar {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--primary) 7%, transparent), transparent 42%),
+    var(--bg-surface);
+}
+
+body[data-maestro-shell="admin"] .maestro-admin-sidebar .menu-card,
+.sidebar-admin-link {
+  border-radius: 8px !important;
+}
+
+.admin-v84-hub-shell,
+.admin-v84-dashboard-card,
+.admin-v84-audit-shell,
+.admin-v84-semesters-shell,
+.admin-v84-machine-card {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.admin-v84-hub-shell {
+  max-width: 1240px;
+  border-radius: 8px !important;
+}
+
+.admin-v84-hub-header {
+  padding-bottom: var(--space-lg);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+}
+
+.admin-v84-action-grid,
+.admin-v84-menu-group:not(.hidden) {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.admin-v84-menu-group .divider-text {
+  grid-column: 1 / -1;
+  margin: var(--space-lg) 0 var(--space-xs) !important;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.admin-v84-action-grid .admin-action-card,
+.admin-v84-menu-group .admin-action-card {
+  min-height: 104px;
+  align-items: center;
+  border-radius: 8px !important;
+}
+
+.admin-v84-action-grid .admin-action-card .icon,
+.admin-v84-menu-group .admin-action-card .icon {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  border-radius: 8px !important;
+}
+
+.admin-v84-action-grid .admin-action-card .maestro-icon,
+.admin-v84-menu-group .admin-action-card .maestro-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.admin-v84-toolbar,
+.admin-v84-dashboard-card,
+.admin-v84-machine-card {
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  background: var(--bg-surface) !important;
+  box-shadow: var(--maestro-shadow-soft);
+}
+
+.admin-v84-toolbar {
+  padding: var(--space-lg) !important;
+}
+
+.admin-audit-legacy-heading {
+  display: none !important;
+}
+
+.admin-v84-audit-shell {
+  max-width: 1440px;
+  display: grid;
+  gap: var(--space-md);
+}
+
+.admin-v84-audit-shell .admin-audit-results,
+.admin-v84-audit-shell .admin-audit-side-panel {
+  border-radius: 8px;
+}
+
+.admin-v84-audit-shell .auditoria-table-wrapper,
+.admin-v84-audit-shell .dynamic-table-wrapper {
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+}
+
+.btn-paginacao-icon,
+.btn-chip-anexo-icon {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-paginacao-icon .maestro-icon,
+.btn-chip-anexo-icon .maestro-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.btn-chip-anexo-icon {
+  min-height: 40px;
+  border-radius: 999px !important;
+}
+
+.admin-v84-dashboard-card {
+  max-width: 1360px;
+}
+
+.admin-v84-dashboard-card .dash-kpi,
+.admin-v84-dashboard-card .dashboard-chart-card,
+.admin-v84-dashboard-card .dashboard-usage-card,
+.admin-v84-dashboard-card .dash-free-analysis-box {
+  border-radius: 8px !important;
+}
+
+.admin-v84-dashboard-card .admin-dashboard-tabs {
+  border-radius: 8px !important;
+}
+
+.admin-v84-dashboard-card .dash-tab {
+  border-radius: 8px !important;
+}
+
+.bi-analysis-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bi-analysis-title .maestro-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--primary);
+}
+
+.admin-v84-semesters-shell {
+  max-width: 1320px;
+}
+
+.admin-v84-semesters-shell .semestre-atual-card,
+.admin-v84-semesters-shell .semestre-card,
+.admin-v84-semesters-shell .admin-semesters-editor {
+  border-radius: 8px !important;
+}
+
+.admin-v84-machine-card {
+  max-width: 1180px !important;
+  display: grid;
+  gap: var(--space-md);
+}
+
+.admin-v84-machine-card .form-header,
+.admin-v84-machine-card > .btn-solid {
+  margin-bottom: 0 !important;
+}
+
+.admin-v84-machine-section {
+  display: grid;
+  gap: var(--space-sm);
+  margin: 0 !important;
+  border-radius: 8px !important;
+}
+
+.admin-v84-machine-section .switch-row {
+  min-height: 54px;
+  border-radius: 8px;
+}
+
+.admin-v84-machine-section .btn-solid,
+.admin-v84-machine-card > .btn-solid {
+  min-height: 44px;
+}
+
+#btn-healthcheck-maestro .maestro-icon,
+.btn-motor-force .maestro-icon,
+.btn-motor-force-last .maestro-icon {
+  width: 17px;
+  height: 17px;
+}
+
+body.dark-theme .admin-v84-toolbar,
+body.dark-theme .admin-v84-dashboard-card,
+body.dark-theme .admin-v84-machine-card,
+body.dark-theme .admin-v84-machine-section,
+body.dark-theme .admin-v84-audit-shell .auditoria-table-wrapper,
+body.dark-theme .admin-v84-audit-shell .dynamic-table-wrapper {
+  background: color-mix(in srgb, var(--bg-surface) 88%, #000 12%) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+@media (min-width: 900px) {
+  .admin-v84-action-grid,
+  .admin-v84-menu-group:not(.hidden) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1180px) {
+  .admin-v84-hub-header,
+  .admin-v84-dashboard-card .admin-dashboard-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .admin-v84-action-grid,
+  .admin-v84-menu-group:not(.hidden) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .admin-v84-machine-card {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    align-items: start;
+  }
+
+  .admin-v84-machine-card .form-header,
+  .admin-v84-machine-card > .btn-solid,
+  .admin-v84-machine-card .motores-acoes-card {
+    grid-column: 1 / -1;
+  }
+
+  .admin-v84-machine-card .motores-acoes-card {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .admin-v84-machine-card .motores-acoes-card .label-sm {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 767px) {
+  .admin-v84-toolbar,
+  .admin-v84-dashboard-card,
+  .admin-v84-machine-card {
+    padding: var(--space-md) !important;
+  }
+
+  .admin-v84-action-grid .admin-action-card,
+  .admin-v84-menu-group .admin-action-card {
+    min-height: 92px;
+  }
+
+  .admin-v84-machine-section .switch-row {
+    align-items: flex-start;
   }
 }

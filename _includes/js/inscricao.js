@@ -6,7 +6,7 @@ const STEPPER_LABELS = {
     1: 'Triagem',
     2: 'Rota Acadêmica',
     3: 'Condicionais',
-    4: 'Cofre Digital'
+    4: 'Documentos e revisao'
 };
 
 let inscricaoArquivos = {};

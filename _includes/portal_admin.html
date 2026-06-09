@@ -21,9 +21,9 @@
          <button class="btn-solid dark-bg mt-15" onclick="switchView('view-admin-hub')">Voltar ao Menu</button>
       </section>
 
-      <section id="view-auditoria" class="view-section admin-view admin-audit-view" data-component="AdminAudit">
-         <div class="admin-audit-shell">
-         <div class="form-card p-15-mb-10 admin-panel-card admin-panel-toolbar admin-audit-toolbar">
+      <section id="view-auditoria" class="view-section admin-view admin-audit-view admin-v84-audit-view" data-component="AdminAudit">
+         <div class="admin-audit-shell admin-v84-audit-shell">
+         <div class="form-card p-15-mb-10 admin-panel-card admin-panel-toolbar admin-audit-toolbar admin-v84-toolbar">
             <div class="admin-audit-header">
                <div>
                   <p class="admin-panel-eyebrow">Auditoria documental</p>
@@ -54,7 +54,7 @@
                   <strong id="auditoria-kpi-retidos">0</strong>
                </div>
             </div>
-            <div class="flex-between-center-mb-15">
+            <div class="flex-between-center-mb-15 admin-audit-legacy-heading">
                <h2 class="admin-section-title"><span data-maestro-icon-slot="file" aria-hidden="true"></span> MESA DE AUDITORIA</h2>
                <button onclick="carregarFilaAuditoria()" class="btn-icon-refresh" aria-label="Atualizar mesa de auditoria"><span data-maestro-icon-slot="refresh" aria-hidden="true"></span></button>
             </div>
@@ -104,9 +104,9 @@
          </div>
       </section>
 
-      <section id="view-semestres" class="view-section admin-view admin-semesters-view" data-component="AdminSemesters">
-         <div class="admin-semesters-shell">
-         <div class="form-card p-15-mb-10 admin-panel-card admin-semesters-editor">
+      <section id="view-semestres" class="view-section admin-view admin-semesters-view admin-v84-semesters-view" data-component="AdminSemesters">
+         <div class="admin-semesters-shell admin-v84-semesters-shell">
+         <div class="form-card p-15-mb-10 admin-panel-card admin-semesters-editor admin-v84-toolbar">
             <div class="semestres-header-row admin-panel-header-row">
                <div>
                   <p class="admin-panel-eyebrow">Ciclo letivo</p>
@@ -155,15 +155,15 @@
          </div>
       </section>
 
-      <section id="view-moderador" class="view-section">
-         <div class="form-card form-card-moderador">
+      <section id="view-moderador" class="view-section admin-view admin-machine-view" data-component="MachineRoom">
+         <div class="form-card form-card-moderador admin-v84-machine-card">
             <div class="form-header mb-20">
                <span class="card-icon-emoji" data-maestro-icon-slot="settings" aria-hidden="true"></span>
                <h2 class="form-card-moderador-title">SALA DAS MÁQUINAS</h2>
                <p class="form-card-moderador-desc">Controlo de automações e estado do servidor.</p>
             </div>
             
-            <div class="motores-status-card">
+            <div class="motores-status-card admin-v84-machine-section">
                <div id="loader-sincronizacao-motores" class="motores-loader-overlay hidden">
                    <div class="loader loader-small"></div>
                </div>
@@ -200,7 +200,7 @@
                </div>
             </div>
 
-            <div class="motores-status-card machine-policy-card">
+            <div class="motores-status-card machine-policy-card admin-v84-machine-section">
                <span class="label-sm text-primary">POLITICAS VISUAIS DO PORTAL</span>
                <div class="switch-row machine-policy-row">
                  <div>
@@ -214,13 +214,13 @@
                </div>
             </div>
 
-            <div class="motores-acoes-card">
+            <div class="motores-acoes-card admin-v84-machine-section">
                <span class="label-sm">AÇÕES FORÇADAS MANUAIS</span>
                <button class="btn-solid btn-motor-force" onclick="forcarMotor('ETL')"><span data-maestro-icon-slot="refresh" aria-hidden="true"></span> Sincronizar Forms</button>
                <button class="btn-solid btn-motor-force" onclick="forcarMotor('OCR')"><span data-maestro-icon-slot="gauge" aria-hidden="true"></span> Auditar OCR</button>
                <button class="btn-solid btn-motor-force" onclick="forcarMotor('DOCS')"><span data-maestro-icon-slot="document" aria-hidden="true"></span> Emitir PDFs</button>
                <button class="btn-solid btn-motor-force-last" onclick="forcarMotor('EMAIL')"><span data-maestro-icon-slot="mail" aria-hidden="true"></span> Fila de E-mails</button>
-               <button class="btn-solid btn-motor-force-last" id="btn-healthcheck-maestro" onclick="executarHealthcheckMaestroUI()">Validar backend</button>
+               <button class="btn-solid btn-motor-force-last" id="btn-healthcheck-maestro" onclick="executarHealthcheckMaestroUI()"><span data-maestro-icon-slot="shield" aria-hidden="true"></span> Validar backend</button>
             </div>
 
             <button class="btn-solid dark-bg" onclick="switchView('view-admin-hub')">Voltar ao Menu</button>
@@ -265,8 +265,8 @@
         </div>
       </section>
 
-      <section id="view-dashboard" class="view-section admin-view admin-dashboard-view" data-component="AdminDashboard">
-        <div class="form-card dark-form p-15 admin-panel-card admin-dashboard-card">
+      <section id="view-dashboard" class="view-section admin-view admin-dashboard-view admin-v84-dashboard-view" data-component="AdminDashboard">
+        <div class="form-card dark-form p-15 admin-panel-card admin-dashboard-card admin-v84-dashboard-card">
           <div class="form-header mb-20 admin-dashboard-header">
             <div>
               <p class="admin-panel-eyebrow">Inteligencia operacional</p>
@@ -320,7 +320,7 @@
           <div id="dash-area-analise" class="hidden">
              <div class="dash-box dash-free-analysis-box dashboard-chart-card dashboard-bi-card">
                 <div class="dash-bi-header-row">
-                   <h3 class="bi-analysis-title">🔍 Análise Livre</h3>
+                   <h3 class="bi-analysis-title"><span data-maestro-icon-slot="gauge" aria-hidden="true"></span> Análise Livre</h3>
                    <div class="text-right">
                       <span class="bi-total-label">Estudantes Encontrados</span>
                       <strong id="bi_total" class="bi-total-value">0</strong>

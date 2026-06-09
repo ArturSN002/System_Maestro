@@ -899,9 +899,9 @@ function renderizarListaAuditoria() {
 
         html += `
         <div class="auditoria-paginacao dynamic-pagination">
-            <button class="btn-solid dark-bg btn-paginacao" ${btnPrevDisabled}>⬅ Ant.</button>
+            <button class="btn-solid dark-bg btn-paginacao btn-paginacao-icon" ${btnPrevDisabled}><span data-maestro-icon-slot="arrowLeft" aria-hidden="true"></span><span>Ant.</span></button>
             <span class="paginacao-texto">Pág. ${paginaAtualAuditoria} de ${totalPaginas}</span>
-            <button class="btn-solid dark-bg btn-paginacao" ${btnNextDisabled}>Próx. ➡</button>
+            <button class="btn-solid dark-bg btn-paginacao btn-paginacao-icon" ${btnNextDisabled}><span>Próx.</span><span data-maestro-icon-slot="arrowRight" aria-hidden="true"></span></button>
         </div>`;
     }
 
@@ -944,15 +944,15 @@ function abrirModalRaioX(cpf, semestreId = "") {
 
     let anexoHtml = '';
     const docsMapa = {
-        'FOTO': '🖼️ Foto',
-        'DOCUMENTO': '🪪 Doc. ID',
-        'VINCULO': '🎓 Vínculo',
-        'RESIDENCIA': '🏠 Morada',
-        'ESTAGIO': '💼 Estágio'
+        'FOTO': { icon: 'file', label: 'Foto' },
+        'DOCUMENTO': { icon: 'idCard', label: 'Doc. ID' },
+        'VINCULO': { icon: 'graduation', label: 'Vínculo' },
+        'RESIDENCIA': { icon: 'home', label: 'Morada' },
+        'ESTAGIO': { icon: 'briefcase', label: 'Estágio' }
     };
 
-    for (const [chave, rotulo] of Object.entries(docsMapa)) {
-        anexoHtml += `<button class="btn-chip-anexo" data-cpf="${cpfLimpo}" data-tipo="${chave}" data-semestre-id="${escapeHTMLAuditoria(semestreAluno)}" onclick="abrirDocumentoSeguro(this.dataset.cpf, this.dataset.tipo, this.dataset.semestreId)">${escapeHTMLAuditoria(rotulo)}</button>`;
+    for (const [chave, docConfig] of Object.entries(docsMapa)) {
+        anexoHtml += `<button class="btn-chip-anexo btn-chip-anexo-icon" data-cpf="${cpfLimpo}" data-tipo="${chave}" data-semestre-id="${escapeHTMLAuditoria(semestreAluno)}" onclick="abrirDocumentoSeguro(this.dataset.cpf, this.dataset.tipo, this.dataset.semestreId)"><span data-maestro-icon-slot="${docConfig.icon}" aria-hidden="true"></span>${escapeHTMLAuditoria(docConfig.label)}</button>`;
     }
 
     document.getElementById('rx-documentos-grid').innerHTML = anexoHtml;

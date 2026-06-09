@@ -1,51 +1,45 @@
       <section id="view-aluno-menu" class="view-section student-view student-hub-view" data-component="StudentHub">
-        <div class="student-hub-shell">
-          <div class="student-hub-hero">
+        <div class="student-hub-shell student-v8-hub-shell">
+          <div class="student-hub-hero student-v8-hub-hero">
             <p class="student-hub-eyebrow">Area do estudante</p>
-            <h2 class="student-hub-heading">Tudo do transporte em um so lugar</h2>
-            <p class="student-hub-copy">Inicie sua solicitacao, acompanhe a auditoria, acesse a carteira digital e consulte documentos com uma navegacao mais simples.</p>
+            <h2 class="student-hub-heading">Seu transporte, documentos e carteira</h2>
+            <p class="student-hub-copy">Acompanhe a solicitacao, acesse a carteira digital e consulte pendencias do transporte escolar.</p>
+            <div class="student-v8-hub-status" aria-hidden="true">
+              <span data-maestro-icon-slot="phone" aria-hidden="true"></span>
+              <strong>Acesso rapido</strong>
+            </div>
           </div>
 
-        <div class="student-action-grid">
-          <button class="menu-card outline-card menu-card-success student-action-card student-action-card-new" onclick="abrirNovaInscricao()">
-            <span class="icon student-action-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 20h9"></path>
-                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
-              </svg>
-            </span>
+        <div class="student-action-grid student-v8-action-grid">
+          <button class="menu-card outline-card menu-card-success student-action-card student-action-card-new student-v8-action-card" onclick="abrirNovaInscricao()">
+            <span class="icon student-action-icon" data-maestro-icon-slot="edit" aria-hidden="true"></span>
             <div class="info">
               <strong class="text-success">Nova Inscrição</strong>
-              <span>Solicite o seu passe de transporte</span>
+              <span>Solicite o acesso ao transporte</span>
             </div>
           </button>
 
-          <button class="menu-card outline-card student-action-card student-action-card-query" onclick="switchView('view-consult')">
-            <span class="icon student-action-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8"></circle>
-                <path d="m21 21-4.3-4.3"></path>
-              </svg>
-            </span>
+          <button class="menu-card outline-card student-action-card student-action-card-query student-v8-action-card" onclick="switchView('view-consult')">
+            <span class="icon student-action-icon" data-maestro-icon-slot="gauge" aria-hidden="true"></span>
             <div class="info">
-              <strong>Acompanhar Inscrição</strong>
-              <span>Verifique o status usando o seu CPF</span>
+              <strong>Consulta e Renova&ccedil;&atilde;o</strong>
+              <span>Veja o status pelo CPF</span>
             </div>
           </button>
 
-          <button class="menu-card primary-card student-action-card student-action-card-wallet" onclick="switchView('view-login')">
-            <span class="icon student-action-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="4" width="18" height="16" rx="2"></rect>
-                <circle cx="9" cy="10" r="2"></circle>
-                <path d="M15 9h3"></path>
-                <path d="M15 13h3"></path>
-                <path d="M7 16h5"></path>
-              </svg>
-            </span>
+          <button class="menu-card primary-card student-action-card student-action-card-wallet student-v8-action-card" onclick="switchView('view-login')">
+            <span class="icon student-action-icon" data-maestro-icon-slot="idCard" aria-hidden="true"></span>
             <div class="info">
               <strong>Abrir Carteira Digital</strong>
-              <span>Acessar (Requer ID)</span>
+              <span>Carteira, QR e radar</span>
+            </div>
+          </button>
+
+          <button class="menu-card outline-card student-action-card student-action-card-rescue student-v8-action-card" onclick="switchView('view-consult')">
+            <span class="icon student-action-icon" data-maestro-icon-slot="upload" aria-hidden="true"></span>
+            <div class="info">
+              <strong>Resgate Documental</strong>
+              <span>Envie pendencias apos consulta</span>
             </div>
           </button>
         </div>
@@ -57,31 +51,39 @@
       <section id="view-inscricao" class="view-section student-view student-registration-view" data-component="RegistrationStepper">
         <div class="form-card student-flow-card student-registration-card">
           <div class="form-header mb-10 student-registration-header">
-            <span class="card-icon-emoji student-form-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 20h9"></path>
-                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
-              </svg>
-            </span>
+            <span class="card-icon-emoji student-form-icon" data-maestro-icon-slot="edit" aria-hidden="true"></span>
             <p class="student-hub-eyebrow">Solicitacao guiada</p>
             <h2>Inscrição no Transporte</h2>
-            <p>Preencha os dados em etapas. O envio final preserva os mesmos contratos de inscrição, uploads e semestre atual.</p>
+            <p>Preencha os dados em etapas e envie os documentos solicitados.</p>
           </div>
 
           <!-- Progress Indicator -->
-          <div class="stepper-progress student-stepper-progress" id="stepper-progress" aria-label="Progresso da inscricao">
-            <div class="step-dot step-active" id="dot-1" title="Triagem"></div>
+          <div class="stepper-progress student-stepper-progress student-v83-stepper-progress" id="stepper-progress" aria-label="Progresso da inscricao">
+            <div class="step-dot step-active" id="dot-1" title="Triagem" aria-label="Etapa 1: Triagem"></div>
             <div class="step-connector" id="conn-1"></div>
-            <div class="step-dot" id="dot-2" title="Dados academicos"></div>
+            <div class="step-dot" id="dot-2" title="Dados academicos" aria-label="Etapa 2: Dados academicos"></div>
             <div class="step-connector" id="conn-2"></div>
-            <div class="step-dot" id="dot-3" title="Condicionais"></div>
+            <div class="step-dot" id="dot-3" title="Condicionais" aria-label="Etapa 3: Condicionais"></div>
             <div class="step-connector" id="conn-3"></div>
-            <div class="step-dot" id="dot-4" title="Documentos"></div>
+            <div class="step-dot" id="dot-4" title="Documentos" aria-label="Etapa 4: Documentos e revisao"></div>
+          </div>
+          <div class="student-v83-step-map" aria-hidden="true">
+            <span>Triagem</span>
+            <span>Dados</span>
+            <span>Regras</span>
+            <span>Revisao</span>
           </div>
           <div class="stepper-label student-stepper-label" id="stepper-label">Etapa <strong>1</strong> de 4 — Triagem</div>
 
           <!-- ============ STEP 1: Triagem ============ -->
           <div class="step-container step-visible student-step-container" id="step-1">
+            <div class="student-v83-guidance-card">
+              <span data-maestro-icon-slot="shield" aria-hidden="true"></span>
+              <div>
+                <strong>Comece pelo CPF</strong>
+                <p>Se houver cadastro anterior, os dados serao reaproveitados para renovacao.</p>
+              </div>
+            </div>
             <div class="step-section-title">Identificação</div>
             <label class="input-label">CPF (APENAS NÚMEROS)</label>
             <input type="tel" id="insc-cpf" class="input-field" placeholder="000.000.000-00" maxlength="14" inputmode="numeric">
@@ -93,6 +95,13 @@
 
           <!-- ============ STEP 2: Rota Acadêmica ============ -->
           <div class="step-container student-step-container" id="step-2">
+            <div class="student-v83-guidance-card">
+              <span data-maestro-icon-slot="map" aria-hidden="true"></span>
+              <div>
+                <strong>Confirme rota e periodo</strong>
+                <p>Os dados academicos definem semestre, dias, turnos e rota do transporte.</p>
+              </div>
+            </div>
             <div class="step-section-title">Dados Acadêmicos</div>
 
             <div class="grid-desktop">
@@ -180,6 +189,13 @@
 
           <!-- ============ STEP 3: Condicionais ============ -->
           <div class="step-container student-step-container" id="step-3">
+            <div class="student-v83-guidance-card">
+              <span data-maestro-icon-slot="alert" aria-hidden="true"></span>
+              <div>
+                <strong>Responda todas as condicoes</strong>
+                <p>Estagio, PCD, menoridade e transporte noturno podem exigir dados adicionais.</p>
+              </div>
+            </div>
             <div class="step-section-title">Perguntas Condicionais</div>
 
             <!-- Q1: Transporte 23h -->
@@ -199,6 +215,13 @@
 
             <!-- Q2: Estágio -->
             <div class="student-stage-feature" data-maestro-estagio-feature="inscricao">
+            <div class="student-v83-stage-header">
+              <span data-maestro-icon-slot="briefcase" aria-hidden="true"></span>
+              <div>
+                <strong>Dados de estagio</strong>
+                <p>Disponivel somente quando a politica da entidade permitir transporte para vinculos externos.</p>
+              </div>
+            </div>
             <p class="insc-question-title">Necessita de transporte para estágio?</p>
             <div class="insc-radio-group">
               <label class="insc-radio-label"><input type="radio" name="insc-estagio" value="Sim" onchange="toggleCondField('cond-estagio', true)"> Sim</label>
@@ -295,6 +318,13 @@
 
           <!-- ============ STEP 4: Cofre Digital / Uploads ============ -->
           <div class="step-container student-step-container" id="step-4">
+            <div class="student-v83-guidance-card">
+              <span data-maestro-icon-slot="document" aria-hidden="true"></span>
+              <div>
+                <strong>Revise os anexos antes de enviar</strong>
+                <p>Arquivos obrigatorios e foto serao enviados no mesmo contrato da inscricao.</p>
+              </div>
+            </div>
             <div class="step-section-title"><span data-maestro-icon-slot="paperclip" aria-hidden="true"></span> Documentos Obrigatórios</div>
 
             <div class="custom-file-upload mb-15">
@@ -358,6 +388,22 @@
               </div>
             </div>
 
+            <div class="student-v83-review-card" aria-label="Revisao final antes do envio">
+              <div class="student-v83-review-header">
+                <span data-maestro-icon-slot="check" aria-hidden="true"></span>
+                <div>
+                  <strong>Revisao final</strong>
+                  <p>Confira se os dados e anexos estao corretos antes de submeter.</p>
+                </div>
+              </div>
+              <ul class="student-v83-review-list">
+                <li><span data-maestro-icon-slot="idCard" aria-hidden="true"></span> CPF, nome, contato e instituicao revisados</li>
+                <li><span data-maestro-icon-slot="map" aria-hidden="true"></span> Rota, dias, turnos e periodo letivo conferidos</li>
+                <li><span data-maestro-icon-slot="paperclip" aria-hidden="true"></span> Documentos obrigatorios anexados</li>
+                <li data-maestro-estagio-feature="inscricao"><span data-maestro-icon-slot="briefcase" aria-hidden="true"></span> Declaracao de vinculo do estagio anexada quando aplicavel</li>
+              </ul>
+            </div>
+
             <div class="stepper-nav mt-25">
               <button class="btn-solid btn-back" onclick="stepperPrev(4, 3)"><span data-maestro-icon-slot="arrowLeft" aria-hidden="true"></span> VOLTAR</button>
               <button class="btn-solid btn-success" id="btn-submeter-inscricao" onclick="prepararEnvioNativo()"><span data-maestro-icon-slot="upload" aria-hidden="true"></span> SUBMETER INSCRIÇÃO</button>
@@ -368,27 +414,35 @@
       </section>
 
       <section id="view-consult" class="view-section student-view student-consult-view">
-        <div class="form-card student-flow-card student-consult-card">
-          <div class="form-header">
-            <h2>Situação Cadastral</h2>
-            <p>Acompanhe a emissão da sua identidade</p>
+        <div class="form-card student-flow-card student-consult-card student-v8-consult-card">
+          <div class="form-header student-v8-flow-header">
+            <span class="card-icon-emoji student-v8-flow-icon" data-maestro-icon-slot="gauge" aria-hidden="true"></span>
+            <p class="student-hub-eyebrow">Consulta do estudante</p>
+            <h2>Situa&ccedil;&atilde;o Cadastral</h2>
+            <p>Acompanhe inscri&ccedil;&atilde;o, renova&ccedil;&atilde;o e pend&ecirc;ncias documentais.</p>
           </div>
           <div class="grid-desktop student-query-grid">
             <div>
+              <label class="input-label" for="id-estudante">CPF do estudante</label>
               <input type="text" id="id-estudante" class="input-field" placeholder="Digite apenas os números do CPF">
             </div>
             <div>
-              <button class="btn-solid w-full" id="btn-estudante" onclick="consultarEstudante()">CONSULTAR STATUS</button>
+              <button class="btn-solid w-full student-v8-primary-button" id="btn-estudante" onclick="consultarEstudante()"><span data-maestro-icon-slot="gauge" aria-hidden="true"></span> CONSULTAR STATUS</button>
             </div>
           </div>
+          <label class="student-v8-inline-toggle">
+            <input type="checkbox" id="chk-notificacoes-cpf">
+            <span data-maestro-icon-slot="bell" aria-hidden="true"></span>
+            Receber aviso quando houver atualiza&ccedil;&atilde;o
+          </label>
           <button class="btn-text" onclick="switchView('view-aluno-menu')">Cancelar</button>
         </div>
         <div id="res-estudante" class="result-container hidden"></div>
       </section>
 
       <section id="view-resgate" class="view-section student-view student-rescue-view">
-         <div class="form-card form-card-accent student-flow-card student-rescue-card">
-            <div class="form-header mb-15">
+         <div class="form-card form-card-accent student-flow-card student-rescue-card student-v8-rescue-card">
+            <div class="form-header mb-15 student-v8-flow-header">
                <span class="card-icon-emoji" data-maestro-icon-slot="upload" aria-hidden="true"></span>
                <h2 class="text-accent">RESGATE DOCUMENTAL</h2>
                <p class="resgate-header-desc">Envie apenas os documentos solicitados pela Secretaria.</p>
@@ -402,7 +456,7 @@
                </ul>
             </div>
 
-            <div id="container-inputs-resgate">
+            <div id="container-inputs-resgate" class="student-v8-rescue-list">
                <div class="resgate-field-row">
                   <label class="resgate-field-label">
                      <input type="checkbox" id="chk-resgate-foto" onchange="toggleBoxResgate('FOTO')" class="resgate-checkbox-input">
@@ -417,7 +471,7 @@
                <div class="resgate-field-row">
                   <label class="resgate-field-label">
                      <input type="checkbox" id="chk-resgate-vinculo" onchange="toggleBoxResgate('VINCULO')" class="resgate-checkbox-input">
-                     🎓 Declaração de Vínculo
+                     <span data-maestro-icon-slot="graduation" aria-hidden="true"></span> Declara&ccedil;&atilde;o de V&iacute;nculo
                   </label>
                   <div id="box-resgate-VINCULO" class="hidden resgate-file-box">
                      <input type="file" id="file-resgate-VINCULO" accept="application/pdf" class="input-field resgate-file-input" onchange="processarArquivoResgate(this, 'VINCULO')">
@@ -428,7 +482,7 @@
                <div class="resgate-field-row">
                   <label class="resgate-field-label">
                      <input type="checkbox" id="chk-resgate-residencia" onchange="toggleBoxResgate('RESIDENCIA')" class="resgate-checkbox-input">
-                     🏠 Comprovante de Residência
+                     <span data-maestro-icon-slot="home" aria-hidden="true"></span> Comprovante de Resid&ecirc;ncia
                   </label>
                   <div id="box-resgate-RESIDENCIA" class="hidden resgate-file-box">
                      <input type="file" id="file-resgate-RESIDENCIA" accept="application/pdf" class="input-field resgate-file-input" onchange="processarArquivoResgate(this, 'RESIDENCIA')">
@@ -439,7 +493,7 @@
                <div class="resgate-field-row">
                   <label class="resgate-field-label">
                      <input type="checkbox" id="chk-resgate-documento" onchange="toggleBoxResgate('DOCUMENTO')" class="resgate-checkbox-input">
-                     🪪 RG ou CNH (Documento)
+                     <span data-maestro-icon-slot="idCard" aria-hidden="true"></span> RG ou CNH (Documento)
                   </label>
                   <div id="box-resgate-DOCUMENTO" class="hidden resgate-file-box">
                      <input type="file" id="file-resgate-DOCUMENTO" accept="application/pdf" class="input-field resgate-file-input" onchange="processarArquivoResgate(this, 'DOCUMENTO')">
@@ -447,10 +501,10 @@
                   </div>
                </div>
 
-               <div class="mb-15" data-maestro-estagio-feature="resgate">
+               <div class="mb-15 resgate-field-row student-v8-stage-rescue-row" data-maestro-estagio-feature="resgate">
                   <label class="resgate-field-label">
                      <input type="checkbox" id="chk-resgate-estagio" onchange="toggleBoxResgate('ESTAGIO')" class="resgate-checkbox-input">
-                     💼 Comprovante de Estágio
+                     <span data-maestro-icon-slot="briefcase" aria-hidden="true"></span> Comprovante de Est&aacute;gio
                   </label>
                   <div id="box-resgate-ESTAGIO" class="hidden resgate-file-box">
                      <input type="file" id="file-resgate-ESTAGIO" accept="application/pdf" class="input-field resgate-file-input" onchange="processarArquivoResgate(this, 'ESTAGIO')">
@@ -465,8 +519,8 @@
       </section>
 
       <section id="view-login" class="view-section student-view student-login-view">
-        <div class="form-card student-flow-card student-login-card">
-          <div class="form-header">
+        <div class="form-card student-flow-card student-login-card student-v8-auth-card">
+          <div class="form-header student-v8-flow-header">
             <span class="card-icon-emoji" data-maestro-icon-slot="lock" aria-hidden="true"></span>
             <h2>Cofre Digital</h2>
             <p>Insira as credenciais da sua carteira</p>
@@ -484,8 +538,8 @@
       </section>
 
       <section id="view-nova-senha" class="view-section student-view student-password-view">
-        <div class="form-card student-flow-card student-password-card">
-          <div class="form-header">
+        <div class="form-card student-flow-card student-password-card student-v8-auth-card">
+          <div class="form-header student-v8-flow-header">
             <span class="card-icon-emoji" data-maestro-icon-slot="key" aria-hidden="true"></span>
             <h2>Definir Senha de Acesso</h2>
             <p>Crie uma senha forte para proteger a sua carteira digital</p>
@@ -515,7 +569,7 @@
       </section>
 
       <section id="view-wallet" class="view-section student-view student-wallet-view" data-component="StudentWallet">
-        <div class="wallet-wrapper student-wallet-wrapper wallet-operational-shell">
+        <div class="wallet-wrapper student-wallet-wrapper wallet-operational-shell student-v8-wallet-shell">
           <div class="wallet-operational-header">
             <div>
               <p class="student-hub-eyebrow">Carteira digital</p>

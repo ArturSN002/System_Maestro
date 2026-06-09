@@ -1,7 +1,7 @@
 <!-- COMPONENTE: MENUS OPERACIONAIS (ADMIN E MOTORISTA) -->
 <section id="view-admin-hub" class="view-section admin-view admin-hub-view" data-component="AdminHub">
-  <div class="admin-hub-shell">
-    <div class="admin-hub-header">
+  <div class="admin-hub-shell admin-v84-hub-shell">
+    <div class="admin-hub-header admin-v84-hub-header">
       <div>
         <p class="admin-hub-eyebrow">Secretaria</p>
         <h2 class="admin-hub-title">Central administrativa</h2>
@@ -16,7 +16,7 @@
       </div>
     </div>
 
-  <div id="menu-grupo-campo" class="grid-desktop admin-action-grid admin-field-grid">
+  <div id="menu-grupo-campo" class="grid-desktop admin-action-grid admin-field-grid admin-v84-action-grid">
     <button class="menu-card dark-card admin-action-card admin-action-card-field" data-maestro-action="fiscalizar" onclick="switchView('view-fiscal')">
       <span class="icon" data-maestro-icon-slot="shield" aria-hidden="true"></span>
       <div class="info">
@@ -44,7 +44,7 @@
     </button>
   </div>
 
-  <div id="menu-grupo-secretaria" class="hidden admin-menu-group admin-secretaria-group">
+  <div id="menu-grupo-secretaria" class="hidden admin-menu-group admin-secretaria-group admin-v84-menu-group">
     <div class="divider-text mt-25">SECRETARIA E LOGÍSTICA</div>
 
     <button class="menu-card primary-card admin-action-card admin-action-card-route" data-maestro-action="gerirRotas" onclick="abrirModalSelecaoRota()">
@@ -80,7 +80,7 @@
       </div>
     </button>
     <button class="menu-card outline-card menu-card-secondary admin-action-card admin-action-card-semester" data-maestro-action="semestres" onclick="abrirGestaoSemestres()">
-      <span class="icon menu-card-icon-no-bg">SEM</span>
+      <span class="icon menu-card-icon-no-bg" data-maestro-icon-slot="book" aria-hidden="true"></span>
       <div class="info">
         <strong>Gestao de Semestres</strong>
         <span>Criar, arquivar e definir o semestre atual</span>
@@ -88,7 +88,7 @@
     </button>
   </div>
 
-  <div id="menu-grupo-moderador" class="hidden admin-menu-group admin-moderador-group">
+  <div id="menu-grupo-moderador" class="hidden admin-menu-group admin-moderador-group admin-v84-menu-group">
     <div class="divider-text mt-25">ADMINISTRAÇÃO DO SISTEMA</div>
 
     <button class="menu-card dark-card menu-card-dark admin-action-card admin-action-card-machine" data-maestro-action="salaMaquinas" onclick="abrirPainelModerador()">
