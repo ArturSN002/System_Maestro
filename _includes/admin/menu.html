@@ -105,11 +105,11 @@
   </div>
 </section>
 
-<div id="view-painel-motorista" class="view-section operational-view driver-view hidden" data-component="DriverPanel">
+<div id="view-painel-motorista" class="view-section operational-view driver-view driver-v87-view hidden" data-component="DriverPanel">
   <div class="welcome-text">Central Logística do Motorista</div>
 
-  <div class="driver-shell">
-  <div class="driver-hero">
+  <div class="driver-shell driver-v87-shell">
+  <div class="driver-hero driver-v87-hero">
     <div>
       <p class="admin-panel-eyebrow">Operacao de rota</p>
       <div class="welcome-text driver-title">Central Logistica do Motorista</div>
@@ -122,7 +122,15 @@
     </div>
   </div>
 
-  <div class="grid-desktop driver-action-grid">
+  <div class="driver-v87-readiness-strip">
+    <span data-maestro-icon-slot="locate" aria-hidden="true"></span>
+    <div>
+      <strong>Modo de baixa distracao</strong>
+      <span>Escolha a rota, mantenha o GPS ativo e use SOS apenas em situacoes criticas.</span>
+    </div>
+  </div>
+
+  <div class="grid-desktop driver-action-grid driver-v87-action-grid">
 
   <button class="menu-card primary-card driver-action-card driver-action-route" data-maestro-action="motoristaRotas gerirRotas" onclick="abrirModalSelecaoRota()">
     <div class="icon" data-maestro-icon-slot="bus" aria-hidden="true"></div>

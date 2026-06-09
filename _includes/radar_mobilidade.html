@@ -1,7 +1,7 @@
-<section id="view-radar" class="view-section split-view-desktop radar-view-shell operational-view operational-radar-view student-v8-radar-view" data-component="MobilityRadar">
+<section id="view-radar" class="view-section split-view-desktop radar-view-shell operational-view operational-radar-view student-v8-radar-view radar-v87-shell" data-component="MobilityRadar">
     
-    <div id="radar-lista-container" class="split-sidebar operational-radar-list student-v8-radar-list">
-        <div class="radar-list-header operational-radar-list-header student-v8-radar-header">
+    <div id="radar-lista-container" class="split-sidebar operational-radar-list student-v8-radar-list radar-v87-list">
+        <div class="radar-list-header operational-radar-list-header student-v8-radar-header radar-v87-list-header">
             <span class="student-v8-flow-icon" data-maestro-icon-slot="bus" aria-hidden="true"></span>
             <h2 class="radar-list-title">Autocarros em Operação</h2>
             <div class="radar-list-state-stack" aria-label="Estado do radar">
@@ -10,6 +10,11 @@
             </div>
         </div>
         <p class="radar-list-subtitle">Acompanhe os veículos e rotas em tempo real.</p>
+        <div class="radar-v87-priority-strip">
+            <span data-maestro-icon-slot="mapPin" aria-hidden="true"></span>
+            <strong>Mapa prioritario</strong>
+            <span>Selecione uma viagem para acompanhar rota, paradas e sinal GPS.</span>
+        </div>
         <div id="lista-viagens-cards" class="operational-radar-trips">
             <div class="loader radar-list-loader"></div>
             <p class="radar-list-loading-text">A procurar viagens disponíveis...</p>
@@ -21,9 +26,9 @@
         </div>
     </div>
 
-    <div id="radar-mapa-container" class="hidden split-main radar-map-container operational-radar-map student-v8-radar-map">
+    <div id="radar-mapa-container" class="hidden split-main radar-map-container operational-radar-map student-v8-radar-map radar-v87-map-priority">
         
-        <div class="radar-map-topbar operational-radar-topbar">
+        <div class="radar-map-topbar operational-radar-topbar radar-v87-map-topbar">
             <button class="hide-on-desktop radar-map-pill-button" onclick="fecharMapaVoltarLista()">
                 <span data-maestro-icon-slot="arrowLeft" aria-hidden="true"></span> Voltar à Lista
             </button>
@@ -39,6 +44,6 @@
 
         <button class="hide-on-desktop radar-locate-button operational-locate-button" onclick="centralizarMapaEmMim()" aria-label="Centralizar mapa na minha localização"><span data-maestro-icon-slot="locate" aria-hidden="true"></span></button>
         
-        <div id="painel-viagem-ativa" class="hidden radar-active-trip-panel"></div>
+        <div id="painel-viagem-ativa" class="hidden radar-active-trip-panel radar-v87-bottom-sheet"></div>
     </div>
 </section>

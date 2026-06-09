@@ -59,7 +59,7 @@
   <div id="modal-sos-fiscal" class="splash-overlay modal-overlay-backdrop maestro-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-sos-title" data-modal-profile="field" data-modal-tone="danger" data-modal-initial-focus="#sos-id-onibus">
     <div class="form-card form-card-modal form-card-modal-danger maestro-modal-panel maestro-modal-panel-critical" tabindex="-1">
       <div class="form-header form-header-modal maestro-modal-header">
-         <span>🚨</span>
+         <span data-maestro-icon-slot="alert" aria-hidden="true"></span>
          <h2 id="modal-sos-title">DECLARAR EMERGÊNCIA</h2>
          <p>Isto irá inativar o autocarro, notificar os estudantes desta rota e enviar o seu GPS à coordenação.</p>
       </div>
@@ -87,7 +87,7 @@
   <div id="modal-encerrar-rota" class="splash-overlay modal-overlay-backdrop maestro-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-encerrar-title" data-modal-profile="field" data-modal-tone="warning" data-modal-initial-focus="#input-encerrar-onibus">
     <div class="form-card form-card-modal form-card-modal-warning maestro-modal-panel maestro-modal-panel-warning" tabindex="-1">
       <div class="form-header form-header-modal maestro-modal-header">
-         <span>🏁</span>
+         <span data-maestro-icon-slot="flag" aria-hidden="true"></span>
          <h2 id="modal-encerrar-title">FINALIZAR VIAGEM</h2>
          <p>Forçar o desembarque de todos os alunos e limpar o GPS desta rota.</p>
       </div>
@@ -115,7 +115,7 @@
          <option value="Sugestão">Sugestão / Ideia</option>
          <option value="Reclamação">Reclamação da Rota</option>
          <option value="Achados e Perdidos">Achados e Perdidos</option>
-         <option value="Dúvida Geral">❓ Dúvida Geral</option>
+         <option value="Dúvida Geral">Dúvida Geral</option>
       </select>
       
       <label class="input-label">A SUA MENSAGEM (Max. 280 letras)</label>
@@ -189,7 +189,7 @@
                   <label class="input-label">MUDAR STATUS PARA:</label>
                   <select id="rx-novo-status" class="input-field">
                       <option value="ATIVO">ATIVO (Aprovar Carteira)</option>
-                      <option value="PENDENTE">⏳ PENDENTE (Aguardar)</option>
+                      <option value="PENDENTE">PENDENTE (Aguardar)</option>
                       <option value="SUSPENSO">SUSPENSO (Exige Correção)</option>
                       <option value="CANCELADO">CANCELADO (Rejeição Final)</option>
                   </select>
@@ -198,7 +198,7 @@
                   <textarea id="rx-notas" class="input-field raio-x-parecer-box" rows="4" placeholder="Se reprovar, escreva o motivo aqui para a IA usar de base..."></textarea>
 
                   <div class="stepper-nav maestro-modal-actions maestro-modal-actions-audit">
-                      <button class="btn-solid btn-accent maestro-modal-secondary-action" onclick="acionarIAParaEmail()">✨ Gerar E-mail IA</button>
+                      <button class="btn-solid btn-accent maestro-modal-secondary-action" onclick="acionarIAParaEmail()"><span data-maestro-icon-slot="sparkles" aria-hidden="true"></span> Gerar E-mail IA</button>
                       <button class="btn-solid btn-primary maestro-modal-primary" onclick="gravarDecisaoAuditoria()">💾 GRAVAR</button>
                   </div>
               </div>

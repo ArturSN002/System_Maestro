@@ -264,7 +264,7 @@ function gerarHtmlFiscal(nome, inst, rota, turno, fotoComponente, statusReal, ob
     }
 
     return `
-    <div class="wallet-card dark">
+    <div class="wallet-card dark fiscal-v87-result-card">
       <div class="wallet-header">FISCALIZACAO DE IDENTIDADE</div>
       <div class="wallet-body">
         ${fotoComponente}

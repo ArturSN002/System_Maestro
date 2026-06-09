@@ -243,9 +243,9 @@
          </div>
       </section>
 
-      <section id="view-fiscal" class="view-section operational-view fiscal-view" data-component="FiscalScanner">
-        <div class="fiscal-shell">
-        <div class="form-card dark-form fiscal-panel-card" id="app-fiscal">
+      <section id="view-fiscal" class="view-section operational-view fiscal-view fiscal-v87-view" data-component="FiscalScanner">
+        <div class="fiscal-shell fiscal-v87-shell">
+        <div class="form-card dark-form fiscal-panel-card fiscal-v87-panel" id="app-fiscal">
           <div class="form-header fiscal-panel-header">
             <h2><span data-maestro-icon-slot="shield" aria-hidden="true"></span> VALIDAÇÃO</h2>
             <p>Aponte a câmara para o QR Code do aluno</p>
@@ -255,11 +255,19 @@
             <span id="fiscal-network-state" class="fiscal-state-chip">Rede</span>
           </div>
           
-          <button class="btn-solid dark-bg btn-scanner-action mb-10 fiscal-primary-scan-button" id="btn-scanner" onclick="iniciarScanner()">
+          <div class="fiscal-v87-security-strip">
+            <span data-maestro-icon-slot="shield" aria-hidden="true"></span>
+            <div>
+              <strong>Scanner operacional</strong>
+              <span>Priorize QR Code; use o ID manual apenas quando a camera nao estiver disponivel.</span>
+            </div>
+          </div>
+
+          <button class="btn-solid dark-bg btn-scanner-action mb-10 fiscal-primary-scan-button fiscal-v87-scan-primary" id="btn-scanner" onclick="iniciarScanner()">
             <span class="scanner-button-icon" data-maestro-icon-slot="camera" aria-hidden="true"></span> LER VÍDEO CONTÍNUO
           </button>
           
-          <button class="btn-solid accent-bg btn-scanner-action btn-scanner-native mb-15 fiscal-native-scan-button" id="btn-scanner-nativo" onclick="document.getElementById('input-qr-file').click()">
+          <button class="btn-solid accent-bg btn-scanner-action btn-scanner-native mb-15 fiscal-native-scan-button fiscal-v87-scan-native" id="btn-scanner-nativo" onclick="document.getElementById('input-qr-file').click()">
             <span class="scanner-button-icon" data-maestro-icon-slot="phone" aria-hidden="true"></span> USAR CÂMARA NATIVA
           </button>
           <input type="file" id="input-qr-file" accept="image/*" capture="environment" class="hidden" onchange="lerQRCodePorFoto(event)">
@@ -277,7 +285,7 @@
           <button class="btn-text text-light mt-15" onclick="fecharModoFiscalizacao()">Voltar ao Menu</button>
         </div>
         
-        <div id="res-fiscal" class="result-container fiscal-result-panel"></div>
+        <div id="res-fiscal" class="result-container fiscal-result-panel fiscal-v87-bottom-sheet"></div>
         </div>
       </section>
 

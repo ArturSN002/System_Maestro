@@ -148,22 +148,26 @@ function renderizarCardViagemMobilidade(v, index) {
         const btnDisable = vagasSeguras <= 0 ? "disabled" : "";
         const btnState = vagasSeguras <= 0 ? " is-disabled" : "";
         statusVagas = labelLota;
-        checkinArea = `<button class="hide-on-desktop mobility-checkin-button${btnState}" ${btnDisable} data-id-viagem="${idViagem}" onclick="confirmarEmbarque(this.dataset.idViagem)">FAZER CHECK-IN</button>`;
+        checkinArea = `<button class="hide-on-desktop mobility-checkin-button mobility-v87-critical-action${btnState}" ${btnDisable} data-id-viagem="${idViagem}" onclick="confirmarEmbarque(this.dataset.idViagem)">${iconMobilidade("check")} FAZER CHECK-IN</button>`;
     } else {
         statusVagas = `<span class="mobility-seats is-closed">Embarque fechado (Capacidade: ${vagasSeguras})</span>`;
-        checkinArea = `<button class="hide-on-desktop mobility-checkin-button is-disabled" disabled>AGUARDE...</button>`;
+        checkinArea = `<button class="hide-on-desktop mobility-checkin-button mobility-v87-critical-action is-disabled" disabled>AGUARDE...</button>`;
     }
 
     const cardState = index === 0 ? " is-primary" : " is-secondary";
     return `
-<div class="mobility-trip-card${cardState}">
+<div class="mobility-trip-card mobility-v87-trip-card${cardState}" data-id-viagem="${idViagem}">
   <div class="mobility-trip-header">
      <strong class="mobility-trip-title">${iconMobilidade("bus")} ${rota}</strong>
      <span class="mobility-trip-time">${horario}</span>
   </div>
+  <div class="mobility-v87-trip-meta">
+     <span>${iconMobilidade("mapPin")} Rota monitorada</span>
+     <span>${v && v.estadoRadar === "EM_OPERACAO" ? "Em operacao" : "Aguardando"}</span>
+  </div>
   <div class="mobility-trip-status">${statusVagas}</div>
   <div class="mobility-trip-actions">
-     <button class="btn-solid mobility-map-button" data-id-viagem="${idViagem}" onclick="abrirMapaDaViagem(this.dataset.idViagem)">${iconMobilidade("map")} VER MAPA</button>
+     <button class="btn-solid mobility-map-button mobility-v87-map-button" data-id-viagem="${idViagem}" onclick="abrirMapaDaViagem(this.dataset.idViagem)">${iconMobilidade("map")} VER MAPA</button>
      ${checkinArea}
   </div>
 </div>`;
@@ -171,6 +175,12 @@ function renderizarCardViagemMobilidade(v, index) {
 
 function renderizarListaViagensMobilidade(viagens) {
     return viagens.map((v, index) => renderizarCardViagemMobilidade(v, index)).join("");
+}
+
+function marcarViagemSelecionadaMobilidade(idViagem) {
+    document.querySelectorAll(".mobility-v87-trip-card").forEach(card => {
+        card.classList.toggle("is-selected", String(card.dataset.idViagem || "") === String(idViagem || ""));
+    });
 }
 
 function renderizarViagensCacheMobilidade(res, containerLista, opcoes) {
@@ -291,6 +301,7 @@ function abrirMapaDaViagem(idViagem) {
     const tripData = window.lastViagens.find(v => v.id === idViagem);
     if (!tripData) return;
     tripData.paradas = normalizarArrayMobilidade(tripData.paradas);
+    marcarViagemSelecionadaMobilidade(idViagem);
 
     const desktopActive = isDesktop();
 
@@ -534,10 +545,10 @@ function abrirPainelViagem() {
     if (!painelSucesso) return;
 
     painelSucesso.innerHTML = `
-      <div class="radar-trip-confirmed">
+      <div class="radar-trip-confirmed radar-v87-trip-confirmed">
          <h3 class="radar-trip-title">${iconMobilidade("check")} Check-in Confirmado</h3>
          <p class="radar-trip-text">O seu lugar está garantido. Acompanhe a viagem no radar abaixo.</p>
-         <div id="radar-dinamico-conteudo" class="radar-dynamic-box">
+         <div id="radar-dinamico-conteudo" class="radar-dynamic-box radar-v87-dynamic-box" aria-live="polite">
             <div class="loader radar-inline-loader"></div>
             <p class="radar-inline-loading-text">A sincronizar radar...</p>
          </div>
@@ -567,12 +578,12 @@ async function atualizarRadarDinamico() {
         // --- UI do Guia (Transmissor Ativo) ---
         if (res.isGuia) {
             boxRadar.innerHTML = `
-                <div class="radar-guide-card">
+                <div class="radar-guide-card radar-v87-guide-card">
                    <div class="radar-guide-icon">${iconMobilidade("gauge")}</div>
                    <h4 class="radar-guide-title">Transmissão Ativa</h4>
                    <p class="radar-guide-text">O seu GPS está a guiar os seus colegas.</p>
                    <span class="radar-guide-count">${escapeMobilidade(res.totalGuias || 1)} guia(s) conectado(s)</span>
-                   <button onclick="abdicarSerGuia()" class="btn-solid radar-stop-guide-button">Ajudando a comunidade (Parar)</button>
+                   <button onclick="abdicarSerGuia()" class="btn-solid radar-stop-guide-button radar-v87-critical-action">${iconMobilidade("shield")} Parar compartilhamento</button>
                 </div>
             `;
         }
@@ -581,7 +592,7 @@ async function atualizarRadarDinamico() {
             // Recruitment: Require explicit consent, auto-volunteer removed.
 
             boxRadar.innerHTML = `
-                <div class="radar-live-card">
+                <div class="radar-live-card radar-v87-live-card">
                    <div class="radar-live-header">
                       <strong class="radar-live-title"><span class="radar-live-pin">${iconMobilidade("mapPin")}</span> Radar ao Vivo</strong>
                       <span class="radar-guide-badge">${escapeMobilidade(res.totalGuias || 1)} guia(s)</span>
@@ -589,7 +600,7 @@ async function atualizarRadarDinamico() {
                    <div id="radar-eta-slot" class="radar-eta-slot">
                       <div><div class="loader radar-eta-loader"></div><p class="radar-eta-loading-text">A calcular ETA...</p></div>
                    </div>
-                   <button onclick="atualizarRadarDinamico()" class="btn-text radar-refresh-button">${iconMobilidade("refresh")} Atualizar Agora</button>
+                   <button onclick="atualizarRadarDinamico()" class="btn-text radar-refresh-button radar-v87-refresh-button">${iconMobilidade("refresh")} Atualizar Agora</button>
                 </div>
             `;
 
@@ -601,11 +612,11 @@ async function atualizarRadarDinamico() {
             // Recruitment: Require explicit consent, auto-volunteer removed.
 
             boxRadar.innerHTML = `
-                <div class="radar-inactive-card">
+                <div class="radar-inactive-card radar-v87-inactive-card">
                    <div class="radar-inactive-icon">${iconMobilidade("gauge")}</div>
                    <h4 class="radar-inactive-title">Radar Inativo</h4>
                    <p class="radar-inactive-text">A tentar ligar ao radar comunitário...</p>
-                   <button onclick="solicitarSerGuia()" class="btn-solid radar-start-guide-button">Seja o Guia (Ligar GPS)</button>
+                   <button onclick="solicitarSerGuia()" class="btn-solid radar-start-guide-button radar-v87-critical-action">${iconMobilidade("locate")} Ligar GPS como guia</button>
                 </div>
             `;
         }

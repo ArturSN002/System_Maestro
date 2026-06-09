@@ -11878,3 +11878,411 @@ body.dark-theme .dashboard-command-link {
     gap: 2px;
   }
 }
+
+/* ==========================================================================
+   Fase 8.7 - Mobilidade, radar, fiscalizacao e motorista
+   ========================================================================== */
+
+.radar-v87-shell,
+.driver-v87-shell,
+.fiscal-v87-shell {
+  min-width: 0;
+}
+
+.radar-v87-priority-strip,
+.driver-v87-readiness-strip,
+.fiscal-v87-security-strip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin: var(--space-md) 0;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border));
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--primary) 8%, transparent), transparent 58%),
+    color-mix(in srgb, var(--bg-surface) 94%, transparent);
+  color: var(--text-main);
+  box-shadow: var(--maestro-shadow-soft);
+}
+
+.radar-v87-priority-strip > [data-maestro-icon-slot],
+.driver-v87-readiness-strip > [data-maestro-icon-slot],
+.fiscal-v87-security-strip > [data-maestro-icon-slot] {
+  display: inline-grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  place-items: center;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+}
+
+.radar-v87-priority-strip svg,
+.driver-v87-readiness-strip svg,
+.fiscal-v87-security-strip svg {
+  width: 20px;
+  height: 20px;
+}
+
+.radar-v87-priority-strip strong,
+.driver-v87-readiness-strip strong,
+.fiscal-v87-security-strip strong {
+  display: block;
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.radar-v87-priority-strip span:last-child,
+.driver-v87-readiness-strip span:last-child,
+.fiscal-v87-security-strip span:last-child {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-sub);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.mobility-v87-trip-card {
+  position: relative;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--primary) 5%, transparent), transparent 60%),
+    var(--bg-surface);
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.mobility-v87-trip-card::before {
+  content: "";
+  position: absolute;
+  inset: 12px auto 12px 0;
+  width: 4px;
+  border-radius: 0 8px 8px 0;
+  background: color-mix(in srgb, var(--accent) 78%, var(--primary));
+  opacity: 0.7;
+}
+
+.mobility-v87-trip-card:hover,
+.mobility-v87-trip-card:focus-within,
+.mobility-v87-trip-card.is-selected {
+  border-color: color-mix(in srgb, var(--primary) 46%, var(--border));
+  box-shadow: var(--maestro-shadow-soft);
+  transform: translateY(-1px);
+}
+
+.mobility-v87-trip-card.is-selected::before {
+  opacity: 1;
+  background: var(--primary);
+}
+
+.mobility-v87-trip-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.mobility-v87-trip-meta span {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border: 1px solid color-mix(in srgb, var(--primary) 14%, var(--border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 6%, transparent);
+  color: var(--text-sub);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.mobility-v87-trip-meta svg,
+.mobility-v87-map-button svg,
+.mobility-v87-critical-action svg,
+.radar-v87-critical-action svg,
+.radar-v87-refresh-button svg,
+.driver-critical-button svg {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+}
+
+.mobility-v87-map-button,
+.mobility-v87-critical-action,
+.radar-v87-critical-action,
+.radar-v87-refresh-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.mobility-v87-critical-action,
+.radar-v87-critical-action {
+  min-height: 46px;
+  border-radius: 8px;
+  font-weight: 900;
+}
+
+.radar-v87-map-priority {
+  min-width: 0;
+  background: color-mix(in srgb, var(--bg-surface) 96%, transparent);
+}
+
+.radar-v87-map-topbar {
+  border-bottom: 1px solid var(--border);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--primary) 8%, transparent), transparent),
+    var(--bg-surface);
+}
+
+.radar-v87-bottom-sheet {
+  z-index: 450;
+}
+
+.radar-v87-trip-confirmed,
+.radar-v87-dynamic-box,
+.radar-v87-guide-card,
+.radar-v87-live-card,
+.radar-v87-inactive-card,
+.fiscal-v87-result-card {
+  border-radius: 8px;
+}
+
+.radar-v87-guide-card,
+.radar-v87-live-card,
+.radar-v87-inactive-card {
+  border: 1px solid color-mix(in srgb, var(--primary) 16%, var(--border));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--primary) 7%, transparent), transparent 62%),
+    var(--bg-surface);
+  box-shadow: var(--maestro-shadow-soft);
+}
+
+.radar-v87-guide-card {
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--border));
+}
+
+.radar-v87-inactive-card {
+  border-style: dashed;
+}
+
+.fiscal-v87-panel {
+  border-radius: 8px;
+}
+
+.fiscal-v87-scan-primary,
+.fiscal-v87-scan-native {
+  min-height: 52px;
+  border-radius: 8px;
+  font-weight: 900;
+}
+
+.fiscal-v87-result-card {
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border));
+  box-shadow: var(--maestro-shadow-soft);
+}
+
+.fiscal-v87-result-card .wallet-footer {
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.driver-v87-view {
+  width: 100%;
+}
+
+.driver-v87-shell {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.driver-v87-hero {
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--primary) 16%, var(--border));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--primary) 12%, transparent), transparent 62%),
+    var(--bg-surface);
+}
+
+.driver-v87-action-grid {
+  gap: var(--space-md);
+}
+
+.driver-v87-action-grid .driver-action-card {
+  min-height: 124px;
+  border-radius: 8px;
+}
+
+.driver-critical-button {
+  display: inline-flex;
+  min-height: 58px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 8px;
+  font-weight: 900;
+}
+
+.driver-sos-button {
+  background: var(--danger);
+}
+
+.driver-finish-button {
+  background: color-mix(in srgb, var(--primary) 82%, #111 18%);
+}
+
+.route-v87-panel {
+  border-radius: 8px 8px 0 0;
+}
+
+.maestro-modal-panel-critical .maestro-modal-header [data-maestro-icon-slot] {
+  display: inline-grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--danger);
+}
+
+body.dark-theme .radar-v87-priority-strip,
+body.dark-theme .driver-v87-readiness-strip,
+body.dark-theme .fiscal-v87-security-strip,
+body.dark-theme .radar-v87-guide-card,
+body.dark-theme .radar-v87-live-card,
+body.dark-theme .radar-v87-inactive-card,
+body.dark-theme .driver-v87-hero {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--primary) 14%, transparent), transparent 64%),
+    color-mix(in srgb, var(--bg-surface) 88%, #000 12%);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+@media (min-width: 1024px) {
+  .radar-v87-shell {
+    display: grid;
+    grid-template-columns: minmax(340px, 0.34fr) minmax(0, 1fr);
+    gap: var(--space-md);
+    min-height: calc(100dvh - 72px);
+  }
+
+  .radar-v87-list {
+    max-height: calc(100dvh - 84px);
+    overflow: auto;
+  }
+
+  .radar-v87-map-priority {
+    min-height: calc(100dvh - 84px);
+    border-left: 1px solid var(--border);
+  }
+
+  .radar-v87-map-priority .radar-leaflet-host,
+  .radar-v87-map-priority #mapa-paradas-container {
+    min-height: calc(100dvh - 154px);
+  }
+
+  .radar-v87-bottom-sheet {
+    position: absolute;
+    right: var(--space-md);
+    bottom: var(--space-md);
+    left: auto;
+    width: min(420px, calc(100% - 32px));
+    max-height: min(58vh, 520px);
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-surface);
+    box-shadow: var(--maestro-shadow-raised);
+  }
+
+  .fiscal-v87-shell {
+    display: grid;
+    grid-template-columns: minmax(360px, 420px) minmax(0, 1fr);
+    gap: var(--space-lg);
+    align-items: start;
+  }
+
+  .fiscal-v87-bottom-sheet {
+    position: sticky;
+    top: var(--space-md);
+  }
+
+  .driver-v87-action-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .radar-v87-shell,
+  .driver-v87-shell,
+  .fiscal-v87-shell {
+    padding-bottom: calc(var(--space-xl) + env(safe-area-inset-bottom));
+  }
+
+  .radar-v87-priority-strip,
+  .driver-v87-readiness-strip,
+  .fiscal-v87-security-strip {
+    align-items: flex-start;
+  }
+
+  .mobility-trip-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .mobility-v87-map-button,
+  .mobility-v87-critical-action {
+    width: 100%;
+  }
+
+  .radar-v87-map-priority {
+    min-height: 100dvh;
+  }
+
+  .radar-v87-map-priority .radar-leaflet-host,
+  .radar-v87-map-priority #mapa-paradas-container {
+    min-height: calc(100dvh - 96px);
+  }
+
+  .radar-v87-bottom-sheet:not(.hidden),
+  .fiscal-v87-bottom-sheet:not(:empty) {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 900;
+    max-height: min(72dvh, 620px);
+    overflow: auto;
+    padding: var(--space-md);
+    border: 1px solid var(--border);
+    border-bottom: 0;
+    border-radius: 18px 18px 0 0;
+    background: var(--bg-surface);
+    box-shadow: var(--maestro-shadow-raised);
+  }
+
+  .driver-v87-action-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .driver-v87-action-grid .driver-action-card {
+    min-height: 112px;
+  }
+
+  .driver-critical-button {
+    width: 100%;
+    min-height: 64px;
+  }
+
+  .route-v87-panel {
+    border-radius: 18px 18px 0 0;
+  }
+}

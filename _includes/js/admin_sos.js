@@ -31,7 +31,7 @@ async function dispararEncerramentoRota() {
         return;
     }
 
-    btn.innerHTML = 'A PROCESSAR DESEMBARQUE... ⏳';
+    btn.innerHTML = 'A PROCESSAR DESEMBARQUE...';
     btn.disabled = true;
 
     try {
@@ -83,7 +83,7 @@ function confirmarEmergenciaGPS() {
         return;
     }
 
-    btn.innerHTML = 'A OBTER GPS E NOTIFICAR ALUNOS... ⏳';
+    btn.innerHTML = 'A OBTER GPS E NOTIFICAR ALUNOS...';
     btn.disabled = true;
 
     if (!navigator.geolocation) {
