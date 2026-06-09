@@ -5,7 +5,8 @@
 let arrayAlunosAuditoria = [];
 let arrayAlunosAuditoriaFiltrado = [];
 let paginaAtualAuditoria = 1;     // NOVO: Guarda a página atual
-const ITENS_POR_PAGINA = 10;      // NOVO: Exibe 10 alunos por bloco
+const AUDITORIA_ITENS_POR_PAGINA_PADRAO = 20;
+let itensPorPaginaAuditoria = AUDITORIA_ITENS_POR_PAGINA_PADRAO;
 const AUDITORIA_FILTER_STORAGE_KEY = "MAESTRO_AUDITORIA_FILTROS_V1";
 let auditoriaRaioXSelecionado = null;
 
@@ -55,6 +56,11 @@ function cpfSeguroAuditoria(valor) {
     return String(valor || "").replace(/\D/g, "");
 }
 
+function normalizarTamanhoPaginaAuditoria(valor) {
+    const numero = Number(valor);
+    return [10, 20, 50, 100].includes(numero) ? numero : AUDITORIA_ITENS_POR_PAGINA_PADRAO;
+}
+
 function getSemestreRaioXAtual() {
     const input = document.getElementById('rx-linha-base');
     return input ? String(input.dataset.semestreId || "") : "";
@@ -93,7 +99,8 @@ function obterFiltrosAuditoriaUI() {
         pesquisa: document.getElementById('auditoria-pesquisa')?.value || "",
         status: document.getElementById('auditoria-status')?.value || "",
         instituicao: document.getElementById('auditoria-instituicao')?.value || "",
-        turno: document.getElementById('auditoria-turno')?.value || ""
+        turno: document.getElementById('auditoria-turno')?.value || "",
+        pageSize: String(itensPorPaginaAuditoria || AUDITORIA_ITENS_POR_PAGINA_PADRAO)
     };
 }
 
@@ -115,14 +122,35 @@ function restaurarFiltrosAuditoriaPersistentes() {
         "auditoria-pesquisa": filtros.pesquisa,
         "auditoria-status": filtros.status,
         "auditoria-instituicao": filtros.instituicao,
-        "auditoria-turno": filtros.turno
+        "auditoria-turno": filtros.turno,
+        "auditoria-page-size": filtros.pageSize
     };
 
     Object.keys(mapa).forEach(id => {
         const el = document.getElementById(id);
         if (!el || mapa[id] === undefined || mapa[id] === null) return;
-        el.value = String(mapa[id] || "");
+        const valor = String(mapa[id] || "");
+        if (valor && el.tagName === "SELECT" && !Array.from(el.options || []).some(option => option.value === valor)) {
+            const option = document.createElement("option");
+            option.value = valor;
+            option.textContent = valor;
+            option.dataset.restored = "true";
+            el.appendChild(option);
+        }
+        el.value = valor;
     });
+
+    itensPorPaginaAuditoria = normalizarTamanhoPaginaAuditoria(filtros.pageSize);
+    const pageSizeSelect = document.getElementById("auditoria-page-size");
+    if (pageSizeSelect) pageSizeSelect.value = String(itensPorPaginaAuditoria);
+}
+
+function alterarTamanhoPaginaAuditoria(valor) {
+    itensPorPaginaAuditoria = normalizarTamanhoPaginaAuditoria(valor);
+    const pageSizeSelect = document.getElementById("auditoria-page-size");
+    if (pageSizeSelect) pageSizeSelect.value = String(itensPorPaginaAuditoria);
+    salvarFiltrosAuditoriaPersistentes();
+    aplicarFiltrosAuditoria();
 }
 
 function limparFiltrosAuditoria() {
@@ -230,6 +258,8 @@ function atualizarKpisAuditoriaMaestro() {
     setText("auditoria-kpi-filtrados", kpisFiltrado.total);
     setText("auditoria-kpi-pendentes", kpisFiltrado.pendentes);
     setText("auditoria-kpi-retidos", kpisFiltrado.retidos);
+    setText("auditoria-kpi-ativos", kpisFiltrado.ativos);
+    setText("auditoria-kpi-estagios", kpisFiltrado.estagios);
 }
 
 function resumoCurtoAlunoAuditoria(aluno) {
@@ -389,6 +419,11 @@ function renderizarRaioXLateralAuditoria(aluno) {
     const status = String(aluno.statusAuditoria || aluno.STATUS_VALIDACAO || aluno.statusAtividade || "PENDENTE").toUpperCase();
     const estagio = aluno.estagio || {};
     const temEstagio = estagio.ativo || estagio.tipoVinculo || estagio.statusValidacao || estagio.empresaInstituicao;
+    const dataSubmissao = formatarDataHoraAuditoria(aluno.timestamp);
+    const statusAtividade = String(aluno.statusAtividade || aluno.STATUS_ATIVIDADE || "-").toUpperCase();
+    const statusDocs = String(aluno.statusDocs || aluno.STATUS_DOCS || "-").toUpperCase();
+    const statusOcr = String(aluno.statusOCR || aluno.STATUS_OCR || aluno.statusValidacao || aluno.STATUS_VALIDACAO || "-").toUpperCase();
+    const diasUso = primeiroValorAuditoria(aluno.dias, aluno.DIAS_ALUNO, "-");
     const estagioResumo = temEstagio
         ? [
             primeiroValorAuditoria(estagio.tipoVinculo, "Vinculo informado"),
@@ -410,7 +445,12 @@ function renderizarRaioXLateralAuditoria(aluno) {
             <div><span>Semestre</span><strong>${escapeHTMLAuditoria(semestreId || "-")}</strong></div>
             <div><span>Matricula</span><strong>${escapeHTMLAuditoria(aluno.matricula || aluno.MATRICULA_ALUNO || "-")}</strong></div>
             <div><span>Email</span><strong>${escapeHTMLAuditoria(aluno.email || aluno.EMAIL_ALUNO || "-")}</strong></div>
+            <div><span>Submissao</span><strong>${escapeHTMLAuditoria(dataSubmissao)}</strong></div>
+            <div><span>Atividade</span><strong>${escapeHTMLAuditoria(statusAtividade)}</strong></div>
             <div class="admin-audit-side-span"><span>Logistica</span><strong>${escapeHTMLAuditoria(resumoCurtoAlunoAuditoria(aluno) || "-")}</strong></div>
+            <div><span>Dias</span><strong>${escapeHTMLAuditoria(diasUso)}</strong></div>
+            <div><span>Documentos</span><strong>${escapeHTMLAuditoria(statusDocs)}</strong></div>
+            <div class="admin-audit-side-span"><span>OCR/IA</span><strong>${escapeHTMLAuditoria(statusOcr)}</strong></div>
         </div>
         <div class="admin-audit-side-stage ${temEstagio ? "" : "is-muted"}">
             <span>Estagio</span>
@@ -418,8 +458,8 @@ function renderizarRaioXLateralAuditoria(aluno) {
             ${temEstagio && estagio.empresaInstituicao ? `<small>${escapeHTMLAuditoria(estagio.empresaInstituicao)}</small>` : ""}
         </div>
         <div class="admin-audit-side-actions">
-            <button class="btn-solid" data-cpf="${escapeHTMLAuditoria(cpfAluno)}" data-semestre-id="${escapeHTMLAuditoria(semestreId)}" onclick="abrirModalRaioX(this.dataset.cpf, this.dataset.semestreId)">Abrir parecer completo</button>
-            <button class="btn-text" data-cpf="${escapeHTMLAuditoria(cpfAluno)}" data-semestre-id="${escapeHTMLAuditoria(semestreId)}" onclick="abrirDocumentoSeguro(this.dataset.cpf, 'DOCUMENTO', this.dataset.semestreId)">Ver documento</button>
+            <button class="btn-solid" data-cpf="${escapeHTMLAuditoria(cpfAluno)}" data-semestre-id="${escapeHTMLAuditoria(semestreId)}" onclick="abrirModalRaioX(this.dataset.cpf, this.dataset.semestreId)"><span data-maestro-icon-slot="file" aria-hidden="true"></span> Abrir parecer completo</button>
+            <button class="btn-text" data-cpf="${escapeHTMLAuditoria(cpfAluno)}" data-semestre-id="${escapeHTMLAuditoria(semestreId)}" onclick="abrirDocumentoSeguro(this.dataset.cpf, 'DOCUMENTO', this.dataset.semestreId)"><span data-maestro-icon-slot="idCard" aria-hidden="true"></span> Ver documento</button>
         </div>
     `;
 }
@@ -641,6 +681,27 @@ function atualizarOpcoesFiltrosAuditoria() {
     atualizarOpcoesSelectAuditoria("auditoria-turno", turnos, "Turno (Todos)");
 }
 
+function renderizarFiltrosAtivosAuditoria() {
+    const container = document.getElementById("auditoria-filtros-ativos");
+    if (!container) return;
+    const filtros = obterFiltrosAuditoriaUI();
+    const chips = [];
+    if (String(filtros.pesquisa || "").trim()) chips.push(["Pesquisa", filtros.pesquisa]);
+    if (String(filtros.status || "").trim()) chips.push(["Status", filtros.status]);
+    if (String(filtros.instituicao || "").trim()) chips.push(["Instituicao", filtros.instituicao]);
+    if (String(filtros.turno || "").trim()) chips.push(["Turno", filtros.turno]);
+    if (Number(filtros.pageSize) !== AUDITORIA_ITENS_POR_PAGINA_PADRAO) chips.push(["Fila", `${filtros.pageSize} por pagina`]);
+
+    if (!chips.length) {
+        container.innerHTML = '<span class="admin-audit-filter-chip is-muted">Sem filtros ativos</span>';
+        return;
+    }
+
+    container.innerHTML = '<span class="admin-audit-filter-chip is-saved">Filtros persistidos</span>' + chips
+        .map(([label, value]) => `<span class="admin-audit-filter-chip"><strong>${escapeHTMLAuditoria(label)}</strong>${escapeHTMLAuditoria(value)}</span>`)
+        .join("");
+}
+
 function atualizarResumoAuditoriaMaestro() {
     const resumo = document.getElementById("auditoria-status-resumo");
     const totalCarregado = arrayAlunosAuditoria.length;
@@ -651,6 +712,7 @@ function atualizarResumoAuditoriaMaestro() {
     if (totalBackend && totalBackend > totalCarregado) partes.push(`backend informou ${totalBackend}`);
     if (metaAuditoriaMaestro.truncado) partes.push("lista truncada pelo limite da API");
     if (resumo) resumo.textContent = partes.join(" | ");
+    renderizarFiltrosAtivosAuditoria();
     atualizarKpisAuditoriaMaestro();
     atualizarContextoAuditoriaVisualMaestro();
 }
@@ -804,6 +866,15 @@ function aplicarFiltrosAuditoria() {
     renderizarListaAuditoria();
 }
 
+function formatarDataHoraAuditoria(valor) {
+    let bruto = valor;
+    if (valor && typeof valor.toDate === "function") bruto = valor.toDate();
+    else if (valor && typeof valor === "object" && Number.isFinite(valor.seconds)) bruto = valor.seconds * 1000;
+    const data = new Date(bruto);
+    if (Number.isNaN(data.getTime()) || valor === 0 || valor === "0") return "Sem data registada";
+    return data.toLocaleDateString('pt-BR') + ' ' + data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
 function renderizarListaAuditoria() {
     const container = document.getElementById('auditoria-fila-container');
     if (!arrayAlunosAuditoriaFiltrado || arrayAlunosAuditoriaFiltrado.length === 0) {
@@ -816,23 +887,31 @@ function renderizarListaAuditoria() {
         return;
     }
 
-    if (!arrayAlunosAuditoriaFiltrado || arrayAlunosAuditoriaFiltrado.length === 0) {
-        container.innerHTML = `<div class="empty-state-box dynamic-state-box dynamic-empty-state admin-audit-empty"><h3>🎉 Fila Vazia!</h3><p>Todos os pedidos foram atendidos ou não há resultados.</p></div>`;
-        return;
-    }
-
     // Matemática da Paginação
-    const totalPaginas = Math.ceil(arrayAlunosAuditoriaFiltrado.length / ITENS_POR_PAGINA);
-    const inicio = (paginaAtualAuditoria - 1) * ITENS_POR_PAGINA;
-    const fim = inicio + ITENS_POR_PAGINA;
+    const itensPorPagina = normalizarTamanhoPaginaAuditoria(itensPorPaginaAuditoria);
+    const totalPaginas = Math.max(1, Math.ceil(arrayAlunosAuditoriaFiltrado.length / itensPorPagina));
+    if (paginaAtualAuditoria > totalPaginas) paginaAtualAuditoria = totalPaginas;
+    const inicio = (paginaAtualAuditoria - 1) * itensPorPagina;
+    const fim = inicio + itensPorPagina;
     const itensPagina = arrayAlunosAuditoriaFiltrado.slice(inicio, fim);
+    const fimVisivel = Math.min(fim, arrayAlunosAuditoriaFiltrado.length);
+    const totalBackend = Number(metaAuditoriaMaestro.totalBackend || 0);
 
     let html = `
+        <div class="admin-audit-queue-head">
+            <div>
+                <span class="admin-panel-eyebrow">Fila completa</span>
+                <h3>${arrayAlunosAuditoriaFiltrado.length} estudantes filtrados</h3>
+                <p>${inicio + 1}-${fimVisivel} em exibicao${totalBackend && totalBackend > arrayAlunosAuditoria.length ? ` | ${totalBackend} informados pelo backend` : ""}</p>
+            </div>
+            <span class="admin-context-chip admin-context-chip-muted">${itensPorPagina} por pagina</span>
+        </div>
         <div class="auditoria-table-wrapper dynamic-table-wrapper admin-audit-table-wrapper">
             <table class="auditoria-table dynamic-table">
                 <thead>
                     <tr>
                         <th>Estudante</th>
+                        <th>Logistica</th>
                         <th>Submissão</th>
                         <th>Status</th>
                         <th>Estágio</th>
@@ -849,14 +928,11 @@ function renderizarListaAuditoria() {
         else if (aluno.statusAuditoria === "PENDENTE") { badgeClass = 'badge-auditoria-pendente'; }
         else if (aluno.statusAtividade === "ATIVO") { badgeClass = 'badge-auditoria-ativo'; }
 
-        let d = new Date(aluno.timestamp);
-        let strData = d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        if (isNaN(d.getTime()) || aluno.timestamp === 0) strData = "Sem data registada";
-
         const cpfAluno = cpfSeguroAuditoria(aluno.cpf || aluno.CPF_ALUNO);
         const nomeTratado = escapeHTMLAuditoria(formatarNomeProprio(aluno.nome || aluno.NOME_ALUNO));
-        const statusAuditoria = escapeHTMLAuditoria(aluno.statusAuditoria || aluno.STATUS_VALIDACAO || "");
-        const strDataSeguro = escapeHTMLAuditoria(strData);
+        const logistica = escapeHTMLAuditoria(resumoCurtoAlunoAuditoria(aluno) || "-");
+        const statusAuditoria = escapeHTMLAuditoria(aluno.statusAuditoria || aluno.STATUS_VALIDACAO || "PENDENTE");
+        const strDataSeguro = escapeHTMLAuditoria(formatarDataHoraAuditoria(aluno.timestamp));
         const semestreSeguro = escapeHTMLAuditoria(aluno.semestreId || aluno.semestreAtual || "");
         const estagio = aluno.estagio || {};
         const badgeEstagio = (estagio.ativo || estagio.tipoVinculo || estagio.statusValidacao)
@@ -870,6 +946,9 @@ function renderizarListaAuditoria() {
                     <strong class="auditoria-nome">${nomeTratado}</strong>
                     <span class="auditoria-sub-info">CPF: ${cpfAluno}</span>
                 </div>
+            </td>
+            <td data-label="Logistica">
+                <span class="auditoria-logistica">${logistica}</span>
             </td>
             <td data-label="Submissão">
                 <span class="auditoria-data">${strDataSeguro}</span>

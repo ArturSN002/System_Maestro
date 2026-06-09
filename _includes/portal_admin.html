@@ -53,6 +53,14 @@
                   <span>Retidos</span>
                   <strong id="auditoria-kpi-retidos">0</strong>
                </div>
+               <div class="admin-audit-kpi-card admin-audit-kpi-active">
+                  <span>Ativos</span>
+                  <strong id="auditoria-kpi-ativos">0</strong>
+               </div>
+               <div class="admin-audit-kpi-card admin-audit-kpi-stage">
+                  <span>Estagios</span>
+                  <strong id="auditoria-kpi-estagios">0</strong>
+               </div>
             </div>
             <div class="flex-between-center-mb-15 admin-audit-legacy-heading">
                <h2 class="admin-section-title"><span data-maestro-icon-slot="file" aria-hidden="true"></span> MESA DE AUDITORIA</h2>
@@ -79,12 +87,20 @@
                   <option value="VESPERTINO">Vespertino</option>
                   <option value="NOTURNO">Noturno</option>
                </select>
+               <select id="auditoria-page-size" class="input-field auditoria-filter-select" onchange="alterarTamanhoPaginaAuditoria(this.value)" aria-label="Linhas por pagina na mesa de auditoria">
+                  <option value="10">10 por pagina</option>
+                  <option value="20">20 por pagina</option>
+                  <option value="50">50 por pagina</option>
+                  <option value="100">100 por pagina</option>
+               </select>
                <button type="button" class="btn-text audit-filter-clear" onclick="limparFiltrosAuditoria()">Limpar filtros</button>
                <p id="auditoria-status-resumo" class="admin-tip-text auditoria-filter-summary">A mostrar os estudantes do semestre atual. Use os filtros para refinar a mesa.</p>
             </div>
             <p class="admin-tip-text">A mostrar os casos mais antigos na fila (FIFO). Use a pesquisa para encontrar um aluno específico.</p>
          </div>
          
+            <div id="auditoria-filtros-ativos" class="admin-audit-active-filters" aria-live="polite"></div>
+
             <div class="admin-audit-workbench">
                <div id="auditoria-fila-container" class="grid-desktop admin-audit-results">
                   <div class="loading-state-box dynamic-state-box dynamic-loading-state"><div class="loader"></div><p>A puxar a fila de trabalho...</p></div>

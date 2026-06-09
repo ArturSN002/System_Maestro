@@ -11513,3 +11513,180 @@ body.dark-theme .admin-v84-audit-shell .dynamic-table-wrapper {
     align-items: flex-start;
   }
 }
+
+/* ======================================================================== */
+/* FASE 8.5: Mesa de Auditoria completa, persistente e lateral              */
+/* ======================================================================== */
+.admin-audit-kpi-active {
+  border-color: color-mix(in srgb, var(--success) 30%, var(--border));
+}
+
+.admin-audit-kpi-stage {
+  border-color: color-mix(in srgb, var(--accent) 32%, var(--border));
+}
+
+.admin-audit-active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-top: var(--space-sm);
+}
+
+.admin-audit-filter-chip {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+  color: var(--text-sub);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.admin-audit-filter-chip strong {
+  color: var(--text-main);
+}
+
+.admin-audit-filter-chip.is-saved {
+  border-color: color-mix(in srgb, var(--primary) 26%, var(--border));
+  background: color-mix(in srgb, var(--primary) 8%, var(--bg-surface));
+  color: var(--primary);
+}
+
+.admin-audit-filter-chip.is-muted {
+  color: var(--text-sub);
+}
+
+.admin-audit-queue-head {
+  display: grid;
+  gap: var(--space-sm);
+  align-items: center;
+  margin-bottom: var(--space-sm);
+  padding: var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--primary) 6%, transparent), transparent 52%),
+    var(--bg-surface);
+  box-shadow: var(--maestro-shadow-soft);
+}
+
+.admin-audit-queue-head h3 {
+  margin: 0;
+  color: var(--text-main);
+  font-size: 20px;
+  line-height: 1.15;
+}
+
+.admin-audit-queue-head p {
+  margin: 4px 0 0;
+  color: var(--text-sub);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.auditoria-logistica {
+  display: block;
+  max-width: 28ch;
+  color: var(--text-sub);
+  font-size: 12px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.admin-v84-audit-shell .auditoria-table th:nth-child(1) {
+  width: 26%;
+}
+
+.admin-v84-audit-shell .auditoria-table th:nth-child(2) {
+  width: 22%;
+}
+
+.admin-v84-audit-shell .auditoria-table th:nth-child(3),
+.admin-v84-audit-shell .auditoria-table th:nth-child(4),
+.admin-v84-audit-shell .auditoria-table th:nth-child(5) {
+  width: 14%;
+}
+
+.admin-v84-audit-shell .auditoria-table th:nth-child(6) {
+  width: 10%;
+}
+
+.admin-v84-audit-shell .auditoria-row {
+  transition: background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.admin-v84-audit-shell .auditoria-row:hover {
+  background: color-mix(in srgb, var(--primary) 5%, var(--bg-surface));
+}
+
+.admin-v84-audit-shell .auditoria-row-selected {
+  box-shadow: inset 4px 0 0 var(--primary);
+}
+
+.admin-audit-side-header .auditoria-badge {
+  justify-self: start;
+}
+
+.admin-audit-side-actions .btn-solid,
+.admin-audit-side-actions .btn-text {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.admin-audit-side-actions .maestro-icon {
+  width: 16px;
+  height: 16px;
+}
+
+body.dark-theme .admin-audit-filter-chip,
+body.dark-theme .admin-audit-queue-head {
+  background: color-mix(in srgb, var(--bg-surface) 88%, #000 12%);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+@media (min-width: 768px) {
+  .admin-audit-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1180px) {
+  .admin-audit-kpis {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .admin-audit-queue-head {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .admin-audit-filter-bar {
+    grid-template-columns: minmax(280px, 1.25fr) repeat(4, minmax(145px, 0.65fr)) auto !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .admin-audit-active-filters {
+    gap: 6px;
+  }
+
+  .admin-audit-filter-chip {
+    flex: 1 1 140px;
+    justify-content: center;
+  }
+
+  .admin-audit-queue-head {
+    padding: var(--space-sm);
+  }
+
+  .auditoria-logistica {
+    max-width: none;
+  }
+}
