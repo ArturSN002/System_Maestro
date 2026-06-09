@@ -296,13 +296,31 @@
             </div>
           </div>
 
+          <div class="admin-dashboard-command-bar" aria-label="Atalhos administrativos do dashboard">
+            <button class="btn-solid dashboard-command-primary" type="button" onclick="carregarDashboard()"><span data-maestro-icon-slot="refresh" aria-hidden="true"></span> Atualizar dashboard</button>
+            <button class="btn-text dashboard-command-link" type="button" data-maestro-action="auditoria" onclick="abrirMesaAuditoria()"><span data-maestro-icon-slot="file" aria-hidden="true"></span> Mesa de auditoria</button>
+            <button class="btn-text dashboard-command-link" type="button" data-maestro-action="semestres" onclick="abrirGestaoSemestres()"><span data-maestro-icon-slot="book" aria-hidden="true"></span> Semestres</button>
+            <button class="btn-text dashboard-command-link" type="button" data-maestro-action="salaMaquinas" onclick="abrirPainelModerador()"><span data-maestro-icon-slot="settings" aria-hidden="true"></span> Sala das maquinas</button>
+          </div>
+
           <div class="dash-kpi-grid admin-dashboard-kpis">
+            <div class="dash-kpi dashboard-kpi-card dashboard-kpi-total"><strong id="kpi-total" class="text-primary-val">-</strong><span>TOTAL</span></div>
             <div class="dash-kpi dashboard-kpi-card dashboard-kpi-active"><strong id="kpi-ativos" class="text-success-val">-</strong><span>ATIVOS</span></div>
             <div class="dash-kpi dashboard-kpi-card dashboard-kpi-queue"><strong id="kpi-pendentes" class="text-warning-val">-</strong><span>NA FILA</span></div>
             <div class="dash-kpi dashboard-kpi-card dashboard-kpi-review"><strong id="kpi-retidos" class="text-orange-val">-</strong><span>ATENÇÃO</span></div>
             <div class="dash-kpi dashboard-kpi-card dashboard-kpi-inactive"><strong id="kpi-suspensos" class="text-danger-val">-</strong><span>INATIVOS</span></div>
+            <div class="dash-kpi dashboard-kpi-card dashboard-kpi-bi"><strong id="kpi-bi-registros" class="text-accent">-</strong><span>BI</span></div>
           </div>
           <div id="dashboard-async-state" class="dashboard-async-state hidden" aria-live="polite"></div>
+
+          <div class="admin-dashboard-filter-strip" aria-label="Filtros e disponibilidade do dashboard">
+            <div>
+              <span class="admin-panel-eyebrow">Filtros do dashboardStats</span>
+              <strong id="dashboard-filter-title">Dados consolidados</strong>
+              <p id="dashboard-filter-summary">Aguardando dados normalizados.</p>
+            </div>
+            <div id="dashboard-filter-chips" class="admin-dashboard-filter-chips"></div>
+          </div>
 
           <div class="admin-dashboard-summary-grid">
             <div class="dash-box admin-dashboard-status-card dashboard-chart-card">
@@ -316,6 +334,7 @@
                 <strong id="kpi-ia-text" class="text-accent">- / -</strong>
               </div>
               <div class="progress-track"><div id="bar-ia-usage" class="progress-fill"></div></div>
+              <div id="dashboard-executive-insights" class="dashboard-executive-insights" aria-live="polite"></div>
             </div>
           </div>
 

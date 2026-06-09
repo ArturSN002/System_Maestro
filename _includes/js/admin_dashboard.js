@@ -2,14 +2,19 @@
 // 11. MOTOR DO DASHBOARD ANALÍTICO E BI
 // ========================================================================
 window.myCharts = window.myCharts || {};
+let ultimoDashboardStatsMaestro = null;
 
 function mudarAbaDashboard(aba) {
     ['logistica', 'noturno', 'inclusao', 'analise'].forEach(t => {
-        document.getElementById('tab-' + t).classList.remove('active');
-        document.getElementById('dash-area-' + t).classList.add('hidden');
+        const tab = document.getElementById('tab-' + t);
+        const area = document.getElementById('dash-area-' + t);
+        if (tab) tab.classList.remove('active');
+        if (area) area.classList.add('hidden');
     });
-    document.getElementById('tab-' + aba).classList.add('active');
-    document.getElementById('dash-area-' + aba).classList.remove('hidden');
+    const tabAtiva = document.getElementById('tab-' + aba);
+    const areaAtiva = document.getElementById('dash-area-' + aba);
+    if (tabAtiva) tabAtiva.classList.add('active');
+    if (areaAtiva) areaAtiva.classList.remove('hidden');
 
     if (aba === 'analise') {
         renderizarDashboardBI();
@@ -101,6 +106,134 @@ function formatarDataDashboardMaestro(value) {
     } catch (error) {
         return String(value);
     }
+}
+
+function escapeHTMLDashboardMaestro(valor) {
+    if (typeof escapeHTMLMaestro === "function") return escapeHTMLMaestro(valor);
+    return String(valor ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function setTextoDashboardMaestro(id, valor) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = String(valor ?? "");
+}
+
+function numeroDashboardMaestro(valor, fallback = 0) {
+    const numero = Number(valor);
+    return Number.isFinite(numero) ? numero : fallback;
+}
+
+function somarMapaDashboardMaestro(mapa) {
+    if (!mapa || typeof mapa !== "object") return 0;
+    return Object.keys(mapa).reduce((acc, chave) => acc + numeroDashboardMaestro(mapa[chave], 0), 0);
+}
+
+function contarChavesDashboardMaestro(mapa) {
+    if (!mapa || typeof mapa !== "object") return 0;
+    return Object.keys(mapa).filter(chave => String(chave || "").trim() !== "").length;
+}
+
+function maiorItemDashboardMaestro(mapa) {
+    if (!mapa || typeof mapa !== "object") return null;
+    return Object.keys(mapa).reduce((maior, chave) => {
+        const valor = numeroDashboardMaestro(mapa[chave], 0);
+        if (!maior || valor > maior.valor) return { label: chave, valor: valor };
+        return maior;
+    }, null);
+}
+
+function valoresUnicosDashboardMaestro(dataMart, campo) {
+    const valores = new Set();
+    (Array.isArray(dataMart) ? dataMart : []).forEach(item => {
+        String(item && item[campo] ? item[campo] : "")
+            .split(",")
+            .map(valor => valor.trim())
+            .filter(Boolean)
+            .forEach(valor => valores.add(valor));
+    });
+    return Array.from(valores).sort((a, b) => a.localeCompare(b, "pt-BR"));
+}
+
+function listaFiltroDashboardMaestro(stats, nomeFiltro, campoDataMart, graficoFallback) {
+    const filtros = stats && stats.filtrosDisponiveis ? stats.filtrosDisponiveis : {};
+    const direto = filtros[nomeFiltro] || filtros[nomeFiltro + "Disponiveis"] || filtros[nomeFiltro + "Disponíveis"];
+    if (Array.isArray(direto) && direto.length) return direto.map(String).filter(Boolean);
+    const viaDataMart = valoresUnicosDashboardMaestro(stats && stats.dataMart, campoDataMart);
+    if (viaDataMart.length) return viaDataMart;
+    const mapa = graficoFallback || {};
+    return Object.keys(mapa).filter(Boolean);
+}
+
+function atualizarAtalhosDashboardMaestro() {
+    const bar = document.querySelector(".admin-dashboard-command-bar");
+    if (!bar || typeof podeExecutarAcaoMaestro !== "function") return;
+    bar.querySelectorAll("[data-maestro-action]").forEach(botao => {
+        const action = botao.getAttribute("data-maestro-action") || "";
+        const visivel = podeExecutarAcaoMaestro(action, { notify: false });
+        botao.classList.toggle("hidden", !visivel);
+        botao.setAttribute("aria-hidden", visivel ? "false" : "true");
+    });
+}
+
+function atualizarFiltrosDashboardMaestro(stats) {
+    const dashboardStats = normalizarDashboardStatsMaestro(stats);
+    const graficos = dashboardStats.graficos || {};
+    const instituicoes = listaFiltroDashboardMaestro(dashboardStats, "instituicoes", "i", graficos.instituicoes);
+    const turnos = listaFiltroDashboardMaestro(dashboardStats, "turnos", "t", graficos.turnos);
+    const dias = listaFiltroDashboardMaestro(dashboardStats, "dias", "d", graficos.dias);
+    const rotas = listaFiltroDashboardMaestro(dashboardStats, "rotas", "r", graficos.rotas);
+    const chips = [
+        ["Instituicoes", instituicoes.length],
+        ["Turnos", turnos.length],
+        ["Dias", dias.length],
+        ["Rotas", rotas.length]
+    ];
+
+    setTextoDashboardMaestro("dashboard-filter-title", `${numeroDashboardMaestro((dashboardStats.kpis || {}).total, 0) || dashboardStats.dataMart.length || 0} estudantes no recorte`);
+    setTextoDashboardMaestro("dashboard-filter-summary", `Fonte: dashboardStats | BI: ${dashboardStats.dataMart.length} registros | Origem: ${dashboardStats.origem || "network"}`);
+
+    const chipsContainer = document.getElementById("dashboard-filter-chips");
+    if (chipsContainer) {
+        chipsContainer.innerHTML = chips
+            .map(([label, total]) => `<span class="admin-dashboard-filter-chip"><strong>${escapeHTMLDashboardMaestro(total)}</strong>${escapeHTMLDashboardMaestro(label)}</span>`)
+            .join("");
+    }
+}
+
+function atualizarInsightsDashboardMaestro(stats) {
+    const dashboardStats = normalizarDashboardStatsMaestro(stats);
+    const kpis = dashboardStats.kpis || {};
+    const graficos = dashboardStats.graficos || {};
+    const total = numeroDashboardMaestro(kpis.total, 0) || [
+        kpis.ativos,
+        kpis.pendentes,
+        kpis.retidos,
+        kpis.suspensos
+    ].reduce((acc, valor) => acc + numeroDashboardMaestro(valor, 0), 0);
+    const ativos = numeroDashboardMaestro(kpis.ativos, 0);
+    const pendencias = numeroDashboardMaestro(kpis.pendentes, 0) + numeroDashboardMaestro(kpis.retidos, 0);
+    const pctAtivos = total > 0 ? Math.round((ativos / total) * 100) : 0;
+    const pctPendencias = total > 0 ? Math.round((pendencias / total) * 100) : 0;
+    const topInstituicao = maiorItemDashboardMaestro(graficos.instituicoes);
+    const topRota = maiorItemDashboardMaestro(graficos.rotas);
+
+    const insights = [
+        ["Saude operacional", `${pctAtivos}% ativos`],
+        ["Fila de atencao", `${pendencias} casos (${pctPendencias}%)`],
+        ["Instituicao lider", topInstituicao ? `${topInstituicao.label} (${topInstituicao.valor})` : "Sem dados"],
+        ["Rota lider", topRota ? `${topRota.label} (${topRota.valor})` : "Sem dados"]
+    ];
+
+    const container = document.getElementById("dashboard-executive-insights");
+    if (!container) return;
+    container.innerHTML = insights
+        .map(([label, value]) => `<div class="dashboard-insight-row"><span>${escapeHTMLDashboardMaestro(label)}</span><strong>${escapeHTMLDashboardMaestro(value)}</strong></div>`)
+        .join("");
 }
 
 function atualizarContextoDashboardAdminMaestro(dashboardStats) {
@@ -315,6 +448,7 @@ async function carregarDashboard() {
     if (typeof podeExecutarAcaoMaestro === 'function' && !podeExecutarAcaoMaestro("dashboard", { notify: true })) return;
 
     atualizarContextoDashboardAdminMaestro();
+    atualizarAtalhosDashboardMaestro();
     const cachedStats = obterCacheDashboardMaestro();
 
     if (cachedStats) {
@@ -370,12 +504,19 @@ function renderizarDashboardUI(payload) {
     const graficos = dashboardStats.graficos;
     const kpis = dashboardStats.kpis || {};
     const consumo = dashboardStats.consumo || {};
+    ultimoDashboardStatsMaestro = dashboardStats;
 
     // Atualização dos KPIs superiores
+    const totalKpi = kpis.total || (numeroDashboardMaestro(kpis.ativos, 0) + numeroDashboardMaestro(kpis.pendentes, 0) + numeroDashboardMaestro(kpis.retidos, 0) + numeroDashboardMaestro(kpis.suspensos, 0));
+    if (document.getElementById('kpi-total')) document.getElementById('kpi-total').innerText = totalKpi || 0;
     if (document.getElementById('kpi-ativos')) document.getElementById('kpi-ativos').innerText = kpis.ativos || 0;
     if (document.getElementById('kpi-pendentes')) document.getElementById('kpi-pendentes').innerText = kpis.pendentes || 0;
     if (document.getElementById('kpi-retidos')) document.getElementById('kpi-retidos').innerText = kpis.retidos || 0;
     if (document.getElementById('kpi-suspensos')) document.getElementById('kpi-suspensos').innerText = kpis.suspensos || 0;
+    if (document.getElementById('kpi-bi-registros')) document.getElementById('kpi-bi-registros').innerText = Array.isArray(dashboardStats.dataMart) ? dashboardStats.dataMart.length : 0;
+    atualizarFiltrosDashboardMaestro(dashboardStats);
+    atualizarInsightsDashboardMaestro(dashboardStats);
+    atualizarAtalhosDashboardMaestro();
 
     // Atualização da barra de Uso de IA
     const ocrUsado = consumo?.ocr?.usado || 0;
@@ -658,5 +799,8 @@ window.normalizarDia = normalizarDia;
 window.gerarChipsDinamicos = gerarChipsDinamicos;
 window.toggleChip = toggleChip;
 window.renderizarDashboardBI = renderizarDashboardBI;
+window.atualizarFiltrosDashboardMaestro = atualizarFiltrosDashboardMaestro;
+window.atualizarInsightsDashboardMaestro = atualizarInsightsDashboardMaestro;
+window.atualizarAtalhosDashboardMaestro = atualizarAtalhosDashboardMaestro;
 window.renderChart = renderChart;
 window.extrairEOrdenar = extrairEOrdenar;

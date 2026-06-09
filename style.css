@@ -11690,3 +11690,191 @@ body.dark-theme .admin-audit-queue-head {
     max-width: none;
   }
 }
+
+/* ======================================================================== */
+/* FASE 8.6: Dashboard Maestro executivo com dashboardStats                  */
+/* ======================================================================== */
+.admin-dashboard-command-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  align-items: center;
+  margin: calc(-1 * var(--space-sm)) 0 var(--space-md);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+}
+
+.admin-dashboard-command-bar .btn-solid,
+.admin-dashboard-command-bar .btn-text {
+  display: inline-flex !important;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 !important;
+  border-radius: 8px !important;
+}
+
+.admin-dashboard-command-bar .maestro-icon {
+  width: 17px;
+  height: 17px;
+}
+
+.dashboard-command-primary {
+  padding-inline: var(--space-md) !important;
+}
+
+.dashboard-command-link {
+  border: 1px solid var(--border) !important;
+  background: color-mix(in srgb, var(--bg-surface) 92%, transparent) !important;
+}
+
+.dashboard-kpi-total::before {
+  background: var(--primary);
+}
+
+.dashboard-kpi-bi::before {
+  background: var(--accent);
+}
+
+.admin-dashboard-filter-strip {
+  display: grid;
+  gap: var(--space-md);
+  align-items: center;
+  margin: var(--space-md) 0;
+  padding: var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--primary) 6%, transparent), transparent 54%),
+    var(--bg-surface);
+  box-shadow: var(--maestro-shadow-soft);
+}
+
+.admin-dashboard-filter-strip strong {
+  display: block;
+  color: var(--text-main);
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.admin-dashboard-filter-strip p {
+  margin: 4px 0 0;
+  color: var(--text-sub);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.admin-dashboard-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.admin-dashboard-filter-chip {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 11px;
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 7%, var(--bg-surface));
+  color: var(--text-sub);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.admin-dashboard-filter-chip strong {
+  color: var(--text-main);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.dashboard-executive-insights {
+  display: grid;
+  gap: var(--space-xs);
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px dashed var(--border);
+}
+
+.dashboard-insight-row {
+  display: grid;
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1fr);
+  gap: var(--space-sm);
+  align-items: center;
+  min-height: 34px;
+}
+
+.dashboard-insight-row span {
+  color: var(--text-sub);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+.dashboard-insight-row strong {
+  min-width: 0;
+  color: var(--text-main);
+  font-size: 12px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.admin-v84-dashboard-card .dashboard-chart-card h3 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+body.dark-theme .admin-dashboard-filter-strip,
+body.dark-theme .dashboard-command-link {
+  background: color-mix(in srgb, var(--bg-surface) 88%, #000 12%) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+@media (min-width: 768px) {
+  .admin-dashboard-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1180px) {
+  .admin-dashboard-command-bar {
+    justify-content: flex-start;
+  }
+
+  .admin-dashboard-kpis {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .admin-dashboard-filter-strip {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .admin-dashboard-filter-chips {
+    justify-content: flex-end;
+    max-width: 520px;
+  }
+}
+
+@media (max-width: 767px) {
+  .admin-dashboard-command-bar .btn-solid,
+  .admin-dashboard-command-bar .btn-text {
+    flex: 1 1 160px;
+  }
+
+  .admin-dashboard-filter-chip {
+    flex: 1 1 130px;
+    justify-content: center;
+  }
+
+  .dashboard-insight-row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}
