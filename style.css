@@ -12286,3 +12286,35 @@ body.dark-theme .driver-v87-hero {
     border-radius: 18px 18px 0 0;
   }
 }
+
+/* ==========================================================================
+   Fase 8.8 - Polimento final QA visual e acessibilidade
+   ========================================================================== */
+
+.view-section:focus,
+.view-section:focus-visible {
+  outline: none;
+}
+
+.admin-v84-semesters-view .admin-semesters-editor,
+.admin-v84-semesters-view .admin-semester-form-grid {
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+}
+
+.admin-v84-semesters-view .admin-semester-form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.admin-v84-semesters-view .admin-semester-form-grid .input-field {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .admin-v84-semesters-view .admin-semester-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
