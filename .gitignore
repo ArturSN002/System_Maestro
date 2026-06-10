@@ -3,4 +3,6 @@ _site/
 .jekyll-cache/
 .sass-cache/
 .playwright-cli/
+.bundle/
+vendor/bundle/
 *.log

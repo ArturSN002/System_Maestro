@@ -10,7 +10,16 @@ markdown: kramdown
 safe: true
 
 exclude:
+  - Gemfile
+  - Gemfile.lock
+  - gemfile
+  - gemfile.lock
   - output/
+  - _site/
+  - .jekyll-cache/
+  - .sass-cache/
+  - .bundle/
+  - vendor/
   - .playwright-cli/
   - docs/
   - README.md
