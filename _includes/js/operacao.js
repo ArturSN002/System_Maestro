@@ -8,6 +8,7 @@ let paginaAtualAuditoria = 1;     // NOVO: Guarda a página atual
 const AUDITORIA_ITENS_POR_PAGINA_PADRAO = 20;
 let itensPorPaginaAuditoria = AUDITORIA_ITENS_POR_PAGINA_PADRAO;
 const AUDITORIA_FILTER_STORAGE_KEY = "MAESTRO_AUDITORIA_FILTROS_V1";
+const MOTORES_EXECUCAO_SENSIVEL_MAESTRO = new Set(["DOCS", "EMAIL"]);
 let auditoriaRaioXSelecionado = null;
 let filtrosAuditoriaRestaurados = false;
 let assinaturaFiltrosAuditoriaRestaurados = "";
@@ -52,6 +53,30 @@ function safeUrlAttrOperacao(valor, fallback = "") {
         if (bruto.startsWith("./") || bruto.startsWith("/") || bruto.startsWith("#")) return escapeHTMLAuditoria(bruto);
     }
     return escapeHTMLAuditoria(fallback);
+}
+
+function normalizarMotorIdMaestro(motorId) {
+    return String(motorId || "").toUpperCase().trim();
+}
+
+function motorMaestroExigeConfirmacaoExecucao(motorId) {
+    return MOTORES_EXECUCAO_SENSIVEL_MAESTRO.has(normalizarMotorIdMaestro(motorId));
+}
+
+function criarSolicitacaoManualMaestro(prefixo) {
+    const sufixo = Math.random().toString(36).slice(2, 8);
+    return `${prefixo || "manual"}-${Date.now()}-${sufixo}`;
+}
+
+function filtroPushGlobalOperacaoMaestro(valor) {
+    const normalizado = String(valor || "").trim().toUpperCase();
+    return normalizado === "" || normalizado === "TODOS" || normalizado === "TODAS" || normalizado === "GLOBAL";
+}
+
+function pushFiltrosGlobaisOperacaoMaestro(rota, turno, instituicao) {
+    return filtroPushGlobalOperacaoMaestro(rota) &&
+        filtroPushGlobalOperacaoMaestro(turno) &&
+        filtroPushGlobalOperacaoMaestro(instituicao);
 }
 
 function cpfSeguroAuditoria(valor) {
@@ -1245,6 +1270,20 @@ function classificarEstadoMotorMaestro(res) {
     const status = String(res && (res.statusMotor || res.status) || "").toUpperCase();
     const codigo = String(res && res.codigo || "").toUpperCase();
     const motivo = (res && (res.msg || res.motivo || res.erro)) || "";
+    if (codigo === "DRY_RUN" || codigo === "CONFIRMATION_REQUIRED") {
+        return {
+            tipo: "warning",
+            statusMotor: status || "WARNING",
+            mensagem: motivo || "Pre-checagem concluida. Confirme para executar."
+        };
+    }
+    if (codigo === "LEASE_ACTIVE") {
+        return {
+            tipo: "warning",
+            statusMotor: status || "WARNING",
+            mensagem: motivo || "Motor ja possui uma execucao em andamento."
+        };
+    }
     if (status === "DEGRADED" || codigo === "QUOTA_LIMIT") {
         return {
             tipo: "warning",
@@ -1381,17 +1420,48 @@ async function abrirPainelModerador() {
 }
 
 async function forcarMotor(motorId) {
+    const motor = normalizarMotorIdMaestro(motorId);
+    const exigeConfirmacao = motorMaestroExigeConfirmacaoExecucao(motor);
+    const solicitacaoId = criarSolicitacaoManualMaestro(`motor-${motor || "desconhecido"}`);
     const contexto = obterContextoOperacaoMaestro();
-    const btn = obterBotaoMotorMaestro(motorId);
+    const btn = obterBotaoMotorMaestro(motor);
     if (btn) btn.disabled = true;
-    showToast(`A enviar sinal para o motor ${motorId}...`, "loading");
-    setEstadoSalaMaquinasMaestro("loading", `Executando motor ${motorId}...`);
     try {
+        if (exigeConfirmacao) {
+            showToast(`Verificando motor ${motor} antes da execucao...`, "loading");
+            setEstadoSalaMaquinasMaestro("loading", `Verificando motor ${motor}...`);
+            const preflight = await apiCall("forcarExecucaoMotor", {
+                motorId: motor,
+                tenantId: contexto.tenantId,
+                semestreId: contexto.semestreId,
+                usuarioLogadoId: contexto.usuarioLogadoId,
+                origemExecucao: "manual-ui",
+                modo: "dryRun",
+                dryRun: true,
+                solicitacaoId: solicitacaoId
+            }, { timeoutMs: 45000 });
+            const estadoPreflight = classificarEstadoMotorMaestro(preflight);
+            setEstadoSalaMaquinasMaestro(estadoPreflight.tipo, estadoPreflight.mensagem);
+            const confirmou = window.confirm(
+                `Motor ${motor}\n\n${estadoPreflight.mensagem}\n\nEsta acao pode gerar documentos ou enviar comunicacoes. Deseja executar agora?`
+            );
+            if (!confirmou) {
+                setEstadoSalaMaquinasMaestro("warning", `Execucao do motor ${motor} cancelada pelo operador.`);
+                showToast(`Execucao do motor ${motor} cancelada.`, "warning");
+                return;
+            }
+        }
+
+        showToast(`A enviar sinal para o motor ${motor}...`, "loading");
+        setEstadoSalaMaquinasMaestro("loading", `Executando motor ${motor}...`);
         const res = await apiCall("forcarExecucaoMotor", {
-            motorId: motorId,
+            motorId: motor,
             tenantId: contexto.tenantId,
             semestreId: contexto.semestreId,
-            usuarioLogadoId: contexto.usuarioLogadoId
+            usuarioLogadoId: contexto.usuarioLogadoId,
+            origemExecucao: "manual-ui",
+            confirmarExecucao: exigeConfirmacao,
+            solicitacaoId: solicitacaoId
         }, { timeoutMs: 180000 });
         const estado = classificarEstadoMotorMaestro(res);
         setEstadoSalaMaquinasMaestro(estado.tipo, estado.mensagem);
@@ -1574,6 +1644,17 @@ async function dispararAvisoPublico() {
         return;
     }
 
+    let confirmarEnvioGlobal = false;
+    if (enviarPush) {
+        confirmarEnvioGlobal = window.confirm(
+            "Este aviso sera enviado por Push para todos os estudantes com dispositivo registrado no semestre atual.\n\nDeseja confirmar o envio global?"
+        );
+        if (!confirmarEnvioGlobal) {
+            showToast("Publicacao cancelada. Desmarque o Push para publicar apenas no mural.", "warning");
+            return;
+        }
+    }
+
     btn.innerHTML = 'A COMUNICAR COM FIREBASE... ⏳';
     btn.disabled = true;
 
@@ -1588,7 +1669,10 @@ async function dispararAvisoPublico() {
             ASSUNTO_VALIDADE: validadeAviso,
             enviarPush: enviarPush,
             operadorNome: nomeOp,
-            operadorCargo: nivelOp
+            operadorCargo: nivelOp,
+            confirmarEnvioGlobal: confirmarEnvioGlobal,
+            origemExecucao: "manual-ui",
+            solicitacaoId: criarSolicitacaoManualMaestro("aviso-push")
         }) : {
             tipoAviso: tipo,
             titulo: titulo,
@@ -1598,8 +1682,14 @@ async function dispararAvisoPublico() {
             ASSUNTO_VALIDADE: validadeAviso,
             enviarPush: enviarPush,
             operadorNome: nomeOp,
-            operadorCargo: nivelOp
+            operadorCargo: nivelOp,
+            confirmarEnvioGlobal: confirmarEnvioGlobal,
+            origemExecucao: "manual-ui",
+            solicitacaoId: criarSolicitacaoManualMaestro("aviso-push")
         };
+        payloadAviso.confirmarEnvioGlobal = confirmarEnvioGlobal;
+        payloadAviso.origemExecucao = "manual-ui";
+        payloadAviso.solicitacaoId = payloadAviso.solicitacaoId || criarSolicitacaoManualMaestro("aviso-push");
         const resRaw = await apiCall("publicarAvisoNotificacao", payloadAviso);
         const adapterResultadoPush = adapterComunicacaoMaestro("pushResult");
         const res = adapterResultadoPush ? adapterResultadoPush(resRaw) : resRaw;
@@ -1638,6 +1728,18 @@ async function dispararPushLoteManual() {
         return;
     }
 
+    const envioGlobal = pushFiltrosGlobaisOperacaoMaestro(rota, turno, inst);
+    let confirmarEnvioGlobal = false;
+    if (envioGlobal) {
+        confirmarEnvioGlobal = window.confirm(
+            "Os filtros selecionados abrangem todos os estudantes com Push no semestre atual.\n\nDeseja confirmar o disparo global?"
+        );
+        if (!confirmarEnvioGlobal) {
+            showToast("Disparo cancelado. Selecione ao menos um filtro para segmentar o envio.", "warning");
+            return;
+        }
+    }
+
     btn.innerHTML = 'A DISPARAR LOTE... ⏳';
     btn.disabled = true;
 
@@ -1650,7 +1752,10 @@ async function dispararPushLoteManual() {
             turno: turno,
             instituicao: inst,
             operadorNome: nomeOp,
-            operadorCargo: nivelOp
+            operadorCargo: nivelOp,
+            confirmarEnvioGlobal: confirmarEnvioGlobal,
+            origemExecucao: "manual-ui",
+            solicitacaoId: criarSolicitacaoManualMaestro("push-lote")
         }) : {
             titulo: titulo,
             mensagem: mensagem,
@@ -1658,8 +1763,14 @@ async function dispararPushLoteManual() {
             turno: turno,
             instituicao: inst,
             operadorNome: nomeOp,
-            operadorCargo: nivelOp
+            operadorCargo: nivelOp,
+            confirmarEnvioGlobal: confirmarEnvioGlobal,
+            origemExecucao: "manual-ui",
+            solicitacaoId: criarSolicitacaoManualMaestro("push-lote")
         };
+        payloadPush.confirmarEnvioGlobal = confirmarEnvioGlobal;
+        payloadPush.origemExecucao = "manual-ui";
+        payloadPush.solicitacaoId = payloadPush.solicitacaoId || criarSolicitacaoManualMaestro("push-lote");
         const resRaw = await apiCall("dispararPushLoteManual", payloadPush);
         const adapterResultadoPush = adapterComunicacaoMaestro("pushResult");
         const res = adapterResultadoPush ? adapterResultadoPush(resRaw) : resRaw;

@@ -2033,13 +2033,15 @@
   function adaptPushResult(raw) {
     const source = raw || {};
     const push = source.push || {};
+    const pushFalhou = Boolean(source.push && push.sucesso === false);
 
     return mergeDefined({
-      sucesso: source.sucesso !== false,
+      sucesso: source.sucesso !== false && !pushFalhou,
       enviados: toNumber(pickFirst(source.enviados, push.enviados, source.totalEnviados), 0),
       falhas: toNumber(pickFirst(source.falhas, push.falhas, source.totalFalhas), 0),
       msg: pickFirst(source.msg, source.mensagem, push.mensagem),
-      erro: source.erro || push.erro || "",
+      erro: source.erro || push.erro || (pushFalhou ? (push.mensagem || source.msg || "") : ""),
+      codigo: source.codigo || push.codigo || "",
       raw: source
     });
   }
@@ -2380,7 +2382,10 @@
       ASSUNTO_VALIDADE: validadeAviso,
       enviarPush: source.enviarPush !== false,
       operadorNome: safeText(source.operadorNome || session.nome, "Secretaria"),
-      operadorCargo: safeText(source.operadorCargo || session.nivel, "Operador")
+      operadorCargo: safeText(source.operadorCargo || session.nivel, "Operador"),
+      confirmarEnvioGlobal: source.confirmarEnvioGlobal === true,
+      origemExecucao: safeText(source.origemExecucao || source.origem, ""),
+      solicitacaoId: safeText(source.solicitacaoId, "")
     });
   }
 
@@ -2397,7 +2402,10 @@
       turno: safeText(source.turno, "TODOS"),
       instituicao: safeText(source.instituicao, "TODAS"),
       operadorNome: safeText(source.operadorNome || session.nome, "Secretaria"),
-      operadorCargo: safeText(source.operadorCargo || session.nivel, "Operador")
+      operadorCargo: safeText(source.operadorCargo || session.nivel, "Operador"),
+      confirmarEnvioGlobal: source.confirmarEnvioGlobal === true,
+      origemExecucao: safeText(source.origemExecucao || source.origem, ""),
+      solicitacaoId: safeText(source.solicitacaoId, "")
     });
   }
 

@@ -13,14 +13,14 @@ const IAM_STATE = {
 };
 
 const CLIENT_DIRECTORY = {
-  "Ceará-Mirim": "https://script.google.com/macros/s/AKfycbyI60c4UQJLbe1VoM476NUlX1cXAxGeqiGyW26NMgC92f3l0KOuGd7hW6-U6FYEihrebA/exec",
+  "Ceará-Mirim": "https://script.google.com/macros/s/AKfycbwLet-wBQWEOmhnyXroWSIjPHoex3GjQkbrJJIiJzntBmndTL74UI0eGmnt2cw7YWiBxA/exec",
 };
 
 const MAESTRO_CLIENT_DIRECTORY_VERSION = "2026-05-26-cache-reset";
 const MAESTRO_CLIENT_URL_VERSION_KEY = "MAESTRO_CLIENT_URL_VERSION";
 
 const CLIENT_DIRECTORY_METADATA = {
-  "https://script.google.com/macros/s/AKfycbyI60c4UQJLbe1VoM476NUlX1cXAxGeqiGyW26NMgC92f3l0KOuGd7hW6-U6FYEihrebA/exec": {
+  "https://script.google.com/macros/s/AKfycbwLet-wBQWEOmhnyXroWSIjPHoex3GjQkbrJJIiJzntBmndTL74UI0eGmnt2cw7YWiBxA/exec": {
     tenantId: "CEARA_MIRIM",
     label: "Ceara-Mirim"
   }
