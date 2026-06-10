@@ -28,6 +28,8 @@ function sincronizarContextsMaestroDoBoot(configPWA) {
   const themeConfig = contexts.theme.set(configPWA);
   const tenantId = configPWA.tenantId || configPWA.tenantID || configPWA.tenant_id ||
     (configPWA.config && (configPWA.config.tenantId || configPWA.config.tenantID || configPWA.config.tenant_id)) ||
+    (typeof obterTenantIdPorUrlClienteMaestro === "function" ? obterTenantIdPorUrlClienteMaestro(localStorage.getItem("MAESTRO_CLIENT_URL") || GAS_URL || "") : "") ||
+    localStorage.getItem("MAESTRO_TENANT_ID") ||
     "";
   const clientUrl = localStorage.getItem("MAESTRO_CLIENT_URL") || GAS_URL || "";
 
@@ -38,6 +40,9 @@ function sincronizarContextsMaestroDoBoot(configPWA) {
     cepsValidos: themeConfig && themeConfig.rules ? themeConfig.rules.cepsValidos : [],
     source: "bootSystem"
   });
+  if (typeof atualizarTenantContextoMaestro === "function") {
+    atualizarTenantContextoMaestro({ tenantId: tenantId, clientUrl: clientUrl, source: "bootSystem" });
+  }
 
   contexts.semester.set({
     semestreId: configPWA.semestreId || configPWA.semestreAtual ||

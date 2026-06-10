@@ -1322,7 +1322,7 @@
   function getTenantContext() {
     const stored = getJson(STORAGE_KEYS.tenantContext, {});
     return mergeDefined({
-      tenantId: pickFirst(stored.tenantId, stored.tenantID, stored.tenant_id),
+      tenantId: pickFirst(stored.tenantId, stored.tenantID, stored.tenant_id, getLocal("MAESTRO_TENANT_ID", "")),
       clientUrl: pickFirst(stored.clientUrl, getLocal("MAESTRO_CLIENT_URL", ""), window.GAS_URL),
       cidade: pickFirst(stored.cidade, stored.cidadeAlvo),
       cepsValidos: toArray(stored.cepsValidos || stored.CEPS_VALIDOS),
@@ -1340,6 +1340,8 @@
       source: (context && context.source) || "runtime"
     });
     setJson(STORAGE_KEYS.tenantContext, next);
+    if (next.tenantId) setLocal("MAESTRO_TENANT_ID", next.tenantId);
+    if (next.clientUrl) setLocal("MAESTRO_CLIENT_URL", next.clientUrl);
     return next;
   }
 
@@ -1357,6 +1359,7 @@
   function setSemesterContext(context) {
     const next = adaptSemesterContext(context || {}, getSemesterContext());
     setJson(STORAGE_KEYS.semesterContext, next);
+    if (next.semestreId) setLocal("MAESTRO_SEMESTRE_ID", next.semestreId);
     return next;
   }
 
@@ -1566,6 +1569,7 @@
   function setOperatorSession(session) {
     const next = adaptOperatorSession(session || {});
     setJson(STORAGE_KEYS.operatorSession, next);
+    if (next.tenantId) setTenantContext({ tenantId: next.tenantId, source: "operatorSession" });
     markCacheDomain("session", { tenantId: next.tenantId, source: "operatorSession", key: STORAGE_KEYS.operatorSession });
     return next;
   }
@@ -1853,6 +1857,10 @@
     return {
       sucesso: envelope.sucesso !== false,
       erro: envelope.erro || stats.erro || "",
+      codigo: envelope.codigo || stats.codigo || "",
+      status: envelope.status || stats.status || "",
+      detalhes: envelope.detalhes || stats.detalhes || "",
+      retryAfterMs: toNumber(pickFirst(envelope.retryAfterMs, stats.retryAfterMs), null),
       kpis: {
         total: toNumber(pickFirst(kpis.total, kpis.TOTAL), 0),
         ativos: toNumber(pickFirst(kpis.ativos, kpis.ATIVOS), 0),
@@ -1887,6 +1895,7 @@
       filtrosDisponiveis: stats.filtrosDisponiveis || stats.filtros || {},
       atualizadoEm: pickFirst(stats.atualizadoEm, stats.updatedAt, stats.ultimaAtualizacao, envelope.atualizadoEm),
       semestreId: pickFirst(stats.semestreId, stats.semestreAtual, stats.semestre, envelope.semestreId),
+      cache: envelope.cache || stats.cache || {},
       origem: stats.origem || envelope.origem || "network",
       raw: stats
     };

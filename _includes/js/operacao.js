@@ -9,6 +9,8 @@ const AUDITORIA_ITENS_POR_PAGINA_PADRAO = 20;
 let itensPorPaginaAuditoria = AUDITORIA_ITENS_POR_PAGINA_PADRAO;
 const AUDITORIA_FILTER_STORAGE_KEY = "MAESTRO_AUDITORIA_FILTROS_V1";
 let auditoriaRaioXSelecionado = null;
+let filtrosAuditoriaRestaurados = false;
+let assinaturaFiltrosAuditoriaRestaurados = "";
 
 let metaAuditoriaMaestro = {
     totalBackend: 0,
@@ -104,6 +106,32 @@ function obterFiltrosAuditoriaUI() {
     };
 }
 
+function normalizarFiltrosAuditoriaParaAssinatura(filtros) {
+    const source = filtros || {};
+    return {
+        pesquisa: String(source.pesquisa || "").trim(),
+        status: String(source.status || "").trim(),
+        instituicao: String(source.instituicao || "").trim(),
+        turno: String(source.turno || "").trim(),
+        pageSize: String(normalizarTamanhoPaginaAuditoria(source.pageSize || itensPorPaginaAuditoria))
+    };
+}
+
+function assinarFiltrosAuditoria(filtros) {
+    return JSON.stringify(normalizarFiltrosAuditoriaParaAssinatura(filtros));
+}
+
+function filtrosAuditoriaPossuemValor(filtros) {
+    const norm = normalizarFiltrosAuditoriaParaAssinatura(filtros);
+    return Boolean(
+        norm.pesquisa ||
+        norm.status ||
+        norm.instituicao ||
+        norm.turno ||
+        Number(norm.pageSize) !== AUDITORIA_ITENS_POR_PAGINA_PADRAO
+    );
+}
+
 function salvarFiltrosAuditoriaPersistentes() {
     try {
         localStorage.setItem(AUDITORIA_FILTER_STORAGE_KEY, JSON.stringify(obterFiltrosAuditoriaUI()));
@@ -143,6 +171,8 @@ function restaurarFiltrosAuditoriaPersistentes() {
     itensPorPaginaAuditoria = normalizarTamanhoPaginaAuditoria(filtros.pageSize);
     const pageSizeSelect = document.getElementById("auditoria-page-size");
     if (pageSizeSelect) pageSizeSelect.value = String(itensPorPaginaAuditoria);
+    filtrosAuditoriaRestaurados = filtrosAuditoriaPossuemValor(filtros);
+    assinaturaFiltrosAuditoriaRestaurados = filtrosAuditoriaRestaurados ? assinarFiltrosAuditoria(filtros) : "";
 }
 
 function alterarTamanhoPaginaAuditoria(valor) {
@@ -158,6 +188,8 @@ function limparFiltrosAuditoria() {
         const el = document.getElementById(id);
         if (el) el.value = "";
     });
+    filtrosAuditoriaRestaurados = false;
+    assinaturaFiltrosAuditoriaRestaurados = "";
     salvarFiltrosAuditoriaPersistentes();
     aplicarFiltrosAuditoria();
 }
@@ -697,7 +729,14 @@ function renderizarFiltrosAtivosAuditoria() {
         return;
     }
 
-    container.innerHTML = '<span class="admin-audit-filter-chip is-saved">Filtros persistidos</span>' + chips
+    const filtrosRestaurados = filtrosAuditoriaRestaurados &&
+        assinaturaFiltrosAuditoriaRestaurados &&
+        assinarFiltrosAuditoria(filtros) === assinaturaFiltrosAuditoriaRestaurados;
+    const chipEstado = filtrosRestaurados
+        ? '<span class="admin-audit-filter-chip is-saved">Filtros restaurados</span>'
+        : '<span class="admin-audit-filter-chip is-saved">Filtros ativos</span>';
+
+    container.innerHTML = chipEstado + chips
         .map(([label, value]) => `<span class="admin-audit-filter-chip"><strong>${escapeHTMLAuditoria(label)}</strong>${escapeHTMLAuditoria(value)}</span>`)
         .join("");
 }
@@ -820,6 +859,7 @@ function aplicarFiltrosAuditoria() {
     const termoOriginal = document.getElementById('auditoria-pesquisa')?.value.trim() || "";
     const termo = normalizarTextoFiltroAuditoria(termoOriginal);
     const termoCpf = termoOriginal.replace(/\D/g, "");
+    const termoPesquisaCpf = termoCpf && /^[\d.\-\/\s]+$/.test(termoOriginal);
     const status = (document.getElementById('auditoria-status')?.value || "").toUpperCase();
     const instituicao = normalizarTextoFiltroAuditoria(document.getElementById('auditoria-instituicao')?.value || "");
     const turno = normalizarTextoFiltroAuditoria(document.getElementById('auditoria-turno')?.value || "");
@@ -835,7 +875,7 @@ function aplicarFiltrosAuditoria() {
                 aluno.instituicao || aluno.INSTITUICAO_ALUNO || "",
                 aluno.rota || aluno.ROTA_ALUNO || ""
             ].join(" "));
-            matchPesquisa = alvoTexto.includes(termo) || (termoCpf && cpfStr.includes(termoCpf));
+            matchPesquisa = alvoTexto.includes(termo) || (termoPesquisaCpf && cpfStr.includes(termoCpf));
         }
 
         let matchStatus = true;
@@ -1201,6 +1241,57 @@ function normalizarEstadosMotoresMaestro(estados) {
     };
 }
 
+function classificarEstadoMotorMaestro(res) {
+    const status = String(res && (res.statusMotor || res.status) || "").toUpperCase();
+    const codigo = String(res && res.codigo || "").toUpperCase();
+    const motivo = (res && (res.msg || res.motivo || res.erro)) || "";
+    if (status === "DEGRADED" || codigo === "QUOTA_LIMIT") {
+        return {
+            tipo: "warning",
+            statusMotor: "DEGRADED",
+            mensagem: motivo || "Motor em estado degradado. Verifique limites e tente novamente mais tarde."
+        };
+    }
+    if (status === "WARNING" || codigo === "NO_WORK") {
+        return {
+            tipo: "warning",
+            statusMotor: "WARNING",
+            mensagem: motivo || "Motor executado sem itens processados."
+        };
+    }
+    if (res && res.sucesso === false) {
+        return {
+            tipo: "error",
+            statusMotor: status || "ERROR",
+            mensagem: motivo || "Motor nao retornou sucesso."
+        };
+    }
+    return {
+        tipo: "success",
+        statusMotor: status || "OK",
+        mensagem: motivo || "Motor executado com sucesso."
+    };
+}
+
+function resumirObservabilidadeMotoresMaestro(observabilidade) {
+    const source = observabilidade || {};
+    const motores = Object.keys(source);
+    if (!motores.length) return { tipo: "success", mensagem: "Motores sincronizados com o backend." };
+    const degradados = motores.filter(motor => {
+        const status = String(source[motor] && source[motor].statusMotor || "").toUpperCase();
+        return status === "DEGRADED" || status === "WARNING" || status === "ERROR";
+    });
+    if (!degradados.length) return { tipo: "success", mensagem: "Motores sincronizados com o backend." };
+    const resumo = degradados.slice(0, 3).map(motor => {
+        const item = source[motor] || {};
+        return `${motor}: ${item.codigo || item.statusMotor || "atencao"}`;
+    }).join(" | ");
+    return {
+        tipo: degradados.some(motor => String(source[motor] && source[motor].statusMotor || "").toUpperCase() === "ERROR") ? "error" : "warning",
+        mensagem: "Motores sincronizados com atencao. " + resumo
+    };
+}
+
 function obterBotaoMotorMaestro(motorId) {
     return Array.from(document.querySelectorAll(".btn-motor-force, .btn-motor-force-last"))
         .find(btn => String(btn.getAttribute("onclick") || "").indexOf(`'${motorId}'`) !== -1);
@@ -1272,7 +1363,8 @@ async function abrirPainelModerador() {
             if (toggleOCR) toggleOCR.checked = estados.OCR;
             if (toggleDOCS) toggleDOCS.checked = estados.DOCS;
             if (toggleEMAIL) toggleEMAIL.checked = estados.EMAIL;
-            setEstadoSalaMaquinasMaestro("success", "Motores sincronizados com o backend.");
+            const resumoObservabilidade = resumirObservabilidadeMotoresMaestro(res.observabilidade || res.diagnosticos);
+            setEstadoSalaMaquinasMaestro(resumoObservabilidade.tipo, resumoObservabilidade.mensagem);
         } else {
             setEstadoSalaMaquinasMaestro("error", res.erro || "Nao foi possivel ler o estado dos motores.");
             showToast(res.erro || "Nao foi possivel ler o estado dos motores.", "error");
@@ -1301,15 +1393,9 @@ async function forcarMotor(motorId) {
             semestreId: contexto.semestreId,
             usuarioLogadoId: contexto.usuarioLogadoId
         }, { timeoutMs: 180000 });
-        if (res.sucesso) {
-            const msg = res.msg || "Motor executado com sucesso.";
-            setEstadoSalaMaquinasMaestro("success", msg);
-            showToast(msg, "success");
-        } else {
-            const erro = res.erro || "Motor nao retornou sucesso.";
-            setEstadoSalaMaquinasMaestro("error", erro);
-            showToast(erro, "error");
-        }
+        const estado = classificarEstadoMotorMaestro(res);
+        setEstadoSalaMaquinasMaestro(estado.tipo, estado.mensagem);
+        showToast(estado.mensagem, estado.tipo);
     } catch (e) {
         setEstadoSalaMaquinasMaestro("error", "Erro ao acionar motor: " + e.message);
         showToast("Ocorreu um erro ao acionar o motor: " + e.message, "error");

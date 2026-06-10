@@ -277,12 +277,17 @@ function normalizarDashboardStatsMaestro(payload) {
     return {
         sucesso: payload && payload.sucesso === false ? false : true,
         erro: payload && payload.erro ? payload.erro : "",
+        codigo: payload && payload.codigo ? payload.codigo : "",
+        status: payload && payload.status ? payload.status : "",
+        detalhes: payload && payload.detalhes ? payload.detalhes : "",
+        retryAfterMs: payload && payload.retryAfterMs ? Number(payload.retryAfterMs) : null,
         kpis: stats.kpis || {},
         graficos: stats.graficos || {},
         consumo: stats.consumo || {},
         dataMart: Array.isArray(stats.dataMart) ? stats.dataMart : [],
         filtrosDisponiveis: stats.filtrosDisponiveis || {},
         atualizadoEm: stats.atualizadoEm || "",
+        cache: payload && payload.cache ? payload.cache : (stats.cache || {}),
         origem: stats.origem || "fallback",
         raw: stats
     };
@@ -290,6 +295,21 @@ function normalizarDashboardStatsMaestro(payload) {
 
 function dashboardStatsValido(stats) {
     return !!(stats && stats.sucesso !== false && stats.graficos && typeof stats.graficos === "object");
+}
+
+function ehErroQuotaDashboardMaestro(erro) {
+    const codigo = String(erro && erro.codigo || "").toUpperCase();
+    const texto = String((erro && (erro.message || erro.erro || erro.detalhes)) || erro || "");
+    return codigo === "QUOTA_LIMIT" || /quota|429|RESOURCE_EXHAUSTED/i.test(texto);
+}
+
+function mensagemErroDashboardMaestro(erro, comCache) {
+    if (ehErroQuotaDashboardMaestro(erro)) {
+        return comCache
+            ? "Limite temporario do Firestore atingido. Mantivemos o dashboard em cache."
+            : "Limite temporario do Firestore atingido. Tente novamente em alguns minutos.";
+    }
+    return erro && erro.message ? erro.message : "Dados do Dashboard indisponiveis.";
 }
 
 function aplicarBarraIADashboardMaestro(percentual) {
@@ -416,7 +436,13 @@ async function buscarDashboardStatsServidorMaestro() {
     const dashboardStats = normalizarDashboardStatsMaestro(res);
     if (!dashboardStatsValido(dashboardStats)) {
         const erro = dashboardStats && dashboardStats.erro ? dashboardStats.erro : "Dados do Dashboard indisponiveis.";
-        throw new Error(erro);
+        const erroDashboard = new Error(erro);
+        erroDashboard.codigo = dashboardStats && dashboardStats.codigo ? dashboardStats.codigo : "";
+        erroDashboard.status = dashboardStats && dashboardStats.status ? dashboardStats.status : "";
+        erroDashboard.detalhes = dashboardStats && dashboardStats.detalhes ? dashboardStats.detalhes : "";
+        erroDashboard.retryAfterMs = dashboardStats && dashboardStats.retryAfterMs ? dashboardStats.retryAfterMs : null;
+        erroDashboard.cache = dashboardStats && dashboardStats.cache ? dashboardStats.cache : null;
+        throw erroDashboard;
     }
     return dashboardStats;
 }
@@ -467,8 +493,9 @@ async function carregarDashboard() {
         }).catch(e => {
             if (typeof logMaestroSafe === "function") logMaestroSafe("warn", "Erro de Rede BI.", e);
             else console.warn("Erro de Rede BI.");
-            atualizarEstadoDashboardMaestro("stale", "Nao foi possivel atualizar agora. Mantivemos os dados em cache.", { className: "dashboard-state-banner" });
-            showToast("Erro ao carregar os dados analiticos: " + e.message, "error");
+            const mensagem = mensagemErroDashboardMaestro(e, true);
+            atualizarEstadoDashboardMaestro("stale", mensagem, { className: "dashboard-state-banner" });
+            showToast(mensagem, ehErroQuotaDashboardMaestro(e) ? "warning" : "error");
         });
         return;
     }
@@ -483,8 +510,9 @@ async function carregarDashboard() {
     } catch (err) {
         if (typeof logMaestroSafe === "function") logMaestroSafe("error", "Erro de Rede BI.", err);
         else console.error("Erro de Rede BI.");
-        atualizarEstadoDashboardMaestro("error", "Nao foi possivel carregar o Dashboard.", { className: "dashboard-state-banner" });
-        showToast("Erro de ligacao aos dados analiticos: " + err.message, "error");
+        const mensagem = mensagemErroDashboardMaestro(err, false);
+        atualizarEstadoDashboardMaestro(ehErroQuotaDashboardMaestro(err) ? "stale" : "error", mensagem, { className: "dashboard-state-banner" });
+        showToast(mensagem, ehErroQuotaDashboardMaestro(err) ? "warning" : "error");
     }
 }
 

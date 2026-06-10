@@ -19,6 +19,41 @@ const CLIENT_DIRECTORY = {
 const MAESTRO_CLIENT_DIRECTORY_VERSION = "2026-05-26-cache-reset";
 const MAESTRO_CLIENT_URL_VERSION_KEY = "MAESTRO_CLIENT_URL_VERSION";
 
+const CLIENT_DIRECTORY_METADATA = {
+  "https://script.google.com/macros/s/AKfycbzNnLY4AP8O8oqe-tMN3OczGslw8xlOvdqvq012j5gj5_UvpiBcZPCFUEj0cYno5WeqmQ/exec": {
+    tenantId: "CEARA_MIRIM",
+    label: "Ceara-Mirim"
+  }
+};
+
+function obterTenantIdPorUrlClienteMaestro(url) {
+  const alvo = String(url || "").trim();
+  if (!alvo) return "";
+  const meta = CLIENT_DIRECTORY_METADATA[alvo];
+  if (meta && meta.tenantId) return meta.tenantId;
+  return "";
+}
+
+function atualizarTenantContextoMaestro(contexto) {
+  const source = contexto || {};
+  const clientUrl = source.clientUrl || source.url || localStorage.getItem("MAESTRO_CLIENT_URL") || GAS_URL || "";
+  const tenantId = source.tenantId || source.tenantID || source.tenant_id || obterTenantIdPorUrlClienteMaestro(clientUrl);
+  if (!tenantId && !clientUrl) return null;
+
+  if (tenantId) localStorage.setItem("MAESTRO_TENANT_ID", tenantId);
+  if (clientUrl) localStorage.setItem("MAESTRO_CLIENT_URL", clientUrl);
+
+  if (window.MaestroData && window.MaestroData.contexts && window.MaestroData.contexts.tenant) {
+    return window.MaestroData.contexts.tenant.set({
+      tenantId: tenantId,
+      clientUrl: clientUrl,
+      source: source.source || "runtime"
+    });
+  }
+
+  return { tenantId: tenantId, clientUrl: clientUrl };
+}
+
 function setAuthElementVisibilityMaestro(element, visible, active = false) {
   if (!element) return;
   if (element.classList.contains("view-section")) {
@@ -83,6 +118,8 @@ async function removerCachesLocaisDeBackendMaestro() {
     "MAESTRO_OPERADOR_NOME",
     "MAESTRO_OPERADOR_EMAIL",
     "MAESTRO_OPERADOR_NIVEL",
+    "MAESTRO_TENANT_ID",
+    "MAESTRO_SEMESTRE_ID",
     "MAESTRO_WALLET_CACHE",
     "MAESTRO_OFFLINE_WALLET",
     "MAESTRO_DASH_STATS",
@@ -174,6 +211,7 @@ async function checkClientGateway() {
     showSplashAuthMaestro(splash);
     setAuthElementVisibilityMaestro(gateway, false);
     GAS_URL = savedUrl;
+    atualizarTenantContextoMaestro({ clientUrl: savedUrl, source: "clientGateway" });
     if (typeof bootSystem === "function") await bootSystem();
     return true;
   } else {
@@ -215,6 +253,7 @@ async function salvarCliente() {
   localStorage.setItem("MAESTRO_CLIENT_URL", selectedUrl);
   localStorage.setItem(MAESTRO_CLIENT_URL_VERSION_KEY, MAESTRO_CLIENT_DIRECTORY_VERSION);
   GAS_URL = selectedUrl;
+  atualizarTenantContextoMaestro({ clientUrl: selectedUrl, source: "clientGateway" });
 
   const gateway = document.getElementById("view-gateway");
   setAuthElementVisibilityMaestro(gateway, false);
@@ -266,10 +305,22 @@ function obterTenantPayloadApiMaestro(payload) {
     const tenantContext = window.MaestroData && window.MaestroData.contexts && window.MaestroData.contexts.tenant
       ? window.MaestroData.contexts.tenant.get()
       : {};
-    return tenantContext.tenantId || tenantContext.tenantID || tenantContext.tenant_id || "";
+    const fromContext = tenantContext.tenantId || tenantContext.tenantID || tenantContext.tenant_id || "";
+    if (fromContext) return fromContext;
   } catch (e) {
-    return "";
   }
+
+  try {
+    const storedSession = JSON.parse(localStorage.getItem("MAESTRO_OPERATOR_SESSION") || "{}");
+    if (storedSession.tenantId || storedSession.tenantID || storedSession.tenant_id) {
+      return storedSession.tenantId || storedSession.tenantID || storedSession.tenant_id;
+    }
+  } catch (e) {
+  }
+
+  return localStorage.getItem("MAESTRO_TENANT_ID") ||
+    obterTenantIdPorUrlClienteMaestro(localStorage.getItem("MAESTRO_CLIENT_URL") || GAS_URL) ||
+    "";
 }
 
 function acaoApiUsaSemestreMaestro(action) {
@@ -306,6 +357,91 @@ function acaoApiUsaSemestreMaestro(action) {
     "corrigirSemestresTenantFirestore",
     "atualizarEstagioCarteira"
   ].indexOf(String(action || "")) !== -1;
+}
+
+function acaoApiExigeTenantMaestro(action) {
+  return [
+    "getListaAuditoria",
+    "verFicheiroBase64",
+    "atualizarStatusAluno",
+    "enviarParecerOperador",
+    "getDashboardStats",
+    "getStatusMotores",
+    "alterarEstadoMotor",
+    "forcarExecucaoMotor",
+    "healthcheckMaestro",
+    "corrigirSemestresTenantFirestore",
+    "listarSemestresMaestro",
+    "salvarSemestreMaestro",
+    "definirSemestreAtualMaestro",
+    "marcarSemestrePassadoMaestro",
+    "arquivarSemestreMaestro",
+    "excluirSemestreMaestro",
+    "getFiltrosPush",
+    "dispararPushLoteManual",
+    "publicarAvisoNotificacao",
+    "sincronizarCacheFiscal",
+    "consultarEstudantePorId",
+    "getFotoEstudanteBase64",
+    "declararEmergenciaOnibus",
+    "encerrarRotaManual",
+    "getRotasMotorista"
+  ].indexOf(String(action || "")) !== -1;
+}
+
+function acaoApiExigeSemestreMaestro(action) {
+  return [
+    "getListaAuditoria",
+    "verFicheiroBase64",
+    "atualizarStatusAluno",
+    "enviarParecerOperador",
+    "getDashboardStats",
+    "getStatusMotores",
+    "alterarEstadoMotor",
+    "forcarExecucaoMotor",
+    "healthcheckMaestro",
+    "corrigirSemestresTenantFirestore"
+  ].indexOf(String(action || "")) !== -1;
+}
+
+function validarContextoPayloadApiMaestro(action, payload, options) {
+  const permitirParcial = options && options.allowMissingContext === true ||
+    payload && (payload.permitirContextoParcial === true || payload.permitirTenantFallback === true);
+  if (permitirParcial) return { ok: true };
+
+  const precisaTenant = acaoApiExigeTenantMaestro(action);
+  const precisaSemestre = acaoApiExigeSemestreMaestro(action);
+  if (!precisaTenant && !precisaSemestre) return { ok: true };
+
+  if (precisaTenant && !payload.tenantId) {
+    return {
+      ok: false,
+      resposta: {
+        sucesso: false,
+        erro: "Contexto Maestro incompleto: tenantId ausente.",
+        detalhes: "Selecione o cliente novamente ou atualize o portal antes de executar esta acao.",
+        codigo: "TENANT_CONTEXT_MISSING",
+        status: 409,
+        action: action
+      }
+    };
+  }
+
+  if (precisaSemestre && !payload.semestreId) {
+    return {
+      ok: false,
+      resposta: {
+        sucesso: false,
+        erro: "Contexto Maestro incompleto: semestreId ausente.",
+        detalhes: "Defina o semestre atual ou recarregue as configuracoes antes de executar esta acao.",
+        codigo: "SEMESTER_CONTEXT_MISSING",
+        status: 409,
+        action: action
+      }
+    };
+  }
+
+  return { ok: true };
 }
 
 function prepararPayloadApiMaestro(action, payload) {
@@ -351,6 +487,9 @@ function normalizarErroBackendMaestro(data, action) {
     data.erro = "Indice Firestore ausente para esta consulta. Crie o indice indicado no console Firebase.";
   } else if (/quota|429/i.test(detalhes)) {
     data.codigo = data.codigo || "QUOTA_LIMIT";
+    data.erro = data.erro && !/erro interno no servidor/i.test(data.erro)
+      ? data.erro
+      : "Limite temporario do servidor atingido. Tente novamente em alguns minutos.";
   }
 
   data.action = data.action || action;
@@ -369,6 +508,9 @@ async function apiCall(action, payload = {}, options = {}) {
   }
 
   const payloadFinal = prepararPayloadApiMaestro(action, payload);
+  const contextoValido = validarContextoPayloadApiMaestro(action, payloadFinal, options);
+  if (!contextoValido.ok) return contextoValido.resposta;
+
   const body = {
     action: action,
     token: token,
@@ -459,6 +601,14 @@ function temSessaoOperadorAtiva() {
 }
 
 function sincronizarOperatorSessionMaestro(res, login, tokenValido) {
+  const tenantId = res && (res.tenantId || res.tenantID || res.tenant_id);
+  if (tenantId) {
+    atualizarTenantContextoMaestro({
+      tenantId: tenantId,
+      clientUrl: localStorage.getItem("MAESTRO_CLIENT_URL") || GAS_URL || "",
+      source: "operatorLogin"
+    });
+  }
   if (!window.MaestroData || !window.MaestroData.contexts || !window.MaestroData.contexts.operator) return null;
 
   return window.MaestroData.contexts.operator.set({
@@ -467,7 +617,7 @@ function sincronizarOperatorSessionMaestro(res, login, tokenValido) {
     email: (res && (res.email || res.identificador)) || login || localStorage.getItem("MAESTRO_OPERADOR_EMAIL") || "",
     nivel: String((res && res.nivel) || localStorage.getItem("MAESTRO_OPERADOR_NIVEL") || "OPERADOR").toUpperCase(),
     perfil: String((res && res.nivel) || localStorage.getItem("MAESTRO_OPERADOR_NIVEL") || "OPERADOR").toUpperCase(),
-    tenantId: res && (res.tenantId || res.tenantID || res.tenant_id)
+    tenantId: tenantId || localStorage.getItem("MAESTRO_TENANT_ID") || ""
   });
 }
 
