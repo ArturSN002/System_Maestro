@@ -80,12 +80,15 @@ function stepperNext(current, next) {
 
     // ---- VALIDAÇÃO POR ETAPA ----
     if (current === 1) {
-        const cpfRaw = document.getElementById('insc-cpf').value.replace(/\D/g, '');
-        if (cpfRaw.length !== 11) {
-            showToast("CPF inválido. Informe 11 dígitos.", "error");
+        const cpfValidado = validarCPFMaestro(document.getElementById('insc-cpf').value);
+        if (!cpfValidado.valido) {
+            atualizarFeedbackCPFInscricao("error", cpfValidado.erro);
+            marcarCampoInvalidoMaestro("insc-cpf", cpfValidado.erro, "cpf-feedback-box");
+            showToast(cpfValidado.erro, "error");
             triggerVibration([50, 50]);
             return;
         }
+        limparCampoInvalidoMaestro("insc-cpf");
     }
 
     if (current === 2) {
@@ -250,15 +253,19 @@ function obterSemestreAtualInscricaoMaestro() {
 }
 
 async function verificarCPFInscricao() {
-    const cpfRaw = document.getElementById('insc-cpf').value.replace(/\D/g, '');
+    const cpfValidado = validarCPFMaestro(document.getElementById('insc-cpf').value);
+    const cpfRaw = cpfValidado.cpf;
     const btn = document.getElementById('btn-insc-verificar');
     const semestreId = obterSemestreAtualInscricaoMaestro();
 
-    if (cpfRaw.length !== 11) {
-        showToast("CPF inválido. Informe 11 dígitos.", "error");
+    if (!cpfValidado.valido) {
+        atualizarFeedbackCPFInscricao("error", cpfValidado.erro);
+        marcarCampoInvalidoMaestro("insc-cpf", cpfValidado.erro, "cpf-feedback-box");
+        showToast(cpfValidado.erro, "error");
         triggerVibration([50, 50]);
         return;
     }
+    limparCampoInvalidoMaestro("insc-cpf");
 
     btn.innerText = "A VERIFICAR...";
     btn.disabled = true;
@@ -454,11 +461,12 @@ function processarArquivoInscricao(inputElement, tipoDoc) {
         return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-        showToast("Arquivo muito grande (Máximo 5MB).", "error");
+    const validacaoArquivo = validarArquivoMaestro(file, tipoDoc, "inscricao");
+    if (!validacaoArquivo.valido) {
+        showToast(validacaoArquivo.erro, "error");
         limparArquivoInscricao(tipoDoc);
         if (statusSpan) {
-            atualizarStatusArquivoInscricao(statusSpan, "Erro: Arquivo demasiado pesado.", "error");
+            atualizarStatusArquivoInscricao(statusSpan, validacaoArquivo.erro, "error");
         }
         return;
     }
@@ -468,6 +476,7 @@ function processarArquivoInscricao(inputElement, tipoDoc) {
         inscricaoArquivos[tipoDoc] = {
             tipo: tipoDoc,
             nome: file.name,
+            mimeType: file.type || "",
             base64: e.target.result
         };
         if (statusSpan) {
@@ -695,13 +704,17 @@ function prepararEnvioNativo() {
     const btn = document.getElementById('btn-submeter-inscricao');
 
     // Basic validation
-    const cpf = document.getElementById('insc-cpf').value.replace(/\D/g, '');
+    const cpfValidado = validarCPFMaestro(document.getElementById('insc-cpf').value);
+    const cpf = cpfValidado.cpf;
     const nome = document.getElementById('insc-nome').value.trim();
 
-    if (!cpf || cpf.length !== 11) {
-        showToast("CPF inválido. Volte à etapa 1.", "error");
+    if (!cpfValidado.valido) {
+        atualizarFeedbackCPFInscricao("error", cpfValidado.erro);
+        marcarCampoInvalidoMaestro("insc-cpf", cpfValidado.erro, "cpf-feedback-box");
+        showToast("CPF invalido. Volte a etapa 1.", "error");
         return;
     }
+    limparCampoInvalidoMaestro("insc-cpf");
 
     if (!nome) {
         showToast("Nome completo é obrigatório. Volte à etapa 2.", "error");

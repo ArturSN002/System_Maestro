@@ -1,0 +1,11 @@
+{
+  "name": "system-maestro-github-pages",
+  "private": true,
+  "scripts": {
+    "test:unit:fase01": "node tests/unit/fase01-validators.test.js",
+    "test:playwright:public": "playwright test tests/playwright/public-flows.spec.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.0"
+  }
+}
