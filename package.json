@@ -3,7 +3,9 @@
   "private": true,
   "scripts": {
     "test:unit:fase01": "node tests/unit/fase01-validators.test.js",
-    "test:playwright:public": "playwright test tests/playwright/public-flows.spec.js"
+    "test:unit:fase11": "node tests/unit/fase11-backend.test.js",
+    "test:playwright:public": "playwright test tests/playwright/public-flows.spec.js",
+    "test:playwright:fase11": "playwright test tests/playwright/fase11-admin-qa.spec.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.54.0"
