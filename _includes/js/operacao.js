@@ -1460,6 +1460,7 @@ async function forcarMotor(motorId) {
             semestreId: contexto.semestreId,
             usuarioLogadoId: contexto.usuarioLogadoId,
             origemExecucao: "manual-ui",
+            confirmacao: exigeConfirmacao,
             confirmarExecucao: exigeConfirmacao,
             solicitacaoId: solicitacaoId
         }, { timeoutMs: 180000 });

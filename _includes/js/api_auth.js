@@ -323,6 +323,41 @@ function obterTenantPayloadApiMaestro(payload) {
     "";
 }
 
+function acaoApiSemestresMaestro(action) {
+  return [
+    "listarSemestresMaestro",
+    "obterSemestreAtualMaestro",
+    "salvarSemestreMaestro",
+    "definirSemestreAtualMaestro",
+    "marcarSemestrePassadoMaestro",
+    "arquivarSemestreMaestro",
+    "excluirSemestreMaestro"
+  ].indexOf(String(action || "")) !== -1;
+}
+
+function acaoApiOperadorRestritaMaestro(action) {
+  return [
+    "atualizarStatusAluno",
+    "alterarEstadoMotor",
+    "forcarExecucaoMotor",
+    "getDashboardStats",
+    "getListaAuditoria",
+    "getStatusMotores"
+  ].indexOf(String(action || "")) !== -1 || acaoApiSemestresMaestro(action);
+}
+
+function obterNivelOperadorPayloadMaestro() {
+  try {
+    const storedSession = JSON.parse(localStorage.getItem("MAESTRO_OPERATOR_SESSION") || "{}");
+    if (storedSession.nivel || storedSession.perfil || storedSession.role) {
+      return String(storedSession.nivel || storedSession.perfil || storedSession.role).toUpperCase();
+    }
+  } catch (e) {
+  }
+
+  return String(localStorage.getItem("MAESTRO_OPERADOR_NIVEL") || "").toUpperCase();
+}
+
 function acaoApiUsaSemestreMaestro(action) {
   return [
     "verificarDuplicidadeCPF",
@@ -457,6 +492,15 @@ function prepararPayloadApiMaestro(action, payload) {
 
   if (tenantId && !base.tenantId) {
     base.tenantId = tenantId;
+  }
+
+  if (acaoApiOperadorRestritaMaestro(action)) {
+    const nivelOperador = obterNivelOperadorPayloadMaestro();
+    if (nivelOperador && !base.nivelUsuario) base.nivelUsuario = nivelOperador;
+    if (!base.tipoUsuario) base.tipoUsuario = "OPERADOR";
+    if (!base.usuarioLogadoId) {
+      base.usuarioLogadoId = localStorage.getItem("MAESTRO_OPERADOR_EMAIL") || "";
+    }
   }
 
   return base;
